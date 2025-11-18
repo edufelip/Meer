@@ -1,22 +1,10 @@
 import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text } from "react-native";
 
 export function FavoritesScreen() {
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Favorites</Text>
+    <View className="flex-1 items-center justify-center bg-white">
+      <Text className="text-2xl font-semibold text-pink-500">Favorites</Text>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center"
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: "600"
-  }
-});
