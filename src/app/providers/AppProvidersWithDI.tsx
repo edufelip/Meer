@@ -7,12 +7,14 @@ import { GetCurrentUserUseCase } from "../../domain/usecases/GetCurrentUserUseCa
 import { GetFeaturedThriftStoresUseCase } from "../../domain/usecases/GetFeaturedThriftStoresUseCase";
 import { GetNearbyThriftStoresUseCase } from "../../domain/usecases/GetNearbyThriftStoresUseCase";
 import { GetGuideContentUseCase } from "../../domain/usecases/GetGuideContentUseCase";
+import { GetFavoriteThriftStoresUseCase } from "../../domain/usecases/GetFavoriteThriftStoresUseCase";
 
 interface Dependencies {
   getCurrentUserUseCase: GetCurrentUserUseCase;
   getFeaturedThriftStoresUseCase: GetFeaturedThriftStoresUseCase;
   getNearbyThriftStoresUseCase: GetNearbyThriftStoresUseCase;
   getGuideContentUseCase: GetGuideContentUseCase;
+  getFavoriteThriftStoresUseCase: GetFavoriteThriftStoresUseCase;
 }
 
 const DependenciesContext = createContext<Dependencies | undefined>(undefined);
@@ -38,12 +40,14 @@ export function DependenciesProvider(props: PropsWithChildren) {
     const getFeaturedThriftStoresUseCase = new GetFeaturedThriftStoresUseCase(thriftStoreRepository);
     const getNearbyThriftStoresUseCase = new GetNearbyThriftStoresUseCase(thriftStoreRepository);
     const getGuideContentUseCase = new GetGuideContentUseCase(guideContentRepository);
+    const getFavoriteThriftStoresUseCase = new GetFavoriteThriftStoresUseCase(thriftStoreRepository);
 
     return {
       getCurrentUserUseCase,
       getFeaturedThriftStoresUseCase,
       getNearbyThriftStoresUseCase,
-      getGuideContentUseCase
+      getGuideContentUseCase,
+      getFavoriteThriftStoresUseCase
     };
   }, []);
 

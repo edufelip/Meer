@@ -74,6 +74,33 @@ const nearby: ThriftStore[] = [
   }
 ];
 
+const favorites: ThriftStore[] = [
+  featured[0],
+  featured[1],
+  {
+    id: "eco-trends",
+    name: "Eco Trends",
+    description: "Peças sustentáveis e slow fashion.",
+    imageUrl:
+      "https://lh3.googleusercontent.com/aida-public/AB6AXuCl3MFVqlTBTwWfdv_BpgAwWTyAcF1A7BC-55wLzqGdf-liREBNmdO9GMc3lfyUpt9u1Vq8jRdfcgtrzoVKl7xp3ofYVQTetSzvmrOiVF2XOV8TUlArjxGb812Xhfo19Ix7ihAg02-gQYtNeX2zUaaq2X_qlEWWGQPFzeBPydbViCn-37R9c5Z_0LgRDaA8lX6Qu8FhlWP1sn9gu99PxnN8xX7ysCN2Wi8WyqfLFdogXgVU86a_17Z8_T5Rq1d25NWzPavCzjfnLlk",
+    neighborhood: "Moema",
+    addressLine: "Alameda dos Maracatins, 300",
+    distanceKm: 3.1,
+    walkTimeMinutes: 35
+  },
+  {
+    id: "retro-closet",
+    name: "Retro Closet",
+    description: "Curadoria colorida e divertida.",
+    imageUrl:
+      "https://lh3.googleusercontent.com/aida-public/AB6AXuApzMYo7AGhzLhPB0Jy520PqIdhpEKLX6aVMaPGiv1S0EGhWOzpFiX9rdWKh4JXNUi-R0wVxH0GlWO5fHrtSfTsZWuED_-gGcl1wCMdYAKoHEErg1yYR6_HFD2ifY8ulot9UldCRXkTZkxLV5OtfsyC_uPEt6FS6yicIco564twbpkvLBuYsSuUNRVNkIAkyeyyeO6tFr2SAKD-dJPhKHDJfEfTS_RuKpc5wFAtEg5nBZRPw_lNFl7twLoqYelAPR3KreK13yl9tRg",
+    neighborhood: "Liberdade",
+    addressLine: "Praça da Sé, 45",
+    distanceKm: 2.8,
+    walkTimeMinutes: 30
+  }
+];
+
 export class InMemoryThriftStoreRepository implements ThriftStoreRepository {
   async getFeatured(): Promise<ThriftStore[]> {
     return featured;
@@ -81,5 +108,9 @@ export class InMemoryThriftStoreRepository implements ThriftStoreRepository {
 
   async getNearby(): Promise<ThriftStore[]> {
     return nearby;
+  }
+
+  async getFavorites(): Promise<ThriftStore[]> {
+    return favorites;
   }
 }
