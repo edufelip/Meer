@@ -2,14 +2,17 @@ import React, { PropsWithChildren, createContext, useContext, useMemo } from "re
 import { AsyncStorageUserLocalDataSource } from "../../data/datasources/impl/AsyncStorageUserLocalDataSource";
 import { UserRepositoryImpl } from "../../data/repositories/UserRepositoryImpl";
 import { InMemoryThriftStoreRepository } from "../../data/repositories/InMemoryThriftStoreRepository";
+import { InMemoryGuideContentRepository } from "../../data/repositories/InMemoryGuideContentRepository";
 import { GetCurrentUserUseCase } from "../../domain/usecases/GetCurrentUserUseCase";
 import { GetFeaturedThriftStoresUseCase } from "../../domain/usecases/GetFeaturedThriftStoresUseCase";
 import { GetNearbyThriftStoresUseCase } from "../../domain/usecases/GetNearbyThriftStoresUseCase";
+import { GetGuideContentUseCase } from "../../domain/usecases/GetGuideContentUseCase";
 
 interface Dependencies {
   getCurrentUserUseCase: GetCurrentUserUseCase;
   getFeaturedThriftStoresUseCase: GetFeaturedThriftStoresUseCase;
   getNearbyThriftStoresUseCase: GetNearbyThriftStoresUseCase;
+  getGuideContentUseCase: GetGuideContentUseCase;
 }
 
 const DependenciesContext = createContext<Dependencies | undefined>(undefined);
@@ -29,15 +32,18 @@ export function DependenciesProvider(props: PropsWithChildren) {
     const userLocalDataSource = new AsyncStorageUserLocalDataSource();
     const userRepository = new UserRepositoryImpl(userLocalDataSource);
     const thriftStoreRepository = new InMemoryThriftStoreRepository();
+    const guideContentRepository = new InMemoryGuideContentRepository();
 
     const getCurrentUserUseCase = new GetCurrentUserUseCase(userRepository);
     const getFeaturedThriftStoresUseCase = new GetFeaturedThriftStoresUseCase(thriftStoreRepository);
     const getNearbyThriftStoresUseCase = new GetNearbyThriftStoresUseCase(thriftStoreRepository);
+    const getGuideContentUseCase = new GetGuideContentUseCase(guideContentRepository);
 
     return {
       getCurrentUserUseCase,
       getFeaturedThriftStoresUseCase,
-      getNearbyThriftStoresUseCase
+      getNearbyThriftStoresUseCase,
+      getGuideContentUseCase
     };
   }, []);
 
