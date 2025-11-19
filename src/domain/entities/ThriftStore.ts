@@ -8,4 +8,6 @@ export interface ThriftStore {
   badgeLabel?: string;
   distanceKm?: number;
   neighborhood?: string;
+  addressLine?: string;
+  walkTimeMinutes?: number;
 }

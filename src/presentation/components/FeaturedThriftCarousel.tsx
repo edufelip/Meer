@@ -1,7 +1,7 @@
 import React from "react";
 import { ScrollView, View } from "react-native";
 import type { ThriftStore } from "../../domain/entities/ThriftStore";
-import { FeaturedThriftCard } from "./FeaturedThriftCard";
+import { ThriftAvatar } from "./ThriftAvatar";
 
 interface FeaturedThriftCarouselProps {
   stores: ThriftStore[];
@@ -15,9 +15,9 @@ export function FeaturedThriftCarousel({ stores }: FeaturedThriftCarouselProps) 
       contentContainerStyle={{ paddingLeft: 16, paddingRight: 16 }}
       className="overflow-visible"
     >
-      <View className="flex-row">
+      <View className="flex-row space-x-4">
         {stores.map((store) => (
-          <FeaturedThriftCard key={store.id} store={store} />
+          <ThriftAvatar key={store.id} store={store} />
         ))}
       </View>
     </ScrollView>
