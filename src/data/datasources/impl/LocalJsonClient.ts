@@ -7,6 +7,19 @@ export async function loadFromJson<T>(payload: unknown): Promise<T> {
   });
 }
 
+// Minimal persistence stub to emulate saving JSON locally (in-memory here).
+// When replacing with real API, swap this for a POST/PUT.
+export async function saveToJson(_file: string, payload: unknown): Promise<void> {
+  const latencyMs = getRandomLatency();
+  return new Promise<void>((resolve) => {
+    setTimeout(() => {
+      // noop: in this mock we just pretend to persist
+      clone(payload);
+      resolve();
+    }, latencyMs);
+  });
+}
+
 function getRandomLatency(): number {
   // Simulate network latency between 500ms and 1500ms
   const min = 500;

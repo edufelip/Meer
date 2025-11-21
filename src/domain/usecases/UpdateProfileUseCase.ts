@@ -1,0 +1,16 @@
+import type { ProfileRepository } from "../repositories/ProfileRepository";
+import type { User } from "../entities/User";
+
+type ProfilePayload = Partial<User> & { bio?: string; notifyNewStores?: boolean; notifyPromos?: boolean };
+
+export class UpdateProfileUseCase {
+  private readonly repository: ProfileRepository;
+
+  constructor(repository: ProfileRepository) {
+    this.repository = repository;
+  }
+
+  execute(payload: ProfilePayload): Promise<User & { bio?: string; notifyNewStores: boolean; notifyPromos: boolean }> {
+    return this.repository.updateProfile(payload);
+  }
+}

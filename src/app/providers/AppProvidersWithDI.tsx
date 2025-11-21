@@ -4,9 +4,11 @@ import { UserRepositoryImpl } from "../../data/repositories/UserRepositoryImpl";
 import { JsonThriftStoreRemoteDataSource } from "../../data/datasources/impl/JsonThriftStoreRemoteDataSource";
 import { JsonGuideContentRemoteDataSource } from "../../data/datasources/impl/JsonGuideContentRemoteDataSource";
 import { JsonCategoryRemoteDataSource } from "../../data/datasources/impl/JsonCategoryRemoteDataSource";
+import { JsonProfileRemoteDataSource } from "../../data/datasources/impl/JsonProfileRemoteDataSource";
 import { ThriftStoreRepositoryJson } from "../../data/repositories/ThriftStoreRepositoryJson";
 import { GuideContentRepositoryJson } from "../../data/repositories/GuideContentRepositoryJson";
 import { CategoryRepositoryJson } from "../../data/repositories/CategoryRepositoryJson";
+import { ProfileRepositoryJson } from "../../data/repositories/ProfileRepositoryJson";
 import { GetCurrentUserUseCase } from "../../domain/usecases/GetCurrentUserUseCase";
 import { GetFeaturedThriftStoresUseCase } from "../../domain/usecases/GetFeaturedThriftStoresUseCase";
 import { GetNearbyThriftStoresUseCase } from "../../domain/usecases/GetNearbyThriftStoresUseCase";
@@ -14,6 +16,8 @@ import { GetGuideContentUseCase } from "../../domain/usecases/GetGuideContentUse
 import { GetFavoriteThriftStoresUseCase } from "../../domain/usecases/GetFavoriteThriftStoresUseCase";
 import { GetCategoriesUseCase } from "../../domain/usecases/GetCategoriesUseCase";
 import { GetThriftStoreByIdUseCase } from "../../domain/usecases/GetThriftStoreByIdUseCase";
+import { GetProfileUseCase } from "../../domain/usecases/GetProfileUseCase";
+import { UpdateProfileUseCase } from "../../domain/usecases/UpdateProfileUseCase";
 
 interface Dependencies {
   getCurrentUserUseCase: GetCurrentUserUseCase;
@@ -23,6 +27,8 @@ interface Dependencies {
   getFavoriteThriftStoresUseCase: GetFavoriteThriftStoresUseCase;
   getCategoriesUseCase: GetCategoriesUseCase;
   getThriftStoreByIdUseCase: GetThriftStoreByIdUseCase;
+  getProfileUseCase: GetProfileUseCase;
+  updateProfileUseCase: UpdateProfileUseCase;
 }
 
 const DependenciesContext = createContext<Dependencies | undefined>(undefined);
@@ -44,10 +50,12 @@ export function DependenciesProvider(props: PropsWithChildren) {
     const thriftStoreRemote = new JsonThriftStoreRemoteDataSource();
     const guideContentRemote = new JsonGuideContentRemoteDataSource();
     const categoryRemote = new JsonCategoryRemoteDataSource();
+    const profileRemote = new JsonProfileRemoteDataSource();
 
     const thriftStoreRepository = new ThriftStoreRepositoryJson(thriftStoreRemote);
     const guideContentRepository = new GuideContentRepositoryJson(guideContentRemote);
     const categoryRepository = new CategoryRepositoryJson(categoryRemote);
+    const profileRepository = new ProfileRepositoryJson(profileRemote);
 
     const getCurrentUserUseCase = new GetCurrentUserUseCase(userRepository);
     const getFeaturedThriftStoresUseCase = new GetFeaturedThriftStoresUseCase(thriftStoreRepository);
@@ -56,6 +64,8 @@ export function DependenciesProvider(props: PropsWithChildren) {
     const getFavoriteThriftStoresUseCase = new GetFavoriteThriftStoresUseCase(thriftStoreRepository);
     const getCategoriesUseCase = new GetCategoriesUseCase(categoryRepository);
     const getThriftStoreByIdUseCase = new GetThriftStoreByIdUseCase(thriftStoreRepository);
+    const getProfileUseCase = new GetProfileUseCase(profileRepository);
+    const updateProfileUseCase = new UpdateProfileUseCase(profileRepository);
 
     return {
       getCurrentUserUseCase,
@@ -64,7 +74,9 @@ export function DependenciesProvider(props: PropsWithChildren) {
       getGuideContentUseCase,
       getFavoriteThriftStoresUseCase,
       getCategoriesUseCase,
-      getThriftStoreByIdUseCase
+      getThriftStoreByIdUseCase,
+      getProfileUseCase,
+      updateProfileUseCase
     };
   }, []);
 

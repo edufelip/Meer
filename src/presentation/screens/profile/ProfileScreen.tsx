@@ -12,7 +12,7 @@ import type { RootStackParamList } from "../../../app/navigation/RootStack";
 
 export function ProfileScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const { getCurrentUserUseCase, getFavoriteThriftStoresUseCase } = useDependencies();
+  const { getFavoriteThriftStoresUseCase, getProfileUseCase } = useDependencies();
   const [user, setUser] = useState<User | null>(null);
   const [favorites, setFavorites] = useState<ThriftStore[]>([]);
   const [loading, setLoading] = useState(true);
@@ -21,7 +21,7 @@ export function ProfileScreen() {
     let isMounted = true;
     (async () => {
       const [maybeUser, favs] = await Promise.all([
-        getCurrentUserUseCase.execute(),
+        getProfileUseCase.execute(),
         getFavoriteThriftStoresUseCase.execute()
       ]);
       if (isMounted) {
@@ -33,7 +33,7 @@ export function ProfileScreen() {
     return () => {
       isMounted = false;
     };
-  }, [getCurrentUserUseCase, getFavoriteThriftStoresUseCase]);
+  }, [getProfileUseCase, getFavoriteThriftStoresUseCase]);
 
   const displayUser = useMemo<User>(
     () =>
