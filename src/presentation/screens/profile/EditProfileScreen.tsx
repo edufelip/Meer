@@ -9,6 +9,13 @@ import { useDependencies } from "../../../app/providers/AppProvidersWithDI";
 export function EditProfileScreen() {
   const navigation = useNavigation();
   const { getProfileUseCase, updateProfileUseCase } = useDependencies();
+  const goBackSafe = () => {
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    } else {
+      navigation.navigate("tabs" as never);
+    }
+  };
 
   const [name, setName] = useState("");
   const [bio, setBio] = useState("");
@@ -43,7 +50,7 @@ export function EditProfileScreen() {
       notifyNewStores,
       notifyPromos
     });
-    navigation.goBack();
+    goBackSafe();
   };
 
   return (
@@ -53,7 +60,7 @@ export function EditProfileScreen() {
         <View className="flex-row items-center p-4">
           <Pressable
             className="p-2 rounded-full"
-            onPress={() => navigation.goBack()}
+            onPress={goBackSafe}
             accessibilityRole="button"
             accessibilityLabel="Voltar"
           >
