@@ -95,9 +95,7 @@ export function ProfileScreen() {
             </Pressable>
             <Pressable
               className="flex-row items-center justify-between p-4 border-t border-gray-200"
-              onPress={() => {
-                // placeholder contact action
-              }}
+              onPress={() => navigation.navigate("contact")}
             >
               <Text className="text-[#374151]">Fale Conosco</Text>
               <Ionicons name="chevron-forward" size={18} color={theme.colors.highlight} />
