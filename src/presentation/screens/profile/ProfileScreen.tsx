@@ -86,7 +86,7 @@ export function ProfileScreen() {
         </View>
 
         <View className="px-4 py-4">
-            <Text className="text-lg font-bold mb-2 text-[#1F2937]">Conta</Text>
+          <Text className="text-lg font-bold mb-2 text-[#1F2937]">Conta</Text>
           <View className="bg-white rounded-lg shadow-sm">
             <Pressable
               className="flex-row items-center justify-between p-4 border-b border-gray-200"
@@ -103,6 +103,19 @@ export function ProfileScreen() {
               }
             >
               <Text className="text-[#374151]">Editar Perfil</Text>
+              <Ionicons name="chevron-forward" size={18} color={theme.colors.highlight} />
+            </Pressable>
+            <Pressable
+              className="flex-row items-center justify-between p-4"
+              onPress={() =>
+                navigation.navigate("brechoForm", {
+                  thriftStore: user?.ownedThriftStore ?? null
+                })
+              }
+            >
+              <Text className="text-[#374151]">
+                {user?.ownedThriftStore ? "Meu Brechó" : "Cadastrar Brechó"}
+              </Text>
               <Ionicons name="chevron-forward" size={18} color={theme.colors.highlight} />
             </Pressable>
             <Pressable className="flex-row items-center justify-between p-4">
