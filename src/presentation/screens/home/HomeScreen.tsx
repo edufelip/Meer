@@ -180,12 +180,12 @@ export function HomeScreen() {
                 ? nearby
                 : nearby.filter((s) => s.neighborhood === activeFilter)
               ).map((store, idx, arr) => (
-                <NearbyThriftListItem
-                  key={store.id}
-                  store={store}
-                  style={{ marginBottom: idx === arr.length - 1 ? 0 : 8 }}
-                  onPress={() => navigation.navigate("thriftDetail", { id: store.id })}
-                />
+                <View key={store.id} style={{ marginBottom: idx === arr.length - 1 ? 0 : 8 }}>
+                  <NearbyThriftListItem
+                    store={store}
+                    onPress={() => navigation.navigate("thriftDetail", { id: store.id })}
+                  />
+                </View>
               ))}
             </View>
             <View className="mt-4 items-center">
