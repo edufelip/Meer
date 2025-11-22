@@ -21,6 +21,7 @@ export function HomeScreen() {
     useDependencies();
   const [featured, setFeatured] = useState<ThriftStore[]>([]);
   const [nearby, setNearby] = useState<ThriftStore[]>([]);
+  const [allStores, setAllStores] = useState<ThriftStore[]>([]);
   const [guides, setGuides] = useState<GuideContent[]>([]);
   const [activeFilter, setActiveFilter] = useState("Próximo a mim");
   const [loading, setLoading] = useState(true);
@@ -38,6 +39,7 @@ export function HomeScreen() {
       if (isMounted) {
         setFeatured(featuredStores);
         setNearby(nearbyStores);
+        setAllStores([...featuredStores, ...nearbyStores]);
         setGuides(guideItems);
         const hoods = new Set<string>();
         [...featuredStores, ...nearbyStores].forEach((s) => {
@@ -178,7 +180,7 @@ export function HomeScreen() {
             <View className="mt-4">
               {(activeFilter === "Próximo a mim"
                 ? nearby
-                : nearby.filter((s) => s.neighborhood === activeFilter)
+                : allStores.filter((s) => s.neighborhood === activeFilter)
               ).map((store, idx, arr) => (
                 <View key={store.id} style={{ marginBottom: idx === arr.length - 1 ? 0 : 8 }}>
                   <NearbyThriftListItem
