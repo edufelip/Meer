@@ -15,7 +15,6 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../../../app/navigation/RootStack";
 import { theme } from "../../../shared/theme";
 import { isValidEmail, validatePassword } from "../../../domain/validation/auth";
-/* eslint-disable import/no-unresolved */
 import * as WebBrowser from "expo-web-browser";
 import * as Google from "expo-auth-session/providers/google";
 import { useDependencies } from "../../../app/providers/AppProvidersWithDI";
@@ -73,24 +72,24 @@ export function LoginScreen() {
             </View>
 
             <Text className="text-[32px] font-bold text-center text-[#374151] leading-tight">
-              Conheça seu novo Guia de Brechós!
+              Conheça seu novo{"\n"}Guia de Brechós!
             </Text>
-            <Text className="text-base text-center text-[#374151]/80 pt-1 pb-8">
+            <Text className="text-lg text-center text-[#374151]/80 pt-2 pb-8">
               Explore achados únicos
             </Text>
 
-            <View className="w-full space-y-3">
+            <View className="w-full space-y-4">
               <Pressable
                 className="h-12 rounded-lg bg-[#F3F4F6] flex-row items-center justify-center gap-3 px-5"
                 disabled={!request || loading}
                 onPress={() => promptAsync()}
               >
-                <AntDesign name="google" size={18} color="#4285F4" />
+                <AntDesign name="google" size={20} color="#4285F4" />
                 <Text className="text-base font-bold text-[#374151]">Entrar com Google</Text>
               </Pressable>
               {Platform.OS === "ios" ? (
                 <Pressable className="h-12 rounded-lg bg-[#F3F4F6] flex-row items-center justify-center gap-3 px-5">
-                  <AntDesign name="apple1" size={18} color="#111" />
+                  <AntDesign name="apple1" size={20} color="#111" />
                   <Text className="text-base font-bold text-[#374151]">Entrar com Apple</Text>
                 </Pressable>
               ) : null}
@@ -116,7 +115,7 @@ export function LoginScreen() {
                 />
               </View>
 
-              <View>
+              <View className="mt-2">
                 <View className="flex-row items-center justify-between pb-2">
                   <Text className="text-base font-medium text-[#374151]">Senha</Text>
                 </View>
