@@ -1,9 +1,10 @@
+// Filled at runtime from env; default empty placeholders to avoid leaking secrets in VCS
 export const firebaseConfig = {
-  apiKey: "AIzaSyBGhMkG2hUF2jaaF-Rcx-XhI3LUgk_phrE",
-  authDomain: "meer-5e4b7.firebaseapp.com",
-  projectId: "meer-5e4b7",
-  storageBucket: "meer-5e4b7.firebasestorage.app",
-  messagingSenderId: "586821855462",
-  appId: "1:586821855462:web:cc34097dcfd9e9b38bf327",
-  measurementId: "G-J5E560WHYN"
+  apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY ?? "",
+  authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN ?? "",
+  projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID ?? "",
+  storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET ?? "",
+  messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID ?? "",
+  appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID ?? "",
+  measurementId: process.env.EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID ?? ""
 };
