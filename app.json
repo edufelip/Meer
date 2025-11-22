@@ -10,10 +10,12 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.edufelip.meer"
+      "bundleIdentifier": "com.edufelip.meer",
+      "googleServicesFile": "./GoogleService-Info.plist"
     },
     "android": {
       "package": "com.edufelip.meer",
+      "googleServicesFile": "./android/app/google-services.json",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -40,7 +42,12 @@
             "backgroundColor": "#000000"
           }
         }
-      ]
+      ],
+      "@react-native-firebase/app",
+      "@react-native-firebase/auth",
+      "@react-native-firebase/messaging",
+      "@react-native-firebase/crashlytics",
+      "@react-native-firebase/perf"
     ],
     "experiments": {
       "reactCompiler": true
