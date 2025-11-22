@@ -1,3 +1,4 @@
+/* eslint-disable import/no-unresolved */
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getRemoteConfig, fetchAndActivate, getValue } from "firebase/remote-config";
 

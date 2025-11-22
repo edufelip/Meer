@@ -1,3 +1,4 @@
+/* eslint-disable import/no-unresolved */
 import { useEffect } from "react";
 import crashlytics from "@react-native-firebase/crashlytics";
 

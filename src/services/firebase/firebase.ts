@@ -1,3 +1,4 @@
+/* eslint-disable import/no-unresolved */
 import { FirebaseApp, initializeApp } from "@react-native-firebase/app";
 import auth from "@react-native-firebase/auth";
 import perf from "@react-native-firebase/perf";
