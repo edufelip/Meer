@@ -1,10 +1,13 @@
 import type { GuideContent } from "../../../domain/entities/GuideContent";
 import type { GuideContentRemoteDataSource } from "../GuideContentRemoteDataSource";
-import guideContents from "../../mocks/guideContents.json";
+import homeData from "../../mocks/thriftStores.json";
 import { loadFromJson } from "./LocalJsonClient";
+
+type HomeResponse = { articles?: GuideContent[] };
 
 export class JsonGuideContentRemoteDataSource implements GuideContentRemoteDataSource {
   async listLatest(): Promise<GuideContent[]> {
-    return loadFromJson<GuideContent[]>(guideContents as GuideContent[]);
+    const { articles = [] } = homeData as HomeResponse;
+    return loadFromJson<GuideContent[]>(articles);
   }
 }

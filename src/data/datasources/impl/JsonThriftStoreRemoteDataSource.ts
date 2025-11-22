@@ -4,14 +4,14 @@ import thriftStores from "../../../data/mocks/thriftStores.json";
 import { loadFromJson } from "./LocalJsonClient";
 
 type ThriftStoresResponse = {
-  featured: ThriftStore[];
+  feature: ThriftStore[];
   nearby: ThriftStore[];
-  favorites: ThriftStore[];
+  favorites?: ThriftStore[];
 };
 
 export class JsonThriftStoreRemoteDataSource implements ThriftStoreRemoteDataSource {
   async getFeatured(): Promise<ThriftStore[]> {
-    return loadFromJson<ThriftStore[]>((thriftStores as ThriftStoresResponse).featured);
+    return loadFromJson<ThriftStore[]>((thriftStores as ThriftStoresResponse).feature);
   }
 
   async getNearby(): Promise<ThriftStore[]> {
