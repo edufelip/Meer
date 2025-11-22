@@ -47,7 +47,11 @@ export function MyContentsScreen() {
           data={listData}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
-            <Pressable className="flex-row items-center bg-white rounded-lg shadow-sm overflow-hidden" style={{ marginBottom: 12 }}>
+            <Pressable
+              className="flex-row items-center bg-white rounded-lg shadow-sm overflow-hidden"
+              style={{ marginBottom: 12 }}
+              onPress={() => navigation.navigate("editContent" as never, { articleId: item.id } as never)}
+            >
               <View style={{ width: 96, height: 96 }}>
                 <Image source={{ uri: item.imageUrl }} className="w-full h-full" resizeMode="cover" />
               </View>

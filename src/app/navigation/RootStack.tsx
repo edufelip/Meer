@@ -9,6 +9,7 @@ import { BrechoFormScreen } from "../../presentation/screens/thrift/BrechoFormSc
 import { MyContentsScreen } from "../../presentation/screens/content/MyContentsScreen";
 import { SearchScreen } from "../../presentation/screens/search/SearchScreen";
 import { ContactScreen } from "../../presentation/screens/support/ContactScreen";
+import { EditContentScreen } from "../../presentation/screens/content/EditContentScreen";
 import type { ThriftStoreId } from "../../domain/entities/ThriftStore";
 import type { User } from "../../domain/entities/User";
 
@@ -24,6 +25,7 @@ export type RootStackParamList = {
   myContents: { storeId: ThriftStoreId };
   search: undefined;
   contact: undefined;
+  editContent: { articleId: string };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -40,6 +42,7 @@ export function RootStack() {
       <Stack.Screen name="myContents" component={MyContentsScreen} />
       <Stack.Screen name="search" component={SearchScreen} />
       <Stack.Screen name="contact" component={ContactScreen} />
+      <Stack.Screen name="editContent" component={EditContentScreen} />
     </Stack.Navigator>
   );
 }
