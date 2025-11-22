@@ -6,36 +6,30 @@ import { ActivityIndicator, Image, Pressable, ScrollView, StatusBar, Text, View 
 import { SafeAreaView } from "react-native-safe-area-context";
 import type { RootStackParamList } from "../../../app/navigation/RootStack";
 import { useDependencies } from "../../../app/providers/AppProvidersWithDI";
-import type { ThriftStore } from "../../../domain/entities/ThriftStore";
 import type { User } from "../../../domain/entities/User";
 import { theme } from "../../../shared/theme";
 
 export function ProfileScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const { getFavoriteThriftStoresUseCase, getProfileUseCase } = useDependencies();
+  const { getProfileUseCase } = useDependencies();
   const [user, setUser] = useState<(User & { bio?: string; notifyNewStores: boolean; notifyPromos: boolean }) | null>(
     null
   );
-  const [favorites, setFavorites] = useState<ThriftStore[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let isMounted = true;
     (async () => {
-      const [maybeUser, favs] = await Promise.all([
-        getProfileUseCase.execute(),
-        getFavoriteThriftStoresUseCase.execute()
-      ]);
+      const maybeUser = await getProfileUseCase.execute();
       if (isMounted) {
         setUser(maybeUser);
-        setFavorites(favs);
         setLoading(false);
       }
     })();
     return () => {
       isMounted = false;
     };
-  }, [getProfileUseCase, getFavoriteThriftStoresUseCase]);
+  }, [getProfileUseCase]);
 
   const displayUser = useMemo<User>(
     () =>
@@ -74,9 +68,6 @@ export function ProfileScreen() {
                 className="w-32 h-32 rounded-full"
                 style={{ borderWidth: 4, borderColor: "#EC4899" }}
               />
-              <Pressable className="absolute bottom-0 right-0 bg-[#B55D05] p-2 rounded-full shadow-lg">
-                <Ionicons name="pencil" size={14} color="#FFFFFF" />
-              </Pressable>
             </View>
             <View className="items-center">
               <Text className="text-2xl font-bold text-[#1F2937]">{displayUser.name}</Text>
@@ -125,24 +116,6 @@ export function ProfileScreen() {
           </View>
         </View>
 
-        <View className="px-4 pb-4">
-          <Text className="text-lg font-bold mb-2 text-[#1F2937]">Favoritos</Text>
-          <View className="flex-row flex-wrap gap-4">
-            {favorites.slice(0, 4).map((store) => (
-              <View key={store.id} className="bg-white rounded-lg shadow-sm overflow-hidden" style={{ width: "48%" }}>
-                <Image source={{ uri: store.coverImageUrl }} className="w-full h-24" />
-                <View className="p-2">
-                  <Text className="font-semibold text-[#374151]" numberOfLines={1}>
-                    {store.name}
-                  </Text>
-                  <Text className="text-sm text-gray-500" numberOfLines={1}>
-                    {store.addressLine ?? store.neighborhood ?? store.description}
-                  </Text>
-                </View>
-              </View>
-            ))}
-          </View>
-        </View>
         </ScrollView>
       )}
     </SafeAreaView>
