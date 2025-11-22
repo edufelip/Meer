@@ -175,7 +175,7 @@ export function HomeScreen() {
               </ScrollView>
             </View>
 
-            <View className="space-y-3 mt-4">
+            <View className="space-y-2 mt-4">
               {(activeFilter === "Próximo a mim"
                 ? nearby
                 : nearby.filter((s) => s.neighborhood === activeFilter)

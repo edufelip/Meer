@@ -19,12 +19,12 @@ export function NearbyThriftListItem({ store, onPress }: NearbyThriftListItemPro
 
   return (
     <Pressable
-      className="bg-white rounded-xl shadow-sm p-3 flex-row items-center space-x-4"
+      className="bg-white rounded-xl shadow-sm p-3 flex-row items-center"
       onPress={onPress}
       accessibilityRole="button"
     >
-      <Image source={{ uri: store.imageUrl }} className="w-16 h-16 rounded-lg" />
-      <View className="flex-1">
+      <Image source={{ uri: store.imageUrl }} className="w-16 h-16 rounded-lg mr-2" />
+      <View className="flex-1 ml-2">
         <Text className="font-bold text-[#374151]">{store.name}</Text>
         <Text className="text-sm text-[#6B7280]" numberOfLines={1}>
           {store.addressLine ?? store.description}
