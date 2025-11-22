@@ -264,7 +264,7 @@ export function EditProfileScreen() {
             </View>
           </View>
 
-          <View className="flex flex-col gap-4 pt-4">
+          <View className="flex flex-col gap-4 pt-6">
             <Pressable
               disabled={!canSave}
               className={`rounded-lg py-3 px-4 items-center ${canSave ? "bg-[#B55D05]" : "bg-gray-300"}`}
