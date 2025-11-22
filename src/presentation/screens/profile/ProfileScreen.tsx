@@ -1,14 +1,14 @@
+import { Ionicons } from "@expo/vector-icons";
+import { useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import React, { useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Image, Pressable, ScrollView, StatusBar, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
-import { useDependencies } from "../../../app/providers/AppProvidersWithDI";
-import type { User } from "../../../domain/entities/User";
-import type { ThriftStore } from "../../../domain/entities/ThriftStore";
-import { theme } from "../../../shared/theme";
-import { useNavigation } from "@react-navigation/native";
-import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../../../app/navigation/RootStack";
+import { useDependencies } from "../../../app/providers/AppProvidersWithDI";
+import type { ThriftStore } from "../../../domain/entities/ThriftStore";
+import type { User } from "../../../domain/entities/User";
+import { theme } from "../../../shared/theme";
 
 export function ProfileScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -130,7 +130,7 @@ export function ProfileScreen() {
           <View className="flex-row flex-wrap gap-4">
             {favorites.slice(0, 4).map((store) => (
               <View key={store.id} className="bg-white rounded-lg shadow-sm overflow-hidden" style={{ width: "48%" }}>
-                <Image source={{ uri: store.imageUrl }} className="w-full h-24" />
+                <Image source={{ uri: store.coverImageUrl }} className="w-full h-24" />
                 <View className="p-2">
                   <Text className="font-semibold text-[#374151]" numberOfLines={1}>
                     {store.name}

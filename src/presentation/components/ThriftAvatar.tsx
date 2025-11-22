@@ -10,10 +10,10 @@ interface ThriftAvatarProps {
 export function ThriftAvatar({ store, onPress }: ThriftAvatarProps) {
   const isHighlighted = !!store.badgeLabel;
   return (
-    <Pressable className="flex flex-col items-center space-y-2 w-20" onPress={() => onPress?.(store)}>
+    <Pressable className="flex flex-col items-center space-y-2 w-20 gap-1" onPress={() => onPress?.(store)}>
       <View className="relative">
         <Image
-          source={{ uri: store.imageUrl }}
+          source={{ uri: store.coverImageUrl }}
           className={`w-16 h-16 rounded-full border-2 ${isHighlighted ? "border-pink-500" : "border-gray-300"}`}
         />
       </View>
