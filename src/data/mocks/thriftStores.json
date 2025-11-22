@@ -156,7 +156,31 @@
       "description": "Aprenda a encontrar as melhores peças em brechós.",
       "categoryLabel": "Guia de estilo",
       "imageUrl": "https://lh3.googleusercontent.com/aida-public/AB6AXuASh-dosAr4TVNex49PUkBKFWcLJ5g7HOQJC7p6SaRZyNznaks3TiQuWOksGvrnYi6IeO5sMPBjaerUTI7HzO4xaF5jyAX9NkZS80VOX-lpdnJIHTDaM3nL8ANPzyy3T2OEPfbqu2cuQlC-_PdB_tFutmEey75ynvkAcO3CQis8asojk9mkENmn1Hg88uqHJEOxr2z8LyIELsQfsWo_vVdfdLbws8VFobNPLNE5cMP-Snp3CsMplvntxVg4BQTHBAk7pgXTv1Px3Ls",
-      "storeId": "vintage-vibes"
+      "storeId": "vintage-chic"
+    },
+    {
+      "id": "tour-brecho",
+      "title": "Tour pelo brechó: novidades da semana",
+      "description": "Veja os achados que chegaram nesta semana no nosso espaço.",
+      "categoryLabel": "Vídeo",
+      "imageUrl": "https://lh3.googleusercontent.com/aida-public/AB6AXuBmfZnwoz2FyAt09OQcXxSOWFu-nzy3A0N7Y8dSUZmyVxMgOCUCY3KYMJkp8VWQmVt_eEPzL69-jCYmwaqq52hdiViVNBeuOIy35QjmobKVUKmv0XujKAj04kCQYbEijnAQ84NSgvQ2618bew_ido3S_RsVHz9SiI3adBYqbWWILbs5CkJk5nZnxcQK4mTayuijLFbB_TIx3KsrW2ONKeAeFmq2bGqv-C1QFs-D3V9stPlgaG84Q31ythQGOQjNwpsW6FmOwIdo2us",
+      "storeId": "vintage-chic"
+    },
+    {
+      "id": "cuidados-vintage",
+      "title": "Como cuidar das suas peças vintage",
+      "description": "Guia rápido para conservar tecidos delicados e couro antigo.",
+      "categoryLabel": "Dica Rápida",
+      "imageUrl": "https://lh3.googleusercontent.com/aida-public/AB6AXuBmfZnwoz2FyAt09OQcXxSOWFu-nzy3A0N7Y8dSUZmyVxMgOCUCY3KYMJkp8VWQmVt_eEPzL69-jCYmwaqq52hdiViVNBeuOIy35QjmobKVUKmv0XujKAj04kCQYbEijnAQ84NSgvQ2618bew_ido3S_RsVHz9SiI3adBYqbWWILbs5CkJk5nZnxcQK4mTayuijLFbB_TIx3KsrW2ONKeAeFmq2bGqv-C1QFs-D3V9stPlgaG84Q31ythQGOQjNwpsW6FmOwIdo2us",
+      "storeId": "vintage-chic"
+    },
+    {
+      "id": "look-do-dia",
+      "title": "Look do dia com achados do brechó",
+      "description": "Inspire-se com combinações práticas para o cotidiano.",
+      "categoryLabel": "Post",
+      "imageUrl": "https://lh3.googleusercontent.com/aida-public/AB6AXuBmfZnwoz2FyAt09OQcXxSOWFu-nzy3A0N7Y8dSUZmyVxMgOCUCY3KYMJkp8VWQmVt_eEPzL69-jCYmwaqq52hdiViVNBeuOIy35QjmobKVUKmv0XujKAj04kCQYbEijnAQ84NSgvQ2618bew_ido3S_RsVHz9SiI3adBYqbWWILbs5CkJk5nZnxcQK4mTayuijLFbB_TIx3KsrW2ONKeAeFmq2bGqv-C1QFs-D3V9stPlgaG84Q31ythQGOQjNwpsW6FmOwIdo2us",
+      "storeId": "vintage-chic"
     }
   ]
 }
