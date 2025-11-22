@@ -15,10 +15,11 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../../../app/navigation/RootStack";
 import { theme } from "../../../shared/theme";
 import { isValidEmail, validatePassword, passwordsMatch } from "../../../domain/validation/auth";
-import { firebaseAuth } from "../../../services/firebase/firebase";
+import { useDependencies } from "../../../app/providers/AppProvidersWithDI";
 
 export function SignUpScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const { signUpWithEmailUseCase } = useDependencies();
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [confirmVisible, setConfirmVisible] = useState(false);
   const [fullName, setFullName] = useState("");
@@ -168,8 +169,7 @@ export function SignUpScreen() {
                   }
                   try {
                     setLoading(true);
-                    const userCred = await firebaseAuth().createUserWithEmailAndPassword(email.trim(), password);
-                    await userCred.user.updateProfile({ displayName: fullName.trim() });
+                    await signUpWithEmailUseCase.execute(email.trim(), password, fullName.trim());
                     navigation.navigate("tabs");
                   } catch {
                     setError("Não foi possível criar a conta. Tente novamente.");

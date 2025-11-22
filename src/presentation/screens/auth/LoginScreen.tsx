@@ -16,13 +16,13 @@ import type { RootStackParamList } from "../../../app/navigation/RootStack";
 import { theme } from "../../../shared/theme";
 import { isValidEmail, validatePassword } from "../../../domain/validation/auth";
 /* eslint-disable import/no-unresolved */
-import { firebaseAuth } from "../../../services/firebase/firebase";
-import auth from "@react-native-firebase/auth";
 import * as WebBrowser from "expo-web-browser";
 import * as Google from "expo-auth-session/providers/google";
+import { useDependencies } from "../../../app/providers/AppProvidersWithDI";
 
 export function LoginScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const { signInWithEmailUseCase, signInWithGoogleUseCase } = useDependencies();
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -43,8 +43,7 @@ export function LoginScreen() {
         const { id_token } = response.params;
         try {
           setLoading(true);
-          const credential = auth.GoogleAuthProvider.credential(id_token);
-          await firebaseAuth().signInWithCredential(credential);
+          await signInWithGoogleUseCase.execute(id_token);
           navigation.navigate("tabs");
         } catch {
           setError("Não foi possível entrar com Google. Tente novamente.");
@@ -54,7 +53,7 @@ export function LoginScreen() {
       }
     };
     doGoogle();
-  }, [navigation, response]);
+  }, [navigation, response, signInWithGoogleUseCase]);
 
   return (
     <SafeAreaView className="flex-1 bg-white">
@@ -168,7 +167,7 @@ export function LoginScreen() {
                   }
                   try {
                     setLoading(true);
-                    await firebaseAuth().signInWithEmailAndPassword(email.trim(), password);
+                    await signInWithEmailUseCase.execute(email.trim(), password);
                     navigation.navigate("tabs");
                   } catch {
                     setError("Não foi possível entrar. Verifique suas credenciais.");
