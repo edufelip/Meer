@@ -190,7 +190,7 @@ export function HomeScreen() {
                 </View>
               ))}
             </View>
-            <View className="mt-4 items-center">
+            <View className="mt-6 items-center">
               <Pressable className="bg-[#B55D05] rounded-full px-6 py-3 shadow-lg">
                 <Text className="text-sm font-bold text-white">Ver todos os brechós</Text>
               </Pressable>
