@@ -1,12 +1,8 @@
-/* eslint-disable import/no-unresolved */
 import { useEffect } from "react";
-import crashlytics from "@react-native-firebase/crashlytics";
 
-export function useCrashlytics(userId?: string) {
+// No-op placeholder to keep API stable without native crashlytics dependency in Expo Go.
+export function useCrashlytics(_userId?: string) {
   useEffect(() => {
-    crashlytics().setCrashlyticsCollectionEnabled(true);
-    if (userId) {
-      crashlytics().setUserId(userId);
-    }
-  }, [userId]);
+    // intentionally empty
+  }, [_userId]);
 }

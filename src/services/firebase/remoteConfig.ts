@@ -1,13 +1,6 @@
-/* eslint-disable import/no-unresolved */
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getRemoteConfig, fetchAndActivate, getValue } from "firebase/remote-config";
-
-const firebaseConfig = {
-  apiKey: "YOUR_WEB_API_KEY",
-  authDomain: "your-project.firebaseapp.com",
-  projectId: "your-project",
-  appId: "YOUR_WEB_APP_ID"
-};
+import { firebaseConfig } from "./firebaseConfig";
 
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const rc = getRemoteConfig(app);

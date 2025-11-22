@@ -1,20 +1,15 @@
-/* eslint-disable import/no-unresolved */
-import { FirebaseApp, initializeApp } from "@react-native-firebase/app";
-import auth from "@react-native-firebase/auth";
-import perf from "@react-native-firebase/perf";
-import crashlytics from "@react-native-firebase/crashlytics";
-import messaging from "@react-native-firebase/messaging";
+import { initializeApp, getApps, getApp, FirebaseApp } from "firebase/app";
+import { getAuth, GoogleAuthProvider } from "firebase/auth";
+import { firebaseConfig } from "./firebaseConfig";
 
 let app: FirebaseApp | undefined;
 
 export function getFirebaseApp() {
   if (!app) {
-    app = initializeApp();
+    app = getApps().length ? getApp() : initializeApp(firebaseConfig);
   }
   return app;
 }
 
-export const firebaseAuth = auth;
-export const firebasePerf = perf;
-export const firebaseCrashlytics = crashlytics;
-export const firebaseMessaging = messaging;
+export const firebaseAuth = () => getAuth(getFirebaseApp());
+export const googleAuthProvider = new GoogleAuthProvider();

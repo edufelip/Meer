@@ -1,9 +1,9 @@
-import auth from "@react-native-firebase/auth";
 import type { AuthUser } from "../../domain/entities/AuthUser";
 import type { AuthRepository } from "../../domain/repositories/AuthRepository";
 import { firebaseAuth } from "../../services/firebase/firebase";
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, signInWithCredential, GoogleAuthProvider } from "firebase/auth";
 
-const toAuthUser = (user: auth.FirebaseAuthTypes.User): AuthUser => ({
+const toAuthUser = (user: { uid: string; email: string | null; displayName: string | null; photoURL: string | null }): AuthUser => ({
   id: user.uid,
   email: user.email,
   displayName: user.displayName,
@@ -12,21 +12,24 @@ const toAuthUser = (user: auth.FirebaseAuthTypes.User): AuthUser => ({
 
 export class AuthRepositoryFirebase implements AuthRepository {
   async signInWithEmail(email: string, password: string): Promise<AuthUser> {
-    const cred = await firebaseAuth().signInWithEmailAndPassword(email, password);
+    const auth = firebaseAuth();
+    const cred = await signInWithEmailAndPassword(auth, email, password);
     return toAuthUser(cred.user);
   }
 
   async signUpWithEmail(email: string, password: string, displayName?: string): Promise<AuthUser> {
-    const cred = await firebaseAuth().createUserWithEmailAndPassword(email, password);
+    const auth = firebaseAuth();
+    const cred = await createUserWithEmailAndPassword(auth, email, password);
     if (displayName) {
-      await cred.user.updateProfile({ displayName });
+      await updateProfile(cred.user, { displayName });
     }
     return toAuthUser(cred.user);
   }
 
   async signInWithGoogleIdToken(idToken: string): Promise<AuthUser> {
-    const credential = auth.GoogleAuthProvider.credential(idToken);
-    const cred = await firebaseAuth().signInWithCredential(credential);
+    const auth = firebaseAuth();
+    const credential = GoogleAuthProvider.credential(idToken);
+    const cred = await signInWithCredential(auth, credential);
     return toAuthUser(cred.user);
   }
 }
