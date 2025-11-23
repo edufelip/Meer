@@ -3,6 +3,7 @@ import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import * as Google from "expo-auth-session/providers/google";
 import * as WebBrowser from "expo-web-browser";
+import * as AppleAuthentication from "expo-apple-authentication";
 import { sendPasswordResetEmail } from "firebase/auth";
 import React, { useEffect, useState } from "react";
 import {
@@ -24,6 +25,7 @@ import { firebaseAuth } from "../../../services/firebase/firebase";
 import { useLogin } from "../../../hooks/useLogin";
 import { saveTokens } from "../../../storage/authStorage";
 import { useLoginWithGoogle } from "../../../hooks/useLoginWithGoogle";
+import { useLoginWithApple } from "../../../hooks/useLoginWithApple";
 import { theme } from "../../../shared/theme";
 
 export function LoginScreen() {
@@ -31,6 +33,7 @@ export function LoginScreen() {
   const { signInWithGoogleUseCase } = useDependencies();
   const loginMutation = useLogin();
   const googleMutation = useLoginWithGoogle();
+  const appleMutation = useLoginWithApple();
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -117,7 +120,35 @@ export function LoginScreen() {
                 <Text className="text-base font-bold text-[#374151]">Entrar com Google</Text>
               </Pressable>
               {Platform.OS === "ios" ? (
-                <Pressable className="h-12 rounded-lg bg-[#F3F4F6] flex-row items-center justify-center gap-3 px-10">
+                <Pressable
+                  className="h-12 rounded-lg bg-[#F3F4F6] flex-row items-center justify-center gap-3 px-10"
+                  onPress={async () => {
+                    try {
+                      const credential = await AppleAuthentication.signInAsync({
+                        requestedScopes: [
+                          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+                          AppleAuthentication.AppleAuthenticationScope.EMAIL
+                        ]
+                      });
+                      if (credential.identityToken) {
+                        setLoading(true);
+                        const auth = await appleMutation.mutateAsync({
+                          provider: "apple",
+                          idToken: credential.identityToken,
+                          authorizationCode: credential.authorizationCode ?? undefined,
+                          client: "ios"
+                        });
+                        await saveTokens(auth.token, auth.refreshToken);
+                        navigation.navigate("tabs");
+                      }
+                    } catch (e: any) {
+                      if (e?.code === "ERR_REQUEST_CANCELED") return;
+                      setError("Não foi possível entrar com Apple.");
+                    } finally {
+                      setLoading(false);
+                    }
+                  }}
+                >
                   <Ionicons name="logo-apple" size={20} color="#111" />
                   <Text className="text-base font-bold text-[#374151]">Entrar com Apple</Text>
                 </Pressable>
