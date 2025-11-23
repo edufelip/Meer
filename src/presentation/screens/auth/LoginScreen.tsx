@@ -21,11 +21,13 @@ import type { RootStackParamList } from "../../../app/navigation/RootStack";
 import { useDependencies } from "../../../app/providers/AppProvidersWithDI";
 import { isValidEmail, validatePassword } from "../../../domain/validation/auth";
 import { firebaseAuth } from "../../../services/firebase/firebase";
+import { useLogin } from "../../../hooks/useLogin";
 import { theme } from "../../../shared/theme";
 
 export function LoginScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const { signInWithEmailUseCase, signInWithGoogleUseCase } = useDependencies();
+  const { signInWithGoogleUseCase } = useDependencies();
+  const loginMutation = useLogin();
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -184,9 +186,9 @@ export function LoginScreen() {
                   }
                   try {
                     setLoading(true);
-                    await signInWithEmailUseCase.execute(email.trim(), password);
+                    await loginMutation.mutateAsync({ email: email.trim(), password });
                     navigation.navigate("tabs");
-                  } catch {
+                  } catch (e) {
                     setError("Não foi possível entrar. Verifique suas credenciais.");
                   } finally {
                     setLoading(false);
