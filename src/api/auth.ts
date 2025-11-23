@@ -52,8 +52,3 @@ export async function loginWithApple(payload: SocialLoginPayload): Promise<AuthR
   const res = await api.post<AuthResponse>("/auth/apple", payload);
   return res.data;
 }
-
-export async function refreshToken(refreshToken: string): Promise<AuthResponse> {
-  const res = await api.post<AuthResponse>("/auth/refresh", { refreshToken });
-  return res.data;
-}

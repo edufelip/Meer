@@ -2,7 +2,11 @@ import axios from "axios";
 import { API_BASE_URL } from "../network/config";
 import { navigationRef } from "../app/navigation/navigationRef";
 import { clearTokens, getTokens, saveTokens } from "../storage/authStorage";
-import { refreshToken as refreshTokenApi } from "./auth";
+
+const rawApi = axios.create({
+  baseURL: API_BASE_URL,
+  timeout: 15000
+});
 
 export const api = axios.create({
   baseURL: API_BASE_URL,
@@ -64,11 +68,14 @@ api.interceptors.response.use(
         }
 
         try {
-          const refreshed = await refreshTokenApi(refreshToken);
-          await saveTokens(refreshed.token, refreshed.refreshToken);
+          const refreshed = await rawApi.post<{ token: string; refreshToken?: string }>(
+            "/auth/refresh",
+            { refreshToken }
+          );
+          await saveTokens(refreshed.data.token, refreshed.data.refreshToken);
           originalRequest.headers = {
             ...originalRequest.headers,
-            Authorization: `Bearer ${refreshed.token}`
+            Authorization: `Bearer ${refreshed.data.token}`
           };
           return api(originalRequest);
         } catch (refreshErr) {
