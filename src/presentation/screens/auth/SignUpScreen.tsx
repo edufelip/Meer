@@ -16,10 +16,12 @@ import type { RootStackParamList } from "../../../app/navigation/RootStack";
 import { theme } from "../../../shared/theme";
 import { isValidEmail, validatePassword, passwordsMatch } from "../../../domain/validation/auth";
 import { useDependencies } from "../../../app/providers/AppProvidersWithDI";
+import { useSignup } from "../../../hooks/useSignup";
 
 export function SignUpScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { signUpWithEmailUseCase } = useDependencies();
+  const signupMutation = useSignup();
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [confirmVisible, setConfirmVisible] = useState(false);
   const [fullName, setFullName] = useState("");
@@ -169,7 +171,11 @@ export function SignUpScreen() {
                   }
                   try {
                     setLoading(true);
-                    await signUpWithEmailUseCase.execute(email.trim(), password, fullName.trim());
+                    await signupMutation.mutateAsync({
+                      name: fullName.trim(),
+                      email: email.trim(),
+                      password
+                    });
                     navigation.navigate("tabs");
                   } catch {
                     setError("Não foi possível criar a conta. Tente novamente.");

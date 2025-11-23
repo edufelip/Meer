@@ -5,7 +5,13 @@ export interface LoginPayload {
   password: string;
 }
 
-export interface LoginResponse {
+export interface SignupPayload {
+  name: string;
+  email: string;
+  password: string;
+}
+
+export interface AuthResponse {
   token: string;
   refreshToken?: string;
   user: {
@@ -15,7 +21,12 @@ export interface LoginResponse {
   };
 }
 
-export async function login(payload: LoginPayload): Promise<LoginResponse> {
-  const res = await api.post<LoginResponse>('/auth/login', payload);
+export async function login(payload: LoginPayload): Promise<AuthResponse> {
+  const res = await api.post<AuthResponse>("/auth/login", payload);
+  return res.data;
+}
+
+export async function signup(payload: SignupPayload): Promise<AuthResponse> {
+  const res = await api.post<AuthResponse>("/auth/signup", payload);
   return res.data;
 }
