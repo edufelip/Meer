@@ -6,8 +6,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "../../hooks/reactQueryClient";
 import { getTokens, clearTokens } from "../../storage/authStorage";
 import { useValidateToken } from "../../hooks/useValidateToken";
-import { NavigationContainer } from "@react-navigation/native";
-import { RootStack } from "../navigation/RootStack";
+import { navigationRef } from "../navigation/navigationRef";
 
 // Add cross-cutting providers (theme, auth, localization, etc.) here.
 export function AppProviders(props: PropsWithChildren) {
@@ -58,7 +57,7 @@ function AuthBootstrap({ children }: PropsWithChildren) {
         setBooting(false);
         return;
       }
-      validateTokenQuery.refetch({ throwOnError: false });
+      await validateTokenQuery.refetch({ throwOnError: false });
       setBooting(false);
     })();
     return () => {
@@ -69,6 +68,10 @@ function AuthBootstrap({ children }: PropsWithChildren) {
   useEffect(() => {
     if (validateTokenQuery.isError) {
       clearTokens();
+      // fallback navigation to login when navigation is ready
+      if (navigationRef.isReady()) {
+        navigationRef.navigate("login");
+      }
     }
   }, [validateTokenQuery.isError]);
 

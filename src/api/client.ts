@@ -1,5 +1,7 @@
 import axios from "axios";
 import { API_BASE_URL } from "../network/config";
+import { navigationRef } from "../app/navigation/navigationRef";
+import { clearTokens } from "../storage/authStorage";
 
 export const api = axios.create({
   baseURL: API_BASE_URL,
@@ -35,6 +37,13 @@ api.interceptors.response.use(
         `[API][RESPONSE][ERROR] ${error.response.status} ${error.config?.url}`,
         { data: error.response.data }
       );
+
+      if (error.response.status === 401) {
+        clearTokens();
+        if (navigationRef.isReady()) {
+          navigationRef.navigate("login");
+        }
+      }
     } else {
       console.log("[API][RESPONSE][ERROR]", error.message);
     }
