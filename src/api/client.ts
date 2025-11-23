@@ -1,7 +1,7 @@
 import axios from "axios";
 import { API_BASE_URL } from "../network/config";
 import { navigationRef } from "../app/navigation/navigationRef";
-import { clearTokens } from "../storage/authStorage";
+import { clearTokens, getTokens } from "../storage/authStorage";
 
 export const api = axios.create({
   baseURL: API_BASE_URL,
@@ -10,6 +10,14 @@ export const api = axios.create({
 
 api.interceptors.request.use(
   async (config) => {
+    const { token } = await getTokens();
+    if (token) {
+      config.headers = {
+        ...config.headers,
+        Authorization: `Bearer ${token}`
+      };
+    }
+
     console.log(
       `[API][REQUEST] ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`,
       {
