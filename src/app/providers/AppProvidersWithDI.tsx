@@ -28,6 +28,11 @@ import { IsFavoriteThriftStoreUseCase } from "../../domain/usecases/IsFavoriteTh
 import type { FavoriteRepository } from "../../domain/repositories/FavoriteRepository";
 import { GetHomeUseCase } from "../../domain/usecases/GetHomeUseCase";
 import { GetNearbyPaginatedUseCase } from "../../domain/usecases/GetNearbyPaginatedUseCase";
+import { HttpFeedbackRemoteDataSource } from "../../data/datasources/impl/HttpFeedbackRemoteDataSource";
+import { FeedbackRepositoryImpl } from "../../data/repositories/FeedbackRepositoryImpl";
+import { GetMyFeedbackUseCase } from "../../domain/usecases/GetMyFeedbackUseCase";
+import { UpsertFeedbackUseCase } from "../../domain/usecases/UpsertFeedbackUseCase";
+import { DeleteMyFeedbackUseCase } from "../../domain/usecases/DeleteMyFeedbackUseCase";
 
 interface Dependencies {
   getCurrentUserUseCase: GetCurrentUserUseCase;
@@ -46,6 +51,9 @@ interface Dependencies {
   getProfileUseCase: GetProfileUseCase;
   updateProfileUseCase: UpdateProfileUseCase;
   favoriteRepository: FavoriteRepository;
+  getMyFeedbackUseCase: GetMyFeedbackUseCase;
+  upsertFeedbackUseCase: UpsertFeedbackUseCase;
+  deleteMyFeedbackUseCase: DeleteMyFeedbackUseCase;
 }
 
 const DependenciesContext = createContext<Dependencies | undefined>(undefined);
@@ -66,11 +74,13 @@ export function DependenciesProvider(props: PropsWithChildren) {
     const userRepository = new UserRepositoryImpl(userLocalDataSource);
     const thriftStoreRemote = new HttpThriftStoreRemoteDataSource();
     const favoriteRemote = new HttpFavoriteRemoteDataSource();
+    const feedbackRemote = new HttpFeedbackRemoteDataSource();
     const guideContentRemote = new JsonGuideContentRemoteDataSource();
     const categoryRemote = new HttpCategoryRemoteDataSource();
     const profileRemote = new HttpProfileRemoteDataSource();
     const profileLocal = new AsyncStorageProfileLocalDataSource();
     const favoriteRepository = new FavoriteRepositoryHybrid(favoriteRemote);
+    const feedbackRepository = new FeedbackRepositoryImpl(feedbackRemote);
 
     const thriftStoreRepository = new ThriftStoreRepositoryJson(thriftStoreRemote);
     const guideContentRepository = new GuideContentRepositoryJson(guideContentRemote);
@@ -92,6 +102,9 @@ export function DependenciesProvider(props: PropsWithChildren) {
     const getNearbyPaginatedUseCase = new GetNearbyPaginatedUseCase(thriftStoreRepository);
     const getProfileUseCase = new GetProfileUseCase(profileRepository);
     const updateProfileUseCase = new UpdateProfileUseCase(profileRepository);
+    const getMyFeedbackUseCase = new GetMyFeedbackUseCase(feedbackRepository);
+    const upsertFeedbackUseCase = new UpsertFeedbackUseCase(feedbackRepository);
+    const deleteMyFeedbackUseCase = new DeleteMyFeedbackUseCase(feedbackRepository);
 
     return {
       getCurrentUserUseCase,
@@ -109,7 +122,10 @@ export function DependenciesProvider(props: PropsWithChildren) {
       getNearbyPaginatedUseCase,
       getProfileUseCase,
       updateProfileUseCase,
-      favoriteRepository
+      favoriteRepository,
+      getMyFeedbackUseCase,
+      upsertFeedbackUseCase,
+      deleteMyFeedbackUseCase
     };
   }, []);
 
