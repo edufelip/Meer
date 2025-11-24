@@ -51,7 +51,15 @@
           "locationAlwaysAndWhenInUsePermission": "Permitir que o Guia Brechó acesse sua localização para mostrar brechós perto de você."
         }
       ],
-      "@react-native-google-signin/google-signin"
+      "@react-native-google-signin/google-signin",
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "useFrameworks": "static"
+          }
+        }
+      ]
     ],
     "experiments": {
       "reactCompiler": true
