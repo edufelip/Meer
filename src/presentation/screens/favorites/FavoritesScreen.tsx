@@ -7,6 +7,7 @@ import { FavoriteThriftCard } from "../../components/FavoriteThriftCard";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../../../app/navigation/RootStack";
+import { Ionicons } from "@expo/vector-icons";
 
 export function FavoritesScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -39,6 +40,18 @@ export function FavoritesScreen() {
       {loading ? (
         <View className="flex-1 items-center justify-center bg-[#F3F4F6]">
           <ActivityIndicator size="large" color="#B55D05" />
+        </View>
+      ) : favorites.length === 0 ? (
+        <View className="flex-1 items-center justify-center bg-[#F3F4F6] px-6">
+          <View className="items-center space-y-4">
+            <View className="h-24 w-24 rounded-full bg-gray-200 items-center justify-center">
+              <Ionicons name="heart-outline" size={48} color="#9CA3AF" />
+            </View>
+            <Text className="text-xl font-bold text-[#374151]">Sua lista está vazia</Text>
+            <Text className="text-base text-[#6B7280] text-center max-w-xs">
+              Adicione os seus brechós preferidos aos favoritos e eles aparecerão aqui!
+            </Text>
+          </View>
         </View>
       ) : (
         <FlatList
