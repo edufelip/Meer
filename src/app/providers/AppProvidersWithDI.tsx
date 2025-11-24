@@ -4,7 +4,8 @@ import { UserRepositoryImpl } from "../../data/repositories/UserRepositoryImpl";
 import { JsonThriftStoreRemoteDataSource } from "../../data/datasources/impl/JsonThriftStoreRemoteDataSource";
 import { JsonGuideContentRemoteDataSource } from "../../data/datasources/impl/JsonGuideContentRemoteDataSource";
 import { HttpCategoryRemoteDataSource } from "../../data/datasources/impl/HttpCategoryRemoteDataSource";
-import { JsonProfileRemoteDataSource } from "../../data/datasources/impl/JsonProfileRemoteDataSource";
+import { HttpProfileRemoteDataSource } from "../../data/datasources/impl/HttpProfileRemoteDataSource";
+import { AsyncStorageProfileLocalDataSource } from "../../data/datasources/impl/AsyncStorageProfileLocalDataSource";
 import { ThriftStoreRepositoryJson } from "../../data/repositories/ThriftStoreRepositoryJson";
 import { GuideContentRepositoryJson } from "../../data/repositories/GuideContentRepositoryJson";
 import { CategoryRepositoryJson } from "../../data/repositories/CategoryRepositoryJson";
@@ -57,13 +58,14 @@ export function DependenciesProvider(props: PropsWithChildren) {
     const thriftStoreRemote = new JsonThriftStoreRemoteDataSource();
     const guideContentRemote = new JsonGuideContentRemoteDataSource();
     const categoryRemote = new HttpCategoryRemoteDataSource();
-    const profileRemote = new JsonProfileRemoteDataSource();
+    const profileRemote = new HttpProfileRemoteDataSource();
+    const profileLocal = new AsyncStorageProfileLocalDataSource();
     const favoriteRepository = new FavoriteRepositoryAsyncStorage();
 
     const thriftStoreRepository = new ThriftStoreRepositoryJson(thriftStoreRemote);
     const guideContentRepository = new GuideContentRepositoryJson(guideContentRemote);
     const categoryRepository = new CategoryRepositoryJson(categoryRemote);
-    const profileRepository = new ProfileRepositoryJson(profileRemote);
+    const profileRepository = new ProfileRepositoryJson(profileRemote, profileLocal);
 
     const getCurrentUserUseCase = new GetCurrentUserUseCase(userRepository);
     const getFeaturedThriftStoresUseCase = new GetFeaturedThriftStoresUseCase(thriftStoreRepository);

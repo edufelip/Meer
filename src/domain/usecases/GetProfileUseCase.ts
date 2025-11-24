@@ -8,7 +8,9 @@ export class GetProfileUseCase {
     this.repository = repository;
   }
 
-  execute(): Promise<User & { bio?: string; notifyNewStores: boolean; notifyPromos: boolean }> {
+  execute(): Promise<
+    User & { bio?: string; notifyNewStores: boolean; notifyPromos: boolean; ownedThriftStore?: any }
+  > {
     return this.repository.getProfile();
   }
 }

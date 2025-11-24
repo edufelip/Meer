@@ -1,21 +1,32 @@
 import type { User } from "../../domain/entities/User";
 import type { ProfileRepository } from "../../domain/repositories/ProfileRepository";
 import type { ProfileRemoteDataSource } from "../datasources/ProfileRemoteDataSource";
+import type { ProfileLocalDataSource } from "../datasources/ProfileLocalDataSource";
 
-type ProfilePayload = User & { bio?: string; notifyNewStores: boolean; notifyPromos: boolean };
+type ProfilePayload = User & { bio?: string; notifyNewStores: boolean; notifyPromos: boolean; ownedThriftStore?: any };
 
 export class ProfileRepositoryJson implements ProfileRepository {
   private readonly remote: ProfileRemoteDataSource;
+  private readonly local: ProfileLocalDataSource;
 
-  constructor(remote: ProfileRemoteDataSource) {
+  constructor(remote: ProfileRemoteDataSource, local: ProfileLocalDataSource) {
     this.remote = remote;
+    this.local = local;
   }
 
-  getProfile(): Promise<ProfilePayload> {
-    return this.remote.getProfile();
+  async getProfile(): Promise<ProfilePayload> {
+    const profile = await this.remote.getProfile();
+    await this.local.saveProfile(profile);
+    return profile;
   }
 
-  updateProfile(payload: Partial<ProfilePayload>): Promise<ProfilePayload> {
-    return this.remote.updateProfile(payload);
+  async updateProfile(payload: Partial<ProfilePayload>): Promise<ProfilePayload> {
+    const updated = await this.remote.updateProfile(payload);
+    await this.local.saveProfile(updated);
+    return updated;
+  }
+
+  async getCachedProfile(): Promise<ProfilePayload | null> {
+    return this.local.getProfile();
   }
 }

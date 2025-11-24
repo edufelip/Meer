@@ -10,7 +10,9 @@ export class UpdateProfileUseCase {
     this.repository = repository;
   }
 
-  execute(payload: ProfilePayload): Promise<User & { bio?: string; notifyNewStores: boolean; notifyPromos: boolean }> {
+  execute(payload: ProfilePayload): Promise<
+    User & { bio?: string; notifyNewStores: boolean; notifyPromos: boolean; ownedThriftStore?: any }
+  > {
     return this.repository.updateProfile(payload);
   }
 }
