@@ -7,7 +7,10 @@ import {
   Pressable,
   Image,
   Animated,
-  Easing
+  Easing,
+  Alert,
+  Linking,
+  AppState
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { SectionTitle } from "../../components/SectionTitle";
@@ -38,6 +41,17 @@ export function HomeScreen() {
   const [neighborhoods, setNeighborhoods] = useState<string[]>([]);
   const [offline, setOffline] = useState(false);
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const appState = useRef(AppState.currentState);
+
+  const handleAppStateChange = useCallback(
+    (nextState: string) => {
+      if (appState.current.match(/inactive|background/) && nextState === "active") {
+        requestLocation(false);
+      }
+      appState.current = nextState;
+    },
+    []
+  );
 
   const shimmer = useRef(new Animated.Value(0)).current;
 
@@ -83,7 +97,7 @@ export function HomeScreen() {
   }, [getHomeUseCase, coords]);
 
   useEffect(() => {
-    const unsubscribe = NetInfo.addEventListener((state) => {
+    const unsubscribeNet = NetInfo.addEventListener((state) => {
       const connected = !!state.isConnected;
       setOffline(!connected);
       if (connected) {
@@ -91,39 +105,65 @@ export function HomeScreen() {
       }
     });
 
+    const unsubscribeAppState = AppState.addEventListener("change", handleAppStateChange);
+
     fetchData();
 
     return () => {
-      unsubscribe();
+      unsubscribeNet();
+      unsubscribeAppState.remove();
     };
-  }, [fetchData]);
+  }, [fetchData, handleAppStateChange]);
 
-  useEffect(() => {
-    let active = true;
-    (async () => {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== "granted" || !active) return;
+  const requestLocation = useCallback(
+    async (askPermission: boolean) => {
       try {
+        const { status, canAskAgain } = await Location.getForegroundPermissionsAsync();
+        let finalStatus = status;
+        if (status !== "granted" && askPermission) {
+          const req = await Location.requestForegroundPermissionsAsync();
+          finalStatus = req.status;
+        }
+        if (finalStatus !== "granted") {
+          if (!canAskAgain && askPermission) {
+            Alert.alert(
+              "Permita acesso à localização",
+              "Vá em Ajustes e permita o acesso à localização para mostrar brechós próximos.",
+              [
+                { text: "Cancelar", style: "cancel" },
+                {
+                  text: "Abrir Ajustes",
+                  onPress: () => Linking.openSettings()
+                }
+              ]
+            );
+          }
+          setCoords(DEFAULT_COORDS);
+          return;
+        }
+
         const position = await Location.getCurrentPositionAsync({
           accuracy: Location.Accuracy.Balanced
         });
-        if (!active) return;
         const [place] = await Location.reverseGeocodeAsync(position.coords);
-        if (active && place) {
+        if (place) {
           const city = place.subregion ?? place.city ?? place.region ?? "Sua região";
           const country = place.isoCountryCode ?? "";
           setLocationLabel(country ? `${city}, ${country}` : city);
         }
-        setCoords({ lat: position.coords.latitude, lng: position.coords.longitude });
+        const c = { lat: position.coords.latitude, lng: position.coords.longitude };
+        setCoords(c);
+        fetchData(); // refetch with new coords
       } catch {
         setCoords(DEFAULT_COORDS);
-        // keep default label
       }
-    })();
-    return () => {
-      active = false;
-    };
-  }, []);
+    },
+    [fetchData]
+  );
+
+  useEffect(() => {
+    requestLocation(false);
+  }, [requestLocation]);
 
   const renderShimmer = () => (
     <ScrollView className="flex-1 bg-[#F3F4F6]" contentContainerStyle={{ padding: 16 }}>
@@ -216,7 +256,7 @@ export function HomeScreen() {
             <View className="relative rounded-xl overflow-hidden">
               <NearbyMapCard
                 imageUrl="https://lh3.googleusercontent.com/aida-public/AB6AXuBSugh5Wg37gnoj6GkKkSiS8awJbFlS80QERNJycKgn68NF7oXxiwdsiEEo58M8fByFbIwXzreAIouFbxQR4E7vXlnFdvYSzoshsmN1iHWV2ji6iYl2awjYiBJnN3e-UpF_app3jtWsq7lVod9vG57HH_d6pjIzdWFNwQ6aTTUZnOxvNUEpuYq3ny9OSzx1Hz6W0f3DuJ2uxyhVgq1lhVQnHEMmXcEmyIN-WBUTV5K9e8lMJ8HpqH6_TbZC7CNVMuy3snEnVSGvP7g"
-                onLocate={() => {}}
+                onLocate={() => requestLocation(true)}
               />
               <View className="absolute inset-0 rounded-xl">
                 <View className="absolute bottom-0 left-0 right-0 p-4 pb-4">
