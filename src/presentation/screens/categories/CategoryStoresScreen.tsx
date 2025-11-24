@@ -23,20 +23,24 @@ import { useDependencies as useDeps } from "../../../app/providers/AppProvidersW
 const PAGE_SIZE = 10;
 
 type RouteParams = {
-  categoryId: string;
+  categoryId?: string;
   title: string;
+  type?: "nearby" | "category";
 };
 
 export function CategoryStoresScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const route = useRoute<any>();
-  const { categoryId, title } = route.params as RouteParams;
-  const { getStoresByCategoryUseCase, toggleFavoriteThriftStoreUseCase } = useDependencies();
+  const { categoryId, title, type } = route.params as RouteParams;
+  const { getStoresByCategoryUseCase, getNearbyPaginatedUseCase, toggleFavoriteThriftStoreUseCase } =
+    useDependencies();
 
   const query = useInfiniteQuery({
-    queryKey: ["category-stores", categoryId],
+    queryKey: ["category-stores", categoryId ?? "nearby"],
     queryFn: async ({ pageParam = 1 }) =>
-      getStoresByCategoryUseCase.execute({ categoryId, page: pageParam, pageSize: PAGE_SIZE }),
+      type === "nearby"
+        ? getNearbyPaginatedUseCase.execute({ page: pageParam, pageSize: PAGE_SIZE })
+        : getStoresByCategoryUseCase.execute({ categoryId: categoryId!, page: pageParam, pageSize: PAGE_SIZE }),
     getNextPageParam: (lastPage) => (lastPage.hasNext ? lastPage.page + 1 : undefined)
   });
 

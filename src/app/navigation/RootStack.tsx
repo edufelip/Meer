@@ -27,7 +27,7 @@ export type RootStackParamList = {
   search: undefined;
   contact: undefined;
   editContent: { articleId?: string; storeId: ThriftStoreId };
-  categoryStores: { categoryId: string; title: string };
+  categoryStores: { categoryId?: string; title: string; type?: "nearby" | "category" };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
