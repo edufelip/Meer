@@ -1,9 +1,9 @@
 import { AntDesign, Ionicons, MaterialIcons } from "@expo/vector-icons";
+import auth from "@react-native-firebase/auth";
+import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import * as AppleAuthentication from "expo-apple-authentication";
-import * as Google from "expo-auth-session/providers/google";
-import * as WebBrowser from "expo-web-browser";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -52,52 +52,41 @@ export function LoginScreen() {
     }
   }, [resetVisible]);
 
-  WebBrowser.maybeCompleteAuthSession();
-  // Force Expo Auth Proxy to avoid exp:// redirects in dev
-  const redirectUri = "https://auth.expo.io/@eduardo880/meer";
-
-  const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
-    clientId:
-      Platform.select({
-        ios: process.env.EXPO_PUBLIC_GOOGLE_IOS_ID,
-        android: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_ID,
-        default: process.env.EXPO_PUBLIC_GOOGLE_WEB_ID
-      }) || "",
-    webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_ID,
-    iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_ID,
-    androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_ID,
-    scopes: ["profile", "email"],
-    redirectUri,
-    responseType: "id_token"
-  });
-
   useEffect(() => {
-    const doGoogle = async () => {
-      const idToken =
-        response?.type === "success"
-          ? response.params?.id_token || response.authentication?.idToken
-          : undefined;
+    GoogleSignin.configure({
+      webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_ID
+    });
+  }, []);
 
-      if (idToken) {
-        try {
-          setLoading(true);
-          const platformClient = Platform.OS === "ios" ? "ios" : "android";
-          const auth = await googleMutation.mutateAsync({
-            provider: "google",
-            idToken,
-            client: platformClient
-          });
-          await saveTokens(auth.token, auth.refreshToken);
-          navigation.navigate("tabs");
-        } catch {
-          setError("Não foi possível entrar com Google. Tente novamente.");
-        } finally {
-          setLoading(false);
-        }
+  const handleGoogleLogin = async () => {
+    try {
+      setError(null);
+      setLoading(true);
+      await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+      const response = await GoogleSignin.signIn();
+      const idToken = response.data?.idToken
+      if (!idToken) {
+        setError("Não foi possível entrar com Google. Tente novamente.");
+        return;
       }
-    };
-    doGoogle();
-  }, [navigation, response, googleMutation]);
+
+      const credential = auth.GoogleAuthProvider.credential(idToken);
+      await auth().signInWithCredential(credential);
+
+      const platformClient = Platform.OS === "ios" ? "ios" : "android";
+      const authResult = await googleMutation.mutateAsync({
+        provider: "google",
+        idToken,
+        client: platformClient
+      });
+      await saveTokens(authResult.token, authResult.refreshToken);
+      navigation.navigate("tabs");
+    } catch (err) {
+      setError("Não foi possível entrar com Google. Tente novamente.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <SafeAreaView className="flex-1 bg-white">
@@ -126,8 +115,8 @@ export function LoginScreen() {
             <View className="w-full space-y-12 gap-4">
               <Pressable
                 className="h-12 rounded-lg bg-[#F3F4F6] flex-row items-center justify-center gap-3 px-5"
-                disabled={!request || loading}
-                onPress={() => promptAsync({ useProxy: true, showInRecents: true })}
+                disabled={loading}
+                onPress={handleGoogleLogin}
               >
                 <AntDesign name="google" size={20} color="#4285F4" />
                 <Text className="text-base font-bold text-[#374151]">Entrar com Google</Text>

@@ -1,7 +1,8 @@
 {
   "expo": {
     "name": "Meer",
-    "slug": "Meer",
+    "slug": "meer",
+    "owner": "eduardo880",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -49,7 +50,8 @@
         {
           "locationAlwaysAndWhenInUsePermission": "Permitir que o Guia Brechó acesse sua localização para mostrar brechós perto de você."
         }
-      ]
+      ],
+      "@react-native-google-signin/google-signin"
     ],
     "experiments": {
       "reactCompiler": true
