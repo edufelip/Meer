@@ -26,12 +26,14 @@ type RouteParams = {
   categoryId?: string;
   title: string;
   type?: "nearby" | "category";
+  lat?: number;
+  lng?: number;
 };
 
 export function CategoryStoresScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const route = useRoute<any>();
-  const { categoryId, title, type } = route.params as RouteParams;
+  const { categoryId, title, type, lat, lng } = route.params as RouteParams;
   const { getStoresByCategoryUseCase, getNearbyPaginatedUseCase, toggleFavoriteThriftStoreUseCase } =
     useDependencies();
 
@@ -39,7 +41,7 @@ export function CategoryStoresScreen() {
     queryKey: ["category-stores", categoryId ?? "nearby"],
     queryFn: async ({ pageParam = 1 }) =>
       type === "nearby"
-        ? getNearbyPaginatedUseCase.execute({ page: pageParam, pageSize: PAGE_SIZE })
+        ? getNearbyPaginatedUseCase.execute({ page: pageParam, pageSize: PAGE_SIZE, lat, lng })
         : getStoresByCategoryUseCase.execute({ categoryId: categoryId!, page: pageParam, pageSize: PAGE_SIZE }),
     getNextPageParam: (lastPage) => (lastPage.hasNext ? lastPage.page + 1 : undefined)
   });

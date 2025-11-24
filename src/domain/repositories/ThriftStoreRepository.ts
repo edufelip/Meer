@@ -11,9 +11,11 @@ export interface ThriftStoreRepository {
     page?: number;
     pageSize?: number;
   }): Promise<{ items: ThriftStore[]; page: number; hasNext: boolean }>;
-  getHome(): Promise<{ featured: ThriftStore[]; nearby: ThriftStore[]; content: any[] }>;
+  getHome(params?: { lat?: number; lng?: number }): Promise<{ featured: ThriftStore[]; nearby: ThriftStore[]; content: any[] }>;
   listNearbyPaginated(params: {
     page?: number;
     pageSize?: number;
+    lat?: number;
+    lng?: number;
   }): Promise<{ items: ThriftStore[]; page: number; hasNext: boolean }>;
 }

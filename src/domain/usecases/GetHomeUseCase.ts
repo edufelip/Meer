@@ -5,7 +5,7 @@ import type { ThriftStoreRepository } from "../repositories/ThriftStoreRepositor
 export class GetHomeUseCase {
   constructor(private readonly repository: ThriftStoreRepository) {}
 
-  execute(): Promise<{ featured: ThriftStore[]; nearby: ThriftStore[]; content: GuideContent[] }> {
-    return this.repository.getHome();
+  execute(params?: { lat?: number; lng?: number }): Promise<{ featured: ThriftStore[]; nearby: ThriftStore[]; content: GuideContent[] }> {
+    return this.repository.getHome(params);
   }
 }

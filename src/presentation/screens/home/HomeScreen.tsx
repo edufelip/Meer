@@ -37,6 +37,7 @@ export function HomeScreen() {
   const [locationLabel, setLocationLabel] = useState("São Paulo, SP");
   const [neighborhoods, setNeighborhoods] = useState<string[]>([]);
   const [offline, setOffline] = useState(false);
+  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
 
   const shimmer = useRef(new Animated.Value(0)).current;
 
@@ -61,7 +62,9 @@ export function HomeScreen() {
 
   const fetchData = useCallback(async () => {
     try {
-      const { featured: featuredStores, nearby: nearbyStores, content: guideItems } = await getHomeUseCase.execute();
+      const { featured: featuredStores, nearby: nearbyStores, content: guideItems } = await getHomeUseCase.execute(
+        coords ?? DEFAULT_COORDS
+      );
       setFeatured(featuredStores);
       setNearby(nearbyStores.slice(0, 10));
       setAllStores([...featuredStores, ...nearbyStores]);
@@ -77,7 +80,7 @@ export function HomeScreen() {
     } catch (e) {
       setLoading(true);
     }
-  }, [getHomeUseCase]);
+  }, [getHomeUseCase, coords]);
 
   useEffect(() => {
     const unsubscribe = NetInfo.addEventListener((state) => {
@@ -111,7 +114,9 @@ export function HomeScreen() {
           const country = place.isoCountryCode ?? "";
           setLocationLabel(country ? `${city}, ${country}` : city);
         }
+        setCoords({ lat: position.coords.latitude, lng: position.coords.longitude });
       } catch {
+        setCoords(DEFAULT_COORDS);
         // keep default label
       }
     })();

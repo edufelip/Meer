@@ -37,13 +37,15 @@ export class ThriftStoreRepositoryJson implements ThriftStoreRepository {
     return this.remote.listByCategory(params);
   }
 
-  getHome(): Promise<{ featured: ThriftStore[]; nearby: ThriftStore[]; content: any[] }> {
-    return this.remote.getHome();
+  getHome(params?: { lat?: number; lng?: number }): Promise<{ featured: ThriftStore[]; nearby: ThriftStore[]; content: any[] }> {
+    return this.remote.getHome(params);
   }
 
   listNearbyPaginated(params: {
     page?: number;
     pageSize?: number;
+    lat?: number;
+    lng?: number;
   }): Promise<{ items: ThriftStore[]; page: number; hasNext: boolean }> {
     return this.remote.listNearbyPaginated(params);
   }

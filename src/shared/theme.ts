@@ -8,3 +8,8 @@ export const theme = {
     accent: "#EC4899"
   }
 };
+
+export const DEFAULT_COORDS = {
+  lat: -23.5561782,
+  lng: -46.6375468
+};

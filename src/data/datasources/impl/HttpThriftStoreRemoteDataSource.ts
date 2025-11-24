@@ -43,20 +43,29 @@ export class HttpThriftStoreRemoteDataSource implements ThriftStoreRemoteDataSou
     return res.data;
   }
 
-  async getHome(): Promise<{ featured: ThriftStore[]; nearby: ThriftStore[]; content: any[] }> {
-    const res = await api.get<{ featured: ThriftStore[]; nearby: ThriftStore[]; content: any[] }>("/home");
+  async getHome(params?: { lat?: number; lng?: number }): Promise<{ featured: ThriftStore[]; nearby: ThriftStore[]; content: any[] }> {
+    const res = await api.get<{ featured: ThriftStore[]; nearby: ThriftStore[]; content: any[] }>("/home", {
+      params: {
+        lat: params?.lat,
+        lng: params?.lng
+      }
+    });
     return res.data;
   }
 
   async listNearbyPaginated(params: {
     page?: number;
     pageSize?: number;
+    lat?: number;
+    lng?: number;
   }): Promise<{ items: ThriftStore[]; page: number; hasNext: boolean }> {
     const res = await api.get<{ items: ThriftStore[]; page: number; hasNext: boolean }>("/stores", {
       params: {
         type: "nearby",
         page: params.page ?? 1,
-        pageSize: params.pageSize ?? 10
+        pageSize: params.pageSize ?? 10,
+        lat: params.lat,
+        lng: params.lng
       }
     });
     return res.data;
