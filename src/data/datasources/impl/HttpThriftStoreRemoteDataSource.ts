@@ -42,4 +42,23 @@ export class HttpThriftStoreRemoteDataSource implements ThriftStoreRemoteDataSou
     });
     return res.data;
   }
+
+  async getHome(): Promise<{ featured: ThriftStore[]; nearby: ThriftStore[]; content: any[] }> {
+    const res = await api.get<{ featured: ThriftStore[]; nearby: ThriftStore[]; content: any[] }>("/home");
+    return res.data;
+  }
+
+  async listNearbyPaginated(params: {
+    page?: number;
+    pageSize?: number;
+  }): Promise<{ items: ThriftStore[]; page: number; hasNext: boolean }> {
+    const res = await api.get<{ items: ThriftStore[]; page: number; hasNext: boolean }>("/stores", {
+      params: {
+        type: "nearby",
+        page: params.page ?? 1,
+        pageSize: params.pageSize ?? 10
+      }
+    });
+    return res.data;
+  }
 }
