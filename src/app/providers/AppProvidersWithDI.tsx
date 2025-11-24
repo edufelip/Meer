@@ -1,7 +1,7 @@
 import React, { PropsWithChildren, createContext, useContext, useMemo } from "react";
 import { AsyncStorageUserLocalDataSource } from "../../data/datasources/impl/AsyncStorageUserLocalDataSource";
 import { UserRepositoryImpl } from "../../data/repositories/UserRepositoryImpl";
-import { JsonThriftStoreRemoteDataSource } from "../../data/datasources/impl/JsonThriftStoreRemoteDataSource";
+import { HttpThriftStoreRemoteDataSource } from "../../data/datasources/impl/HttpThriftStoreRemoteDataSource";
 import { JsonGuideContentRemoteDataSource } from "../../data/datasources/impl/JsonGuideContentRemoteDataSource";
 import { HttpCategoryRemoteDataSource } from "../../data/datasources/impl/HttpCategoryRemoteDataSource";
 import { HttpProfileRemoteDataSource } from "../../data/datasources/impl/HttpProfileRemoteDataSource";
@@ -57,7 +57,7 @@ export function DependenciesProvider(props: PropsWithChildren) {
   const value = useMemo<Dependencies>(() => {
     const userLocalDataSource = new AsyncStorageUserLocalDataSource();
     const userRepository = new UserRepositoryImpl(userLocalDataSource);
-    const thriftStoreRemote = new JsonThriftStoreRemoteDataSource();
+    const thriftStoreRemote = new HttpThriftStoreRemoteDataSource();
     const guideContentRemote = new JsonGuideContentRemoteDataSource();
     const categoryRemote = new HttpCategoryRemoteDataSource();
     const profileRemote = new HttpProfileRemoteDataSource();
