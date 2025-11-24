@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, FlatList, Pressable, StatusBar, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -7,6 +7,7 @@ import { theme } from "../../../shared/theme";
 import { useDependencies } from "../../../app/providers/AppProvidersWithDI";
 import { NearbyThriftListItem } from "../../components/NearbyThriftListItem";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import NetInfo from "@react-native-community/netinfo";
 
 const suggestionChips = ["Vestidos", "Roupas de festa", "Acessórios", "Vintage"];
 
@@ -20,6 +21,8 @@ export function SearchScreen() {
   const [results, setResults] = useState([] as Awaited<ReturnType<typeof searchThriftStoresUseCase.execute>>);
   const [loading, setLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [offline, setOffline] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -40,6 +43,14 @@ export function SearchScreen() {
     };
   }, []);
 
+  useEffect(() => {
+    const unsub = NetInfo.addEventListener((state) => {
+      const connected = !!state.isConnected;
+      setOffline(!connected);
+    });
+    return () => unsub();
+  }, []);
+
   const persistRecents = async (items: string[]) => {
     setRecents(items);
     await AsyncStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(items.slice(0, 5)));
@@ -51,14 +62,21 @@ export function SearchScreen() {
       setResults([]);
       return;
     }
+    setError(null);
     setLoading(true);
-    const list = await searchThriftStoresUseCase.execute(term);
-    setResults(list);
-    setLoading(false);
-    setHasSearched(true);
-    if (!recents.includes(term)) {
-      const next = [term, ...recents].slice(0, 5);
-      await persistRecents(next);
+    try {
+      const list = await searchThriftStoresUseCase.execute(term);
+      setResults(list);
+      if (!recents.includes(term)) {
+        const next = [term, ...recents].slice(0, 5);
+        await persistRecents(next);
+      }
+    } catch {
+      setResults([]);
+      setError("Não foi possível buscar agora. Verifique sua conexão e tente novamente.");
+    } finally {
+      setLoading(false);
+      setHasSearched(true);
     }
   };
 
@@ -67,6 +85,11 @@ export function SearchScreen() {
     if (!q) return recents;
     return recents.filter((item) => item.toLowerCase().includes(q));
   }, [query, recents]);
+
+  const clearHistory = useCallback(async () => {
+    setRecents([]);
+    await AsyncStorage.removeItem(SEARCH_HISTORY_KEY);
+  }, []);
 
   return (
     <SafeAreaView className="flex-1 bg-white" edges={["top", "left", "right"]}>
@@ -97,6 +120,13 @@ export function SearchScreen() {
             />
           </View>
         </View>
+        {offline && (
+          <View className="mt-3 bg-[#FDE68A] rounded-lg px-3 py-2">
+            <Text className="text-xs font-semibold text-[#92400E]">
+              Sem conexão. As buscas podem falhar até a conexão voltar.
+            </Text>
+          </View>
+        )}
       </View>
 
       <FlatList
@@ -104,23 +134,6 @@ export function SearchScreen() {
         contentContainerStyle={{ paddingBottom: 24 }}
         ListHeaderComponent={
           <>
-            <View className="px-4 pb-3">
-              <View className="flex-row items-center gap-2 overflow-x-auto pb-2 -mb-2">
-                {["Categoria", "Distância", "Tipo de Produto"].map((label) => (
-                  <Pressable
-                    key={label}
-                    className="flex-row items-center gap-2 rounded-full bg-[#B55D05] px-4 py-2"
-                    onPress={() => {
-                      setQuery(label);
-                      runSearch(label);
-                    }}
-                  >
-                    <Text className="text-sm font-medium text-white">{label}</Text>
-                    <Ionicons name="chevron-down" size={14} color="white" />
-                  </Pressable>
-                ))}
-              </View>
-            </View>
             <View className="py-4 px-4">
               <Text className="text-lg font-bold mb-3 text-[#374151]">Sugestões de busca</Text>
               <View className="flex-row flex-wrap gap-2">
@@ -142,15 +155,17 @@ export function SearchScreen() {
             <View className="py-4 px-4">
               <View className="flex-row justify-between items-center mb-3">
                 <Text className="text-lg font-bold text-[#374151]">Pesquisas Recentes</Text>
-                <Pressable
-                  onPress={async () => {
-                    setResults([]);
-                    setQuery("");
-                    await persistRecents([]);
-                  }}
-                >
-                  <Text className="text-sm font-semibold text-[#B55D05]">Limpar</Text>
-                </Pressable>
+                {recents.length > 0 ? (
+                  <Pressable
+                    onPress={async () => {
+                      await clearHistory();
+                      setResults([]);
+                      setQuery("");
+                    }}
+                  >
+                    <Text className="text-sm font-semibold text-[#B55D05]">Limpar</Text>
+                  </Pressable>
+                ) : null}
               </View>
             </View>
           </>
@@ -159,20 +174,25 @@ export function SearchScreen() {
         keyExtractor={(item, idx) => `${item}-${idx}`}
         renderItem={({ item }) => (
           <View className="px-4">
-            <View className="flex-row items-center justify-between p-2 rounded-lg">
+            <Pressable
+              className="flex-row items-center justify-between p-2 rounded-lg"
+              onPress={() => runSearch(item)}
+            >
               <View className="flex-row items-center gap-3">
                 <Ionicons name="time-outline" size={18} color="#6B7280" />
                 <Text className="text-[#374151]">{item}</Text>
               </View>
               <Pressable
-                onPress={async () => {
+                onPress={async (e) => {
+                  e.stopPropagation();
                   const next = recents.filter((r) => r !== item);
                   await persistRecents(next);
                 }}
+                hitSlop={8}
               >
                 <Ionicons name="close" size={18} color="#6B7280" />
               </Pressable>
-            </View>
+            </Pressable>
           </View>
         )}
         ListEmptyComponent={
@@ -182,6 +202,18 @@ export function SearchScreen() {
         }
         ListFooterComponent={
           <View className="px-4 pt-6 gap-3">
+            {error ? (
+              <View className="bg-red-50 border border-red-200 rounded-lg p-3">
+                <Text className="text-red-700 text-sm mb-2">{error}</Text>
+                <Pressable
+                  className="self-start px-3 py-2 rounded bg-red-600"
+                  onPress={() => runSearch(query || recents[0] || "")}
+                  disabled={!query && recents.length === 0}
+                >
+                  <Text className="text-white text-sm font-semibold">Tentar novamente</Text>
+                </Pressable>
+              </View>
+            ) : null}
             {loading ? (
               <View className="gap-3">
                 {[0, 1, 2].map((idx) => (
