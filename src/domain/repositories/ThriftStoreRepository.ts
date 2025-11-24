@@ -18,4 +18,7 @@ export interface ThriftStoreRepository {
     lat?: number;
     lng?: number;
   }): Promise<{ items: ThriftStore[]; page: number; hasNext: boolean }>;
+
+  createStore(form: FormData): Promise<ThriftStore>;
+  updateStore(id: ThriftStoreId, form: FormData): Promise<ThriftStore>;
 }

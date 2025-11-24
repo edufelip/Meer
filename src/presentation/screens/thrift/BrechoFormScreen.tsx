@@ -1,5 +1,15 @@
 import React, { useMemo, useState } from "react";
-import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import {
+  Pressable,
+  ScrollView,
+  Text,
+  TextInput,
+  View,
+  FlatList,
+  Image,
+  Alert,
+  TouchableOpacity
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation, useRoute } from "@react-navigation/native";
@@ -7,6 +17,10 @@ import type { RouteProp } from "@react-navigation/native";
 import type { RootStackParamList } from "../../../app/navigation/RootStack";
 import type { ThriftStore } from "../../../domain/entities/ThriftStore";
 import { theme } from "../../../shared/theme";
+import * as ImagePicker from "expo-image-picker";
+import DraggableFlatList, { RenderItemParams } from "react-native-draggable-flatlist";
+import { useDependencies } from "../../../app/providers/AppProvidersWithDI";
+import { ActivityIndicator } from "react-native";
 
 export function BrechoFormScreen() {
   const navigation = useNavigation();
@@ -26,6 +40,13 @@ export function BrechoFormScreen() {
   const [email, setEmail] = useState("");
   const [social, setSocial] = useState(initial.social?.instagram ?? "");
   const [categories, setCategories] = useState<string[]>(initial.categories ?? []);
+  const [photos, setPhotos] = useState<Array<{ id?: string; uri: string; isNew?: boolean }>>(
+    (initial.images ?? []).map((img) => ({ id: img.id ?? img.url, uri: img.url }))
+  );
+
+  const MAX_PHOTOS = 10;
+  const { createOrUpdateStoreUseCase } = useDependencies();
+  const [saving, setSaving] = useState(false);
 
   const toggleCategory = (label: string) => {
     setCategories((prev) =>
@@ -34,6 +55,141 @@ export function BrechoFormScreen() {
   };
 
   const categoryOptions = ["Feminino", "Masculino", "Infantil", "Casa", "Plus Size", "Luxo"];
+
+  const pickImage = async (fromCamera: boolean) => {
+    const perm = fromCamera
+      ? await ImagePicker.requestCameraPermissionsAsync()
+      : await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (perm.status !== "granted") {
+      Alert.alert("Permissão necessária", "Precisamos da permissão para acessar suas fotos.");
+      return;
+    }
+
+    const result = fromCamera
+      ? await ImagePicker.launchCameraAsync({ allowsEditing: true, aspect: [1, 1], quality: 0.9 })
+      : await ImagePicker.launchImageLibraryAsync({
+          mediaTypes: ImagePicker.MediaTypeOptions.Images,
+          allowsEditing: true,
+          aspect: [1, 1],
+          quality: 0.9,
+          selectionLimit: 1
+        });
+
+    if (!result.canceled && result.assets.length > 0) {
+      const asset = result.assets[0];
+      setPhotos((prev) => {
+        if (prev.length >= MAX_PHOTOS) return prev;
+        const next = [...prev, { uri: asset.uri, isNew: true }];
+        return next;
+      });
+    }
+  };
+
+  const handleDeletePhoto = (uri: string) => {
+    setPhotos((prev) => prev.filter((p) => p.uri !== uri));
+  };
+
+  const renderPhotoItem = ({ item, drag, isActive, index }: RenderItemParams<{ id?: string; uri: string; isNew?: boolean }>) => {
+    const isCover = index === 0;
+    return (
+      <TouchableOpacity
+        onLongPress={drag}
+        delayLongPress={120}
+        disabled={isActive}
+        activeOpacity={0.9}
+        style={{ marginRight: 12 }}
+      >
+        <View className="relative">
+          {isCover && (
+            <View className="absolute top-1 left-1 z-10 bg-[#B55D05] px-2 py-0.5 rounded-full">
+              <Text className="text-xs font-semibold text-white">Capa</Text>
+            </View>
+          )}
+          <Image source={{ uri: item.uri }} className="h-24 w-24 rounded-lg" resizeMode="cover" />
+          <TouchableOpacity
+            onPress={() => handleDeletePhoto(item.uri)}
+            className="absolute inset-0 bg-black/35 items-center justify-center rounded-lg"
+          >
+            <Ionicons name="close" size={22} color="white" />
+          </TouchableOpacity>
+        </View>
+      </TouchableOpacity>
+    );
+  };
+
+  const buildPayload = () => {
+    const textChanges: any = {};
+    if (name.trim()) textChanges.name = name.trim();
+    if (description.trim()) textChanges.description = description.trim();
+    if (hours.trim()) textChanges.openingHours = hours.trim();
+    if (address.trim()) textChanges.addressLine = address.trim();
+    if (phone.trim()) textChanges.phone = phone.trim();
+    if (email.trim()) textChanges.email = email.trim();
+    if (social.trim()) textChanges.social = { instagram: social.trim() };
+    if (categories.length) textChanges.categories = categories;
+
+    const existing = photos.filter((p) => !p.isNew && p.id);
+    const newOnes = photos.filter((p) => p.isNew);
+
+    const deletePhotoIds = (initial.images ?? [])
+      .map((img) => img.id ?? img.url)
+      .filter((id) => !photos.some((p) => p.id === id));
+
+    const order = photos.map((p) => p.id ?? p.uri);
+
+    return { textChanges, existing, newOnes, deletePhotoIds, order };
+  };
+
+  const handleSubmit = async () => {
+    if (!name.trim()) {
+      Alert.alert("Nome obrigatório", "Informe o nome do brechó.");
+      return;
+    }
+
+    const { textChanges, newOnes, deletePhotoIds, order } = buildPayload();
+
+    if (
+      !thriftStore &&
+      Object.keys(textChanges).length === 0 &&
+      newOnes.length === 0 &&
+      deletePhotoIds.length === 0
+    ) {
+      Alert.alert("Nada para salvar", "Adicione informações antes de enviar.");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const form = new FormData();
+      Object.entries(textChanges).forEach(([k, v]) => {
+        if (v === undefined) return;
+        form.append(k, typeof v === "object" ? JSON.stringify(v) : String(v));
+      });
+
+      if (deletePhotoIds.length) form.append("deletePhotoIds", JSON.stringify(deletePhotoIds));
+      if (order.length) form.append("photoOrder", JSON.stringify(order));
+
+      newOnes.forEach((photo, idx) => {
+        form.append("newPhotos", {
+          uri: photo.uri,
+          name: `photo-${idx}.jpg`,
+          type: "image/jpeg"
+        } as any);
+      });
+
+      if (thriftStore?.id) {
+        await createOrUpdateStoreUseCase.executeUpdate(thriftStore.id, form);
+      } else {
+        await createOrUpdateStoreUseCase.executeCreate(form);
+      }
+
+      navigation.goBack();
+    } catch (e) {
+      Alert.alert("Erro", "Não foi possível salvar. Tente novamente.");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <SafeAreaView className="flex-1 bg-[#F3F4F6]" edges={["top", "left", "right"]}>
@@ -85,14 +241,35 @@ export function BrechoFormScreen() {
         </View>
 
         <View className="bg-white p-4 rounded-xl shadow-sm mb-4">
-          <Text className="text-lg font-bold mb-4">Fotos do Local</Text>
-          <View className="border-2 border-dashed border-gray-300 rounded-lg p-6 items-center">
-            <Ionicons name="image-outline" size={32} color="#9CA3AF" />
-            <Text className="text-sm text-gray-600 mt-2">Arraste e solte ou</Text>
-            <Pressable className="mt-2">
-              <Text className="font-semibold text-[#B55D05]">Clique para adicionar fotos</Text>
-            </Pressable>
+          <Text className="text-lg font-bold mb-4">Fotos do Brechó</Text>
+          <View className="flex-row items-center">
+            <DraggableFlatList
+              data={photos}
+              horizontal
+              keyExtractor={(item, index) => item.id ?? item.uri ?? `photo-${index}`}
+              onDragEnd={({ data }) => setPhotos(data)}
+              renderItem={renderPhotoItem}
+              ListHeaderComponent={
+                photos.length >= MAX_PHOTOS ? null : (
+                  <Pressable
+                    className="h-24 w-24 mr-3 border-2 border-dashed border-gray-300 rounded-lg items-center justify-center bg-gray-100"
+                    onPress={() => {
+                      Alert.alert("Adicionar foto", "Escolha a origem", [
+                        { text: "Câmera", onPress: () => pickImage(true) },
+                        { text: "Galeria", onPress: () => pickImage(false) },
+                        { text: "Cancelar", style: "cancel" }
+                      ]);
+                    }}
+                  >
+                    <Ionicons name="add" size={28} color="#9CA3AF" />
+                  </Pressable>
+                )
+              }
+              contentContainerStyle={{ paddingRight: 12 }}
+              showsHorizontalScrollIndicator={false}
+            />
           </View>
+          <Text className="text-xs text-gray-500 mt-2">Segure para reordenar. A primeira foto é a capa.</Text>
         </View>
 
         <View className="bg-white p-4 rounded-xl shadow-sm mb-4">
@@ -160,10 +337,18 @@ export function BrechoFormScreen() {
         </View>
 
         <View className="pt-2 pb-4">
-          <Pressable className="w-full bg-[#B55D05] rounded-full py-3 px-4 shadow-lg items-center">
-            <Text className="font-bold text-white">
-              {thriftStore ? "Salvar alterações" : "Criar Brechó"}
-            </Text>
+          <Pressable
+            className={`w-full rounded-full py-3 px-4 shadow-lg items-center ${
+              saving ? "bg-gray-300" : "bg-[#B55D05]"
+            }`}
+            disabled={saving}
+            onPress={handleSubmit}
+          >
+            {saving ? (
+              <ActivityIndicator color="white" />
+            ) : (
+              <Text className="font-bold text-white">{thriftStore ? "Salvar alterações" : "Criar Brechó"}</Text>
+            )}
           </Pressable>
         </View>
       </ScrollView>

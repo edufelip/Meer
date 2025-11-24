@@ -70,4 +70,18 @@ export class HttpThriftStoreRemoteDataSource implements ThriftStoreRemoteDataSou
     });
     return res.data;
   }
+
+  async createStore(form: FormData): Promise<ThriftStore> {
+    const res = await api.post<ThriftStore>("/stores", form, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+    return res.data;
+  }
+
+  async updateStore(id: ThriftStoreId, form: FormData): Promise<ThriftStore> {
+    const res = await api.put<ThriftStore>(`/stores/${id}`, form, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+    return res.data;
+  }
 }

@@ -49,4 +49,12 @@ export class ThriftStoreRepositoryJson implements ThriftStoreRepository {
   }): Promise<{ items: ThriftStore[]; page: number; hasNext: boolean }> {
     return this.remote.listNearbyPaginated(params);
   }
+
+  createStore(form: FormData): Promise<ThriftStore> {
+    return this.remote.createStore(form);
+  }
+
+  updateStore(id: ThriftStoreId, form: FormData): Promise<ThriftStore> {
+    return this.remote.updateStore(id, form);
+  }
 }

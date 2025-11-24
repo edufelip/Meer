@@ -11,10 +11,13 @@ export interface ThriftStoreRemoteDataSource {
     page: number;
     hasNext: boolean;
   }>;
-  getHome(): Promise<{ featured: ThriftStore[]; nearby: ThriftStore[]; content: any[] }>;
-  listNearbyPaginated(params: { page?: number; pageSize?: number }): Promise<{
+  getHome(params?: { lat?: number; lng?: number }): Promise<{ featured: ThriftStore[]; nearby: ThriftStore[]; content: any[] }>;
+  listNearbyPaginated(params: { page?: number; pageSize?: number; lat?: number; lng?: number }): Promise<{
     items: ThriftStore[];
     page: number;
     hasNext: boolean;
   }>;
+
+  createStore(form: FormData): Promise<ThriftStore>;
+  updateStore(id: ThriftStoreId, form: FormData): Promise<ThriftStore>;
 }
