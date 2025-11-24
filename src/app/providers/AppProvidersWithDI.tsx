@@ -33,6 +33,7 @@ import { FeedbackRepositoryImpl } from "../../data/repositories/FeedbackReposito
 import { GetMyFeedbackUseCase } from "../../domain/usecases/GetMyFeedbackUseCase";
 import { UpsertFeedbackUseCase } from "../../domain/usecases/UpsertFeedbackUseCase";
 import { DeleteMyFeedbackUseCase } from "../../domain/usecases/DeleteMyFeedbackUseCase";
+import { DeleteAccountUseCase } from "../../domain/usecases/DeleteAccountUseCase";
 
 interface Dependencies {
   getCurrentUserUseCase: GetCurrentUserUseCase;
@@ -50,6 +51,7 @@ interface Dependencies {
   getNearbyPaginatedUseCase: GetNearbyPaginatedUseCase;
   getProfileUseCase: GetProfileUseCase;
   updateProfileUseCase: UpdateProfileUseCase;
+  deleteAccountUseCase: DeleteAccountUseCase;
   favoriteRepository: FavoriteRepository;
   getMyFeedbackUseCase: GetMyFeedbackUseCase;
   upsertFeedbackUseCase: UpsertFeedbackUseCase;
@@ -102,6 +104,7 @@ export function DependenciesProvider(props: PropsWithChildren) {
     const getNearbyPaginatedUseCase = new GetNearbyPaginatedUseCase(thriftStoreRepository);
     const getProfileUseCase = new GetProfileUseCase(profileRepository);
     const updateProfileUseCase = new UpdateProfileUseCase(profileRepository);
+    const deleteAccountUseCase = new DeleteAccountUseCase(profileRepository);
     const getMyFeedbackUseCase = new GetMyFeedbackUseCase(feedbackRepository);
     const upsertFeedbackUseCase = new UpsertFeedbackUseCase(feedbackRepository);
     const deleteMyFeedbackUseCase = new DeleteMyFeedbackUseCase(feedbackRepository);
@@ -122,6 +125,7 @@ export function DependenciesProvider(props: PropsWithChildren) {
       getNearbyPaginatedUseCase,
       getProfileUseCase,
       updateProfileUseCase,
+      deleteAccountUseCase,
       favoriteRepository,
       getMyFeedbackUseCase,
       upsertFeedbackUseCase,

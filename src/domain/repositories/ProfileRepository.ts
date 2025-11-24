@@ -16,4 +16,5 @@ export interface ProfileRepository {
   getCachedProfile(): Promise<
     (User & { bio?: string; notifyNewStores: boolean; notifyPromos: boolean; ownedThriftStore?: any }) | null
   >;
+  deleteAccount(email: string): Promise<void>;
 }

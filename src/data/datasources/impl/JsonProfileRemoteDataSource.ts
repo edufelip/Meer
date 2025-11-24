@@ -22,4 +22,9 @@ export class JsonProfileRemoteDataSource implements ProfileRemoteDataSource {
     await saveToJson("profile.json", this.cache);
     return loadFromJson<ProfilePayload>(this.cache);
   }
+
+  async deleteAccount(): Promise<void> {
+    // no-op for local mock
+    return;
+  }
 }

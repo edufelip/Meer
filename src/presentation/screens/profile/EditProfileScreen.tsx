@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   StatusBar,
   View,
@@ -22,11 +22,13 @@ import type { RootStackParamList } from "../../../app/navigation/RootStack";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as ImagePicker from "expo-image-picker";
 import { Platform } from "react-native";
+import { useLogout } from "../../../hooks/useLogout";
 
 export function EditProfileScreen() {
   const navigation = useNavigation();
   const route = useRoute<RouteProp<RootStackParamList, "editProfile">>();
-  const { getProfileUseCase, updateProfileUseCase } = useDependencies();
+  const { getProfileUseCase, updateProfileUseCase, deleteAccountUseCase } = useDependencies();
+  const logout = useLogout();
   const goBackSafe = () => {
     if (navigation.canGoBack()) {
       navigation.goBack();
@@ -42,8 +44,10 @@ export function EditProfileScreen() {
   const [stagedAvatarUri, setStagedAvatarUri] = useState<string | undefined>(undefined);
   const [notifyNewStores, setNotifyNewStores] = useState(preloaded?.notifyNewStores ?? true);
   const [notifyPromos, setNotifyPromos] = useState(preloaded?.notifyPromos ?? false);
-  const [, setEmail] = useState<string | undefined>(undefined);
+  const [email, setEmail] = useState<string | undefined>(preloaded?.email);
   const [showAvatarSheet, setShowAvatarSheet] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteEmailInput, setDeleteEmailInput] = useState("");
   const [initialProfile, setInitialProfile] = useState({
     name: preloaded?.name ?? "",
     bio: preloaded?.bio ?? "",
@@ -98,9 +102,18 @@ export function EditProfileScreen() {
 
   const remainingBio = MAX_BIO - bio.length;
   const canSave = name.trim().length > 0 && remainingBio >= 0;
+  const changes = useMemo(() => {
+    const diff: any = {};
+    if (name.trim() !== initialProfile.name) diff.name = name.trim();
+    if (bio.trim() !== initialProfile.bio) diff.bio = bio.trim();
+    if (notifyNewStores !== initialProfile.notifyNewStores) diff.notifyNewStores = notifyNewStores;
+    if (notifyPromos !== initialProfile.notifyPromos) diff.notifyPromos = notifyPromos;
+    if (stagedAvatarUri) diff.avatarFile = true; // marker
+    return diff;
+  }, [name, bio, notifyNewStores, notifyPromos, stagedAvatarUri, initialProfile]);
 
   const handleSave = async () => {
-    if (!canSave) {
+    if (!(canSave && Object.keys(changes).length > 0)) {
       Alert.alert("Verifique os campos", "Nome é obrigatório e bio deve ter no máximo 200 caracteres.");
       return;
     }
@@ -109,25 +122,25 @@ export function EditProfileScreen() {
       AsyncStorage.setItem(STORAGE_NOTIFY_PROMOS, String(notifyPromos))
     ]);
 
-    const changes: any = {};
-    if (name.trim() !== initialProfile.name) changes.name = name.trim();
-    if (bio.trim() !== initialProfile.bio) changes.bio = bio.trim();
-    if (notifyNewStores !== initialProfile.notifyNewStores) changes.notifyNewStores = notifyNewStores;
-    if (notifyPromos !== initialProfile.notifyPromos) changes.notifyPromos = notifyPromos;
+    const payload: any = {};
+    if (name.trim() !== initialProfile.name) payload.name = name.trim();
+    if (bio.trim() !== initialProfile.bio) payload.bio = bio.trim();
+    if (notifyNewStores !== initialProfile.notifyNewStores) payload.notifyNewStores = notifyNewStores;
+    if (notifyPromos !== initialProfile.notifyPromos) payload.notifyPromos = notifyPromos;
 
     if (stagedAvatarUri) {
       const filename = stagedAvatarUri.split("/").pop() ?? "avatar.jpg";
       const ext = filename.split(".").pop();
       const type = ext ? `image/${ext === "jpg" ? "jpeg" : ext}` : "image/jpeg";
-      changes.avatarFile = { uri: stagedAvatarUri, name: filename, type };
+      payload.avatarFile = { uri: stagedAvatarUri, name: filename, type };
     }
 
-    if (Object.keys(changes).length === 0) {
+    if (Object.keys(payload).length === 0) {
       goBackSafe();
       return;
     }
 
-    await updateProfileUseCase.execute(changes);
+    await updateProfileUseCase.execute(payload);
     goBackSafe();
   };
 
@@ -168,6 +181,26 @@ export function EditProfileScreen() {
     if (!result.canceled && result.assets.length > 0) {
       setStagedAvatarUri(result.assets[0].uri);
       setShowAvatarSheet(false);
+    }
+  };
+
+  const handleLogout = () => {
+    Alert.alert("Sair", "Deseja realmente sair?", [
+      { text: "Cancelar", style: "cancel" },
+      {
+        text: "Sair",
+        style: "destructive",
+        onPress: () => logout()
+      }
+    ]);
+  };
+
+  const handleDeleteAccount = async () => {
+    try {
+      await deleteAccountUseCase.execute(deleteEmailInput.trim());
+      await logout();
+    } catch (e) {
+      Alert.alert("Erro", "Não foi possível excluir a conta agora. Tente novamente.");
     }
   };
 
@@ -291,16 +324,38 @@ export function EditProfileScreen() {
             </View>
           </View>
 
-          <View className="flex flex-col gap-4 pt-6">
+          <View className="flex flex-col gap-3 pt-6">
             <Pressable
-              disabled={!canSave}
-              className={`rounded-lg py-3 px-4 items-center ${canSave ? "bg-[#B55D05]" : "bg-gray-300"}`}
+              disabled={!(canSave && Object.keys(changes).length > 0)}
+              className={`rounded-lg py-3 px-4 items-center ${
+                canSave && Object.keys(changes).length > 0 ? "bg-[#B55D05]" : "bg-gray-300"
+              }`}
               onPress={handleSave}
             >
-              <Text className={`font-bold ${canSave ? "text-white" : "text-gray-500"}`}>Salvar Alterações</Text>
+              <Text
+                className={`font-bold ${
+                  canSave && Object.keys(changes).length > 0 ? "text-white" : "text-gray-500"
+                }`}
+              >
+                Salvar Alterações
+              </Text>
             </Pressable>
-            <Pressable className="items-center justify-center p-4">
+
+            <Pressable
+              className="items-center justify-center p-3 rounded-lg border border-gray-200"
+              onPress={handleLogout}
+            >
               <Text className="font-bold text-red-500">Sair</Text>
+            </Pressable>
+
+            <Pressable
+              className="items-center justify-center p-3 rounded-lg border border-red-200 bg-red-50"
+              onPress={() => {
+                setDeleteEmailInput("");
+                setShowDeleteModal(true);
+              }}
+            >
+              <Text className="font-bold text-red-600">Excluir Conta</Text>
             </Pressable>
           </View>
         </View>
@@ -329,6 +384,53 @@ export function EditProfileScreen() {
             <Text className="text-base font-semibold text-[#1F2937]">Escolher da galeria</Text>
           </Pressable>
           <Pressable className="items-center py-2" onPress={() => setShowAvatarSheet(false)}>
+            <Text className="text-sm text-[#6B7280]">Cancelar</Text>
+          </Pressable>
+        </View>
+      </Modal>
+
+      <Modal visible={showDeleteModal} transparent animationType="fade" onRequestClose={() => setShowDeleteModal(false)}>
+        <TouchableWithoutFeedback onPress={() => setShowDeleteModal(false)}>
+          <View className="flex-1 bg-black/40" />
+        </TouchableWithoutFeedback>
+        <View className="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl p-4 space-y-3 shadow-2xl">
+          <View className="flex-row justify-between items-center">
+            <Text className="text-lg font-bold text-[#1F2937]">Excluir conta</Text>
+            <Pressable onPress={() => setShowDeleteModal(false)}>
+              <Ionicons name="close" size={20} color="#6B7280" />
+            </Pressable>
+          </View>
+          <Text className="text-sm text-[#6B7280]">
+            Esta ação é permanente. Digite seu e-mail para confirmar a exclusão da conta.
+          </Text>
+          <TextInput
+            value={deleteEmailInput}
+            onChangeText={setDeleteEmailInput}
+            placeholder={email ?? "seuemail@dominio.com"}
+            autoCapitalize="none"
+            keyboardType="email-address"
+            className="w-full p-3 bg-white border border-gray-300 rounded-lg"
+          />
+          <Pressable
+            disabled={!email || deleteEmailInput.trim().toLowerCase() !== (email ?? "").toLowerCase()}
+            onPress={handleDeleteAccount}
+            className={`items-center justify-center p-3 rounded-lg ${
+              !email || deleteEmailInput.trim().toLowerCase() !== (email ?? "").toLowerCase()
+                ? "bg-gray-300"
+                : "bg-red-600"
+            }`}
+          >
+            <Text
+              className={`font-bold ${
+                !email || deleteEmailInput.trim().toLowerCase() !== (email ?? "").toLowerCase()
+                  ? "text-gray-500"
+                  : "text-white"
+              }`}
+            >
+              Excluir conta
+            </Text>
+          </Pressable>
+          <Pressable className="items-center py-2" onPress={() => setShowDeleteModal(false)}>
             <Text className="text-sm text-[#6B7280]">Cancelar</Text>
           </Pressable>
         </View>

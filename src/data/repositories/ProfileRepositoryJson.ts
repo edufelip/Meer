@@ -29,4 +29,9 @@ export class ProfileRepositoryJson implements ProfileRepository {
   async getCachedProfile(): Promise<ProfilePayload | null> {
     return this.local.getProfile();
   }
+
+  async deleteAccount(email: string): Promise<void> {
+    await this.remote.deleteAccount(email);
+    await this.local.clearProfile?.();
+  }
 }

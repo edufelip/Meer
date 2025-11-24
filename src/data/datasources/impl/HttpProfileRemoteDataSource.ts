@@ -39,4 +39,8 @@ export class HttpProfileRemoteDataSource implements ProfileRemoteDataSource {
     });
     return res.data;
   }
+
+  async deleteAccount(email: string): Promise<void> {
+    await api.delete("/account", { data: { email } });
+  }
 }

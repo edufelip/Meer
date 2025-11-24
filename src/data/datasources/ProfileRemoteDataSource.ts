@@ -11,4 +11,5 @@ export interface ProfileRemoteDataSource {
       avatarFile?: { uri: string; name?: string; type?: string };
     }
   ): Promise<User & { bio?: string; notifyNewStores: boolean; notifyPromos: boolean }>;
+  deleteAccount(email: string): Promise<void>;
 }
