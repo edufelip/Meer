@@ -3,6 +3,5 @@ export type CategoryId = string;
 export interface Category {
   id: CategoryId;
   name: string;
-  imageResId?: string;
-  imageUrl?: string;
+  imageUrl: string;
 }
