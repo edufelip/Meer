@@ -13,6 +13,31 @@ export const api = axios.create({
   timeout: 15000
 });
 
+let isRefreshing = false;
+let refreshPromise: Promise<string | null> | null = null;
+type PendingRequest = {
+  resolve: (value?: unknown) => void;
+  reject: (error: unknown) => void;
+  originalRequest: any;
+};
+const pendingQueue: PendingRequest[] = [];
+
+const flushQueue = (error: unknown, token: string | null) => {
+  while (pendingQueue.length) {
+    const pending = pendingQueue.shift();
+    if (!pending) continue;
+    if (token) {
+      pending.originalRequest.headers = {
+        ...pending.originalRequest.headers,
+        Authorization: `Bearer ${token}`
+      };
+      api(pending.originalRequest).then(pending.resolve).catch(pending.reject);
+    } else {
+      pending.reject(error);
+    }
+  }
+};
+
 api.interceptors.request.use(
   async (config) => {
     const { token } = await getTokens();
@@ -53,33 +78,63 @@ api.interceptors.response.use(
 
       if (error.response.status === 401) {
         const originalRequest = error.config;
+
         if (originalRequest?._retry) {
+          // Already retried; fail hard
           await clearTokens();
           if (navigationRef.isReady()) navigationRef.navigate("login");
           return Promise.reject(error);
         }
+
         originalRequest._retry = true;
 
-        const { refreshToken } = await getTokens();
-        if (!refreshToken) {
-          await clearTokens();
-          if (navigationRef.isReady()) navigationRef.navigate("login");
-          return Promise.reject(error);
+        // If a refresh is already in-flight, queue this request
+        if (isRefreshing && refreshPromise) {
+          return new Promise((resolve, reject) => {
+            pendingQueue.push({ resolve, reject, originalRequest });
+          });
         }
 
-        try {
+        // Start refresh
+        isRefreshing = true;
+        refreshPromise = (async () => {
+          const { refreshToken } = await getTokens();
+          if (!refreshToken) return null;
           const refreshed = await rawApi.post<{ token: string; refreshToken?: string }>(
             "/auth/refresh",
             { refreshToken }
           );
           await saveTokens(refreshed.data.token, refreshed.data.refreshToken);
+          return refreshed.data.token;
+        })();
+
+        try {
+          const newToken = await refreshPromise;
+          isRefreshing = false;
+          refreshPromise = null;
+
+          if (!newToken) {
+            await clearTokens();
+            flushQueue(error, null);
+            if (navigationRef.isReady()) navigationRef.navigate("login");
+            return Promise.reject(error);
+          }
+
+          // Retry the original request
           originalRequest.headers = {
             ...originalRequest.headers,
-            Authorization: `Bearer ${refreshed.data.token}`
+            Authorization: `Bearer ${newToken}`
           };
+
+          // Process queued requests
+          flushQueue(null, newToken);
+
           return api(originalRequest);
         } catch (refreshErr) {
+          isRefreshing = false;
+          refreshPromise = null;
           await clearTokens();
+          flushQueue(refreshErr, null);
           if (navigationRef.isReady()) navigationRef.navigate("login");
           return Promise.reject(refreshErr);
         }
