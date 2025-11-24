@@ -25,6 +25,7 @@ import { FavoriteRepositoryHybrid } from "../../data/repositories/FavoriteReposi
 import { HttpFavoriteRemoteDataSource } from "../../data/datasources/impl/HttpFavoriteRemoteDataSource";
 import { ToggleFavoriteThriftStoreUseCase } from "../../domain/usecases/ToggleFavoriteThriftStoreUseCase";
 import { IsFavoriteThriftStoreUseCase } from "../../domain/usecases/IsFavoriteThriftStoreUseCase";
+import type { FavoriteRepository } from "../../domain/repositories/FavoriteRepository";
 
 interface Dependencies {
   getCurrentUserUseCase: GetCurrentUserUseCase;
@@ -40,6 +41,7 @@ interface Dependencies {
   getStoresByCategoryUseCase: GetStoresByCategoryUseCase;
   getProfileUseCase: GetProfileUseCase;
   updateProfileUseCase: UpdateProfileUseCase;
+  favoriteRepository: FavoriteRepository;
 }
 
 const DependenciesContext = createContext<Dependencies | undefined>(undefined);
@@ -98,7 +100,8 @@ export function DependenciesProvider(props: PropsWithChildren) {
       getThriftStoreByIdUseCase,
       getStoresByCategoryUseCase,
       getProfileUseCase,
-      updateProfileUseCase
+      updateProfileUseCase,
+      favoriteRepository
     };
   }, []);
 

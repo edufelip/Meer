@@ -42,4 +42,9 @@ export class FavoriteRepositoryAsyncStorage implements FavoriteRepository {
     await writeAll(updated);
     return true;
   }
+
+  async syncPending(): Promise<void> {
+    // no-op: storage-only repo has no pending queue
+    return;
+  }
 }

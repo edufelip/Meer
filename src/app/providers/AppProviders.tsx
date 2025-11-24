@@ -1,4 +1,5 @@
 import React, { PropsWithChildren, useEffect, useState } from "react";
+import { AppState } from "react-native";
 import { DependenciesProvider, useDependencies } from "./AppProvidersWithDI";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "../../hooks/reactQueryClient";
@@ -14,6 +15,7 @@ export function AppProviders(props: PropsWithChildren) {
     <DependenciesProvider>
       <QueryClientProvider client={queryClient}>
         <AuthBootstrap>{children}</AuthBootstrap>
+        <FavoriteSyncBootstrap />
       </QueryClientProvider>
     </DependenciesProvider>
   );
@@ -72,4 +74,24 @@ function AuthBootstrap({ children }: PropsWithChildren) {
   }
 
   return children as JSX.Element;
+}
+
+function FavoriteSyncBootstrap() {
+  const { favoriteRepository } = useDependencies();
+
+  useEffect(() => {
+    favoriteRepository.syncPending();
+
+    const sub = AppState.addEventListener("change", (state) => {
+      if (state === "active") {
+        favoriteRepository.syncPending();
+      }
+    });
+
+    return () => {
+      sub.remove();
+    };
+  }, [favoriteRepository]);
+
+  return null;
 }
