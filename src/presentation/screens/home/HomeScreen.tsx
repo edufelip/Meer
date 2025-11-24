@@ -1,5 +1,14 @@
-import React, { useEffect, useState } from "react";
-import { ScrollView, StatusBar, View, Text, ActivityIndicator, Pressable, Image } from "react-native";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import {
+  ScrollView,
+  StatusBar,
+  View,
+  Text,
+  Pressable,
+  Image,
+  Animated,
+  Easing
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { SectionTitle } from "../../components/SectionTitle";
 import { FeaturedThriftCarousel } from "../../components/FeaturedThriftCarousel";
@@ -14,6 +23,7 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../../../app/navigation/RootStack";
 import { Ionicons } from "@expo/vector-icons";
 import * as Location from "expo-location";
+import NetInfo from "@react-native-community/netinfo";
 
 export function HomeScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -27,34 +37,69 @@ export function HomeScreen() {
   const [loading, setLoading] = useState(true);
   const [locationLabel, setLocationLabel] = useState("São Paulo, SP");
   const [neighborhoods, setNeighborhoods] = useState<string[]>([]);
+  const [offline, setOffline] = useState(false);
+
+  const shimmer = useRef(new Animated.Value(0)).current;
+
+  const startShimmer = useCallback(() => {
+    Animated.loop(
+      Animated.timing(shimmer, {
+        toValue: 1,
+        duration: 1200,
+        easing: Easing.linear,
+        useNativeDriver: true
+      })
+    ).start();
+  }, [shimmer]);
 
   useEffect(() => {
-    let isMounted = true;
-    (async () => {
+    startShimmer();
+  }, [startShimmer]);
+
+  const shimmerStyle = {
+    opacity: shimmer.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0.5, 1, 0.5] })
+  };
+
+  const fetchData = useCallback(async () => {
+    try {
       const [featuredStores, nearbyStores, guideItems] = await Promise.all([
         getFeaturedThriftStoresUseCase.execute(),
         getNearbyThriftStoresUseCase.execute(),
         getGuideContentUseCase.execute()
       ]);
-      if (isMounted) {
-        setFeatured(featuredStores);
-        setNearby(nearbyStores);
-        setAllStores([...featuredStores, ...nearbyStores]);
-        setGuides(guideItems);
-        const hoods = new Set<string>();
-        [...featuredStores, ...nearbyStores].forEach((s) => {
-          if (s.neighborhood) {
-            hoods.add(s.neighborhood);
-          }
-        });
-        setNeighborhoods(["Próximo a mim", ...Array.from(hoods)]);
-        setLoading(false);
-      }
-    })();
-    return () => {
-      isMounted = false;
-    };
+      setFeatured(featuredStores);
+      setNearby(nearbyStores);
+      setAllStores([...featuredStores, ...nearbyStores]);
+      setGuides(guideItems);
+      const hoods = new Set<string>();
+      [...featuredStores, ...nearbyStores].forEach((s) => {
+        if (s.neighborhood) {
+          hoods.add(s.neighborhood);
+        }
+      });
+      setNeighborhoods(["Próximo a mim", ...Array.from(hoods)]);
+      setLoading(false);
+    } catch (e) {
+      // Stay in loading shimmer if offline; offline banner will show
+      setLoading(true);
+    }
   }, [getFeaturedThriftStoresUseCase, getNearbyThriftStoresUseCase, getGuideContentUseCase]);
+
+  useEffect(() => {
+    const unsubscribe = NetInfo.addEventListener((state) => {
+      const connected = !!state.isConnected;
+      setOffline(!connected);
+      if (connected) {
+        fetchData();
+      }
+    });
+
+    fetchData();
+
+    return () => {
+      unsubscribe();
+    };
+  }, [fetchData]);
 
   useEffect(() => {
     let active = true;
@@ -81,123 +126,6 @@ export function HomeScreen() {
     };
   }, []);
 
-  return (
-    <SafeAreaView className="flex-1 bg-white" edges={["top", "left", "right"]}>
-      <StatusBar barStyle="dark-content" />
-      {/* Header matching reference */}
-      <View className="bg-white/90 backdrop-blur-sm px-4 py-3 border-b border-gray-100">
-        <View className="flex-row items-center justify-between">
-          <View className="flex-1">
-            <View className="flex-row items-center">
-              <Text className="text-2xl font-extrabold text-[#374151]">Guia Brechó</Text>
-              <View className="ml-2">
-                <Text className="text-[#B55D05] text-lg">📍</Text>
-              </View>
-            </View>
-            <Text className="text-sm text-[#6B7280] mt-0.5">{locationLabel}</Text>
-          </View>
-          <Pressable
-            className="w-8 h-8 items-center justify-center"
-            onPress={() => navigation.navigate("search")}
-          >
-            <Ionicons name="search" size={22} color={theme.colors.highlight} />
-          </Pressable>
-        </View>
-      </View>
-      {loading ? (
-        <View className="flex-1 items-center justify-center bg-[#F3F4F6]">
-          <ActivityIndicator size="large" color={theme.colors.highlight} />
-        </View>
-      ) : (
-        <ScrollView
-          className="flex-1 bg-[#F3F4F6]"
-          contentInsetAdjustmentBehavior="automatic"
-          contentContainerStyle={{ paddingBottom: 24 }}
-        >
-          <View className="bg-white py-4">
-            <SectionTitle title="Brechós em destaque" />
-            <FeaturedThriftCarousel
-              stores={featured}
-              onPressItem={(store) => navigation.navigate("thriftDetail", { id: store.id })}
-            />
-          </View>
-
-          <View className="px-4 py-6">
-          <SectionTitle title="Descubra brechós perto de você" className="px-0" />
-          {/* Hero card closer to reference */}
-          <View className="relative rounded-xl overflow-hidden">
-            <NearbyMapCard
-              imageUrl="https://lh3.googleusercontent.com/aida-public/AB6AXuBSugh5Wg37gnoj6GkKkSiS8awJbFlS80QERNJycKgn68NF7oXxiwdsiEEo58M8fByFbIwXzreAIouFbxQR4E7vXlnFdvYSzoshsmN1iHWV2ji6iYl2awjYiBJnN3e-UpF_app3jtWsq7lVod9vG57HH_d6pjIzdWFNwQ6aTTUZnOxvNUEpuYq3ny9OSzx1Hz6W0f3DuJ2uxyhVgq1lhVQnHEMmXcEmyIN-WBUTV5K9e8lMJ8HpqH6_TbZC7CNVMuy3snEnVSGvP7g"
-              onLocate={() => {}}
-            />
-            <View className="absolute inset-0 rounded-xl">
-                <View className="absolute bottom-0 left-0 right-0 p-4 pb-4">
-                  <View className="flex-row items-end justify-between">
-                    <View>
-                      <Text className="text-lg font-bold text-white">Brechós próximos</Text>
-                      <Text className="text-sm text-white/90 mb-3">Encontre brechós perto de você</Text>
-                    </View>
-                    <Pressable className="bg-[#B55D05] px-4 py-2 rounded-full shadow-lg mb-3">
-                      <Text className="text-sm font-bold text-white">Ver lista</Text>
-                    </Pressable>
-                  </View>
-                </View>
-            </View>
-            </View>
-
-            {/* Filter chips with icon on first */}
-            <View className="pt-4">
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={{ paddingHorizontal: 0 }}
-                className="overflow-visible"
-              >
-                <View className="flex-row gap-2">
-                  {neighborhoods.map((label, idx) => {
-                    const active = label === activeFilter;
-                    const isFirst = idx === 0;
-                    return (
-                      <Pressable
-                        key={label}
-                        className={`flex-row items-center gap-1.5 py-2 px-3 rounded-full ${
-                          active ? "bg-[#B55D05]" : "bg-gray-200"
-                        }`}
-                        onPress={() => setActiveFilter(label)}
-                      >
-                        {isFirst ? (
-                          <Ionicons name="navigate" size={16} color={active ? "white" : "#374151"} />
-                        ) : null}
-                        <Text
-                          className={`text-sm font-semibold ${active ? "text-white" : "text-gray-700"}`}
-                        >
-                          {label}
-                        </Text>
-                      </Pressable>
-                    );
-                  })}
-                </View>
-              </ScrollView>
-            </View>
-
-            <View className="mt-4">
-              {(activeFilter === "Próximo a mim"
-                ? nearby
-                : allStores.filter((s) => s.neighborhood === activeFilter)
-              ).map((store, idx, arr) => (
-                <View key={store.id} style={{ marginBottom: idx === arr.length - 1 ? 0 : 8 }}>
-                  <NearbyThriftListItem
-                    store={store}
-                    onPress={() => navigation.navigate("thriftDetail", { id: store.id })}
-                  />
-                </View>
-              ))}
-            </View>
-            <View className="mt-6 items-center">
-              <Pressable className="bg-[#B55D05] rounded-full px-6 py-3 shadow-lg">
-                <Text className="text-sm font-bold text-white">Ver todos os brechós</Text>
-              </Pressable>
-            </View>
           </View>
 
           <View className="px-4 py-6 bg-[#F3F4F6]">
