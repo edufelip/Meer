@@ -62,9 +62,10 @@ export function LoginScreen() {
       setError(null);
       setLoading(true);
       await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
-      const { idToken } = await GoogleSignin.signIn();
+      const response = await GoogleSignin.signIn();
+      const idToken = response.data?.idToken
       if (!idToken) {
-        setError("Não foi possível entrar com Google. Tente novamente.");
+        setError("Não foi possível entrar com Google. Tente novamente");
         return;
       }
 

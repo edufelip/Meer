@@ -13,7 +13,7 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.edufelip.meer",
       "googleServicesFile": "./GoogleService-Info.plist",
-      "usesAppleSignIn": true
+      "usesAppleSignIn": false
     },
     "android": {
       "package": "com.edufelip.meer",
