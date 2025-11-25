@@ -8,7 +8,7 @@ export class GetGuideContentUseCase {
     this.repository = repository;
   }
 
-  execute(): Promise<GuideContent[]> {
-    return this.repository.listLatest();
+  execute(limit?: number): Promise<GuideContent[]> {
+    return this.repository.listLatest(limit);
   }
 }

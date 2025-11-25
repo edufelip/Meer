@@ -9,12 +9,17 @@ export class ThriftStoreRepositoryJson implements ThriftStoreRepository {
     this.remote = remote;
   }
 
-  getFeatured(): Promise<ThriftStore[]> {
-    return this.remote.getFeatured();
+  getFeatured(params?: { lat?: number; lng?: number }): Promise<ThriftStore[]> {
+    return this.remote.getFeatured(params);
   }
 
-  getNearby(): Promise<ThriftStore[]> {
-    return this.remote.getNearby();
+  getNearby(params?: {
+    lat?: number;
+    lng?: number;
+    page?: number;
+    pageSize?: number;
+  }): Promise<{ items: ThriftStore[]; page: number; hasNext: boolean }> {
+    return this.remote.getNearby(params);
   }
 
   getFavorites(): Promise<ThriftStore[]> {
@@ -35,10 +40,6 @@ export class ThriftStoreRepositoryJson implements ThriftStoreRepository {
     pageSize?: number;
   }): Promise<{ items: ThriftStore[]; page: number; hasNext: boolean }> {
     return this.remote.listByCategory(params);
-  }
-
-  getHome(params?: { lat?: number; lng?: number }): Promise<{ featured: ThriftStore[]; nearby: ThriftStore[]; content: any[] }> {
-    return this.remote.getHome(params);
   }
 
   listNearbyPaginated(params: {

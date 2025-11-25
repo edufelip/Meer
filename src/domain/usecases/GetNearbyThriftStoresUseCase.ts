@@ -8,7 +8,8 @@ export class GetNearbyThriftStoresUseCase {
     this.repository = repository;
   }
 
-  execute(): Promise<ThriftStore[]> {
-    return this.repository.getNearby();
+  async execute(params?: { lat?: number; lng?: number; page?: number; pageSize?: number }): Promise<ThriftStore[]> {
+    const res = await this.repository.getNearby(params);
+    return res.items ?? [];
   }
 }

@@ -3,8 +3,8 @@ import type { GuideContentRemoteDataSource } from "../GuideContentRemoteDataSour
 import { api } from "../../../api/client";
 
 export class HttpGuideContentRemoteDataSource implements GuideContentRemoteDataSource {
-  async listLatest(): Promise<GuideContent[]> {
-    const res = await api.get<GuideContent[]>("/content", { params: { limit: 20 } });
+  async listLatest(limit = 10): Promise<GuideContent[]> {
+    const res = await api.get<GuideContent[]>("/contents/top", { params: { limit } });
     return res.data;
   }
 }

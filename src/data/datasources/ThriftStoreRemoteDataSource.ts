@@ -1,8 +1,13 @@
 import type { ThriftStore, ThriftStoreId } from "../../domain/entities/ThriftStore";
 
 export interface ThriftStoreRemoteDataSource {
-  getFeatured(): Promise<ThriftStore[]>;
-  getNearby(): Promise<ThriftStore[]>;
+  getFeatured(params?: { lat?: number; lng?: number }): Promise<ThriftStore[]>;
+  getNearby(params?: {
+    lat?: number;
+    lng?: number;
+    page?: number;
+    pageSize?: number;
+  }): Promise<{ items: ThriftStore[]; page: number; hasNext: boolean }>;
   getFavorites(): Promise<ThriftStore[]>;
   getById(id: ThriftStoreId): Promise<ThriftStore | null>;
   search(query: string): Promise<ThriftStore[]>;
@@ -11,7 +16,6 @@ export interface ThriftStoreRemoteDataSource {
     page: number;
     hasNext: boolean;
   }>;
-  getHome(params?: { lat?: number; lng?: number }): Promise<{ featured: ThriftStore[]; nearby: ThriftStore[]; content: any[] }>;
   listNearbyPaginated(params: { page?: number; pageSize?: number; lat?: number; lng?: number }): Promise<{
     items: ThriftStore[];
     page: number;

@@ -3,13 +3,28 @@ import type { ThriftStoreRemoteDataSource } from "../ThriftStoreRemoteDataSource
 import { api } from "../../../api/client";
 
 export class HttpThriftStoreRemoteDataSource implements ThriftStoreRemoteDataSource {
-  async getFeatured(): Promise<ThriftStore[]> {
-    const res = await api.get<ThriftStore[]>("/stores/featured");
+  async getFeatured(params?: { lat?: number; lng?: number }): Promise<ThriftStore[]> {
+    const res = await api.get<ThriftStore[]>("/featured", {
+      params: { lat: params?.lat, lng: params?.lng }
+    });
     return res.data;
   }
 
-  async getNearby(): Promise<ThriftStore[]> {
-    const res = await api.get<ThriftStore[]>("/stores/nearby");
+  async getNearby(params?: {
+    lat?: number;
+    lng?: number;
+    page?: number;
+    pageSize?: number;
+  }): Promise<{ items: ThriftStore[]; page: number; hasNext: boolean }> {
+    const pageIndex = (params?.page ?? 1) - 1;
+    const res = await api.get<{ items: ThriftStore[]; page: number; hasNext: boolean }>("/nearby", {
+      params: {
+        lat: params?.lat,
+        lng: params?.lng,
+        pageIndex: pageIndex < 0 ? 0 : pageIndex,
+        pageSize: params?.pageSize ?? 10
+      }
+    });
     return res.data;
   }
 
@@ -43,26 +58,16 @@ export class HttpThriftStoreRemoteDataSource implements ThriftStoreRemoteDataSou
     return res.data;
   }
 
-  async getHome(params?: { lat?: number; lng?: number }): Promise<{ featured: ThriftStore[]; nearby: ThriftStore[]; content: any[] }> {
-    const res = await api.get<{ featured: ThriftStore[]; nearby: ThriftStore[]; content: any[] }>("/home", {
-      params: {
-        lat: params?.lat,
-        lng: params?.lng
-      }
-    });
-    return res.data;
-  }
-
   async listNearbyPaginated(params: {
     page?: number;
     pageSize?: number;
     lat?: number;
     lng?: number;
   }): Promise<{ items: ThriftStore[]; page: number; hasNext: boolean }> {
-    const res = await api.get<{ items: ThriftStore[]; page: number; hasNext: boolean }>("/stores", {
+    const pageIndex = (params.page ?? 1) - 1;
+    const res = await api.get<{ items: ThriftStore[]; page: number; hasNext: boolean }>("/nearby", {
       params: {
-        type: "nearby",
-        page: params.page ?? 1,
+        pageIndex: pageIndex < 0 ? 0 : pageIndex,
         pageSize: params.pageSize ?? 10,
         lat: params.lat,
         lng: params.lng

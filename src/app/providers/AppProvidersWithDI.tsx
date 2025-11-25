@@ -26,7 +26,6 @@ import { HttpFavoriteRemoteDataSource } from "../../data/datasources/impl/HttpFa
 import { ToggleFavoriteThriftStoreUseCase } from "../../domain/usecases/ToggleFavoriteThriftStoreUseCase";
 import { IsFavoriteThriftStoreUseCase } from "../../domain/usecases/IsFavoriteThriftStoreUseCase";
 import type { FavoriteRepository } from "../../domain/repositories/FavoriteRepository";
-import { GetHomeUseCase } from "../../domain/usecases/GetHomeUseCase";
 import { GetNearbyPaginatedUseCase } from "../../domain/usecases/GetNearbyPaginatedUseCase";
 import { HttpFeedbackRemoteDataSource } from "../../data/datasources/impl/HttpFeedbackRemoteDataSource";
 import { FeedbackRepositoryImpl } from "../../data/repositories/FeedbackRepositoryImpl";
@@ -48,7 +47,6 @@ interface Dependencies {
   getCategoriesUseCase: GetCategoriesUseCase;
   getThriftStoreByIdUseCase: GetThriftStoreByIdUseCase;
   getStoresByCategoryUseCase: GetStoresByCategoryUseCase;
-  getHomeUseCase: GetHomeUseCase;
   getNearbyPaginatedUseCase: GetNearbyPaginatedUseCase;
   getProfileUseCase: GetProfileUseCase;
   updateProfileUseCase: UpdateProfileUseCase;
@@ -102,7 +100,6 @@ export function DependenciesProvider(props: PropsWithChildren) {
     const getCategoriesUseCase = new GetCategoriesUseCase(categoryRepository);
     const getThriftStoreByIdUseCase = new GetThriftStoreByIdUseCase(thriftStoreRepository);
     const getStoresByCategoryUseCase = new GetStoresByCategoryUseCase(thriftStoreRepository);
-    const getHomeUseCase = new GetHomeUseCase(thriftStoreRepository);
     const getNearbyPaginatedUseCase = new GetNearbyPaginatedUseCase(thriftStoreRepository);
     const getProfileUseCase = new GetProfileUseCase(profileRepository);
     const updateProfileUseCase = new UpdateProfileUseCase(profileRepository);
@@ -124,7 +121,6 @@ export function DependenciesProvider(props: PropsWithChildren) {
       getCategoriesUseCase,
       getThriftStoreByIdUseCase,
       getStoresByCategoryUseCase,
-      getHomeUseCase,
       getNearbyPaginatedUseCase,
       getProfileUseCase,
       updateProfileUseCase,

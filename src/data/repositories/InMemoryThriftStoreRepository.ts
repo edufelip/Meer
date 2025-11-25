@@ -116,8 +116,8 @@ export class InMemoryThriftStoreRepository implements ThriftStoreRepository {
     return featured;
   }
 
-  async getNearby(): Promise<ThriftStore[]> {
-    return nearby;
+  async getNearby(): Promise<{ items: ThriftStore[]; page: number; hasNext: boolean }> {
+    return { items: nearby, page: 1, hasNext: false };
   }
 
   async getFavorites(): Promise<ThriftStore[]> {

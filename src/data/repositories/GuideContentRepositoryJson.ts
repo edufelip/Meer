@@ -9,7 +9,7 @@ export class GuideContentRepositoryJson implements GuideContentRepository {
     this.remote = remote;
   }
 
-  listLatest(): Promise<GuideContent[]> {
-    return this.remote.listLatest();
+  listLatest(limit?: number): Promise<GuideContent[]> {
+    return this.remote.listLatest(limit);
   }
 }

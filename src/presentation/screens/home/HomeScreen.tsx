@@ -33,22 +33,29 @@ const DEFAULT_COORDS = { lat: -23.5561782, lng: -46.6375468 };
 
 export function HomeScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const { getHomeUseCase } = useDependencies();
+  const { getFeaturedThriftStoresUseCase, getNearbyPaginatedUseCase, getGuideContentUseCase } =
+    useDependencies();
   const [featured, setFeatured] = useState<ThriftStore[]>([]);
   const [nearby, setNearby] = useState<ThriftStore[]>([]);
   const [allStores, setAllStores] = useState<ThriftStore[]>([]);
   const [guides, setGuides] = useState<GuideContent[]>([]);
+  const [featuredLoading, setFeaturedLoading] = useState(true);
+  const [nearbyLoading, setNearbyLoading] = useState(true);
+  const [guidesLoading, setGuidesLoading] = useState(true);
+  const [hasFetched, setHasFetched] = useState(false);
   const [activeFilter, setActiveFilter] = useState("Próximo a mim");
-  const [loading, setLoading] = useState(true);
   const [locationLabel, setLocationLabel] = useState("São Paulo, SP");
-  const [neighborhoods, setNeighborhoods] = useState<string[]>([]);
+  const [neighborhoods, setNeighborhoods] = useState<string[]>(["Próximo a mim"]);
   const [offline, setOffline] = useState(false);
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const coordsRef = useRef<{ lat: number; lng: number }>(DEFAULT_COORDS);
+  const lastFetchRef = useRef(0);
   const appState = useRef(AppState.currentState);
   const locationResolved = useRef(false);
   const isFetching = useRef(false);
-  const authErrored = useRef(false);
+  const hasFetchedOnce = useRef(false);
+  const featuredDoneRef = useRef(false);
+  const nearbyDoneRef = useRef(false);
 
   const handleAppStateChange = useCallback(
     (nextState: string) => {
@@ -82,37 +89,78 @@ export function HomeScreen() {
   };
 
   const fetchData = useCallback(async () => {
-    // Avoid hammering the API if the user is logged out or already fetching
-    if (!locationResolved.current || !getAccessTokenSync() || isFetching.current || authErrored.current) return;
-    isFetching.current = true;
-    try {
-      const currentCoords = coordsRef.current ?? DEFAULT_COORDS;
-      const { featured: featuredStores = [], nearby: nearbyStores = [], content: guideItems = [] } =
-        await getHomeUseCase.execute(currentCoords);
+    if (!locationResolved.current || !getAccessTokenSync() || isFetching.current) return;
+    const now = Date.now();
+    if (now - lastFetchRef.current < 2500) return; // throttle repeated triggers
 
-      setFeatured(featuredStores ?? []);
-      setNearby((nearbyStores ?? []).slice(0, 10));
-      setAllStores([...(featuredStores ?? []), ...(nearbyStores ?? [])]);
-      setGuides(guideItems ?? []);
-      const hoods = new Set<string>();
-      [...featuredStores, ...nearbyStores].forEach((s) => {
-        if (s.neighborhood) {
-          hoods.add(s.neighborhood);
-        }
-      });
-      setNeighborhoods(["Próximo a mim", ...Array.from(hoods)]);
-      setLoading(false);
-    } catch (e: any) {
-      setLoading(false);
-      if (e?.response?.status === 401) {
-        authErrored.current = true;
-        await clearTokens();
-        if (navigation.isFocused()) navigation.navigate("login");
+    isFetching.current = true;
+    setFeaturedLoading(true);
+    setNearbyLoading(true);
+    setGuidesLoading(true);
+
+    const currentCoords = coordsRef.current ?? DEFAULT_COORDS;
+    const featuredRef: ThriftStore[] = [];
+    const nearbyRef: ThriftStore[] = [];
+    featuredDoneRef.current = false;
+    nearbyDoneRef.current = false;
+
+    const recompute = () => {
+      if (featuredDoneRef.current && nearbyDoneRef.current) {
+        const combined = [...featuredRef, ...nearbyRef];
+        setAllStores(combined);
+        const hoods = new Set<string>();
+        combined.forEach((s) => {
+          if (s.neighborhood) hoods.add(s.neighborhood);
+        });
+        setNeighborhoods(["Próximo a mim", ...Array.from(hoods)]);
       }
-    } finally {
-      isFetching.current = false;
-    }
-  }, [getHomeUseCase, coords, navigation]);
+    };
+
+    const featuredPromise = getFeaturedThriftStoresUseCase
+      .execute(currentCoords)
+      .then((data) => {
+        featuredRef.splice(0, featuredRef.length, ...(data ?? []));
+        setFeatured(data ?? []);
+        setFeaturedLoading(false);
+        featuredDoneRef.current = true;
+        recompute();
+      })
+      .catch(() => {
+        setFeatured([]);
+        setFeaturedLoading(false);
+        featuredDoneRef.current = true;
+        recompute();
+      });
+
+    const nearbyPromise = getNearbyPaginatedUseCase
+      .execute({ page: 1, pageSize: 10, lat: currentCoords.lat, lng: currentCoords.lng })
+      .then((res) => {
+        const items = res.items ?? [];
+        nearbyRef.splice(0, nearbyRef.length, ...items);
+        setNearby(items.slice(0, 10));
+        setNearbyLoading(false);
+        nearbyDoneRef.current = true;
+        recompute();
+      })
+      .catch(() => {
+        setNearby([]);
+        setNearbyLoading(false);
+        nearbyDoneRef.current = true;
+        recompute();
+      });
+
+    const guidesPromise = getGuideContentUseCase
+      .execute(10)
+      .then((res) => setGuides(res ?? []))
+      .catch(() => setGuides([]))
+      .finally(() => setGuidesLoading(false));
+
+    await Promise.allSettled([featuredPromise, nearbyPromise, guidesPromise]);
+    hasFetchedOnce.current = true;
+    setHasFetched(true);
+    lastFetchRef.current = Date.now();
+    isFetching.current = false;
+  }, [getFeaturedThriftStoresUseCase, getNearbyPaginatedUseCase, getGuideContentUseCase]);
 
   useEffect(() => {
     const unsubscribeNet = NetInfo.addEventListener((state) => {
@@ -234,6 +282,8 @@ export function HomeScreen() {
     </ScrollView>
   );
 
+  const initialLoading = !hasFetched && (featuredLoading || nearbyLoading || guidesLoading);
+
   return (
     <SafeAreaView className="flex-1 bg-white" edges={["top", "left", "right"]}>
       <StatusBar barStyle="dark-content" />
@@ -268,7 +318,7 @@ export function HomeScreen() {
         )}
       </View>
 
-      {loading ? (
+      {initialLoading ? (
         renderShimmer()
       ) : (
         <ScrollView
@@ -278,10 +328,19 @@ export function HomeScreen() {
         >
           <View className="bg-white py-4">
             <SectionTitle title="Brechós em destaque" />
-            <FeaturedThriftCarousel
-              stores={featured}
-              onPressItem={(store) => navigation.navigate("thriftDetail", { id: store.id })}
-            />
+            {featuredLoading ? (
+              <Animated.View
+                style={[
+                  { height: 200, borderRadius: 12, backgroundColor: "#E5E7EB", marginHorizontal: 16 },
+                  shimmerStyle
+                ]}
+              />
+            ) : (
+              <FeaturedThriftCarousel
+                stores={featured}
+                onPressItem={(store) => navigation.navigate("thriftDetail", { id: store.id })}
+              />
+            )}
           </View>
 
           <View className="px-4 py-6">
@@ -329,7 +388,7 @@ export function HomeScreen() {
                     const isFirst = idx === 0;
                     return (
                       <Pressable
-                        key={label}
+                        key={`${label}-${idx}`}
                         className={`flex-row items-center gap-1.5 py-2 px-3 rounded-full ${
                           active ? "bg-[#B55D05]" : "bg-gray-200"
                         }`}
@@ -349,17 +408,39 @@ export function HomeScreen() {
             </View>
 
             <View className="mt-4">
-              {(activeFilter === "Próximo a mim"
-                ? nearby
-                : allStores.filter((s) => s.neighborhood === activeFilter)
-              ).map((store, idx, arr) => (
-                <View key={`${store.id}-${idx}`} style={{ marginBottom: idx === arr.length - 1 ? 0 : 8 }}>
-                  <NearbyThriftListItem
-                    store={store}
-                    onPress={() => navigation.navigate("thriftDetail", { id: store.id })}
+              {nearbyLoading ? (
+                [1, 2, 3].map((k) => (
+                  <Animated.View
+                    key={`nearby-skel-${k}`}
+                    style={[
+                      { height: 82, borderRadius: 12, backgroundColor: "#E5E7EB", marginBottom: k === 3 ? 0 : 8 },
+                      shimmerStyle
+                    ]}
                   />
-                </View>
-              ))}
+                ))
+              ) : (
+                (() => {
+                  const list =
+                    activeFilter === "Próximo a mim"
+                      ? nearby
+                      : allStores.filter((s) => s.neighborhood === activeFilter);
+                  if (!list.length) {
+                    return (
+                      <Text className="text-sm text-gray-500 mt-2">
+                        Nenhum brechó encontrado para este filtro.
+                      </Text>
+                    );
+                  }
+                  return list.map((store, idx, arr) => (
+                    <View key={`${store.id}-${idx}`} style={{ marginBottom: idx === arr.length - 1 ? 0 : 8 }}>
+                      <NearbyThriftListItem
+                        store={store}
+                        onPress={() => navigation.navigate("thriftDetail", { id: store.id })}
+                      />
+                    </View>
+                  ));
+                })()
+              )}
             </View>
             <View className="mt-6 items-center">
               <Pressable className="bg-[#B55D05] rounded-full px-6 py-3 shadow-lg">
@@ -373,7 +454,14 @@ export function HomeScreen() {
               <Text className="text-xl font-bold text-[#374151]">Conteúdos e Dicas</Text>
               <Text className="text-sm font-semibold text-[#B55D05]">Ver todos</Text>
             </View>
-            {guides[0] ? (
+            {guidesLoading ? (
+              <Animated.View
+                style={[
+                  { height: 140, borderRadius: 12, backgroundColor: "#E5E7EB" },
+                  shimmerStyle
+                ]}
+              />
+            ) : guides[0] ? (
               <View className="bg-white rounded-xl shadow-sm overflow-hidden">
                 <View className="flex-row">
                   <Image source={{ uri: guides[0].imageUrl }} className="w-1/3 h-full aspect-[4/5]" />
@@ -392,7 +480,9 @@ export function HomeScreen() {
                   </View>
                 </View>
               </View>
-            ) : null}
+            ) : (
+              <Text className="text-sm text-gray-500">Nenhum conteúdo disponível no momento.</Text>
+            )}
           </View>
         </ScrollView>
       )}

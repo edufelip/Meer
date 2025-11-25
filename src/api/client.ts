@@ -82,7 +82,8 @@ api.interceptors.request.use(
     };
 
     // AxiosRequestHeaders can be AxiosHeaders (class) or a plain object; casting through unknown keeps TS happy
-    config.headers = merged as unknown as typeof config.headers;
+    // Cast to any to appease AxiosHeader type which can be a class instance
+    config.headers = merged as any;
 
     console.log(
       `[API][REQUEST] ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`,
@@ -124,6 +125,8 @@ async function performRefresh(): Promise<string | null> {
 
   const { token, refreshToken: newRefresh } = res.data;
   await saveTokens(token, newRefresh);
+  // Ensure future requests pick the new token even before the next request interceptor runs
+  api.defaults.headers.common.Authorization = `Bearer ${token}`;
   return token;
 }
 
@@ -147,6 +150,15 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
+    // Make sure caches are hydrated before deciding
+    await ensureTokenLoaded();
+    const hasRefresh = !!getRefreshTokenSync();
+
+    console.log("[API][AUTH] 401 detected, attempting refresh flow", {
+      url: config?.url,
+      hasRefresh
+    });
+
     // Avoid re-entrant refresh requests: if current request is /auth/refresh and one is in-flight, cancel this one
     const isRefreshCall = config?.url?.includes("/auth/refresh");
     if (isRefreshCall && isRefreshing) {
@@ -154,8 +166,7 @@ api.interceptors.response.use(
     }
 
     // If no refresh token, logout immediately
-    await ensureTokenLoaded();
-    if (!getRefreshTokenSync()) {
+    if (!hasRefresh) {
       await clearTokens();
       if (navigationRef.isReady()) navigationRef.navigate("login");
       return Promise.reject(error);
@@ -175,7 +186,11 @@ api.interceptors.response.use(
       return new Promise((resolve, reject) => {
         subscribeTokenRefresh((newToken) => {
           if (!newToken) return reject(error);
-          config.headers.Authorization = `Bearer ${newToken}`;
+          config.headers = {
+            ...(config.headers as any),
+            Authorization: `Bearer ${newToken}`,
+            "X-App-Package": APP_PACKAGE
+          } as any;
           resolve(api(config));
         });
       });
@@ -212,8 +227,9 @@ api.interceptors.response.use(
 
       // Retry original request with new token
       config.headers = {
-        ...config.headers,
-        Authorization: `Bearer ${newToken}`
+        ...(config.headers as any),
+        Authorization: `Bearer ${newToken}`,
+        "X-App-Package": APP_PACKAGE
       };
 
       return api(config);
