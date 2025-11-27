@@ -16,14 +16,14 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { useDependencies } from "../../../app/providers/AppProvidersWithDI";
 import type { ThriftStore } from "../../../domain/entities/ThriftStore";
-import { useNavigation, useRoute, useFocusEffect } from "@react-navigation/native";
+import { useNavigation, useRoute } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../../../app/navigation/RootStack";
 import { theme } from "../../../shared/theme";
 import { ToggleFavoriteThriftStoreUseCase } from "../../../domain/usecases/ToggleFavoriteThriftStoreUseCase";
-import { useDependencies as useDeps } from "../../../app/providers/AppProvidersWithDI";
 
 const PAGE_SIZE = 10;
+const scrollOffsets = new Map<string, number>();
 
 type RouteParams = {
   categoryId?: string;
@@ -40,21 +40,22 @@ export function CategoryStoresScreen() {
   const { getStoresByCategoryUseCase, getNearbyPaginatedUseCase, toggleFavoriteThriftStoreUseCase } =
     useDependencies();
   const queryClient = useQueryClient();
-
-  useFocusEffect(
-    useCallback(() => {
-      // Refresh data when returning from detail to reflect updated favorite state
-      queryClient.invalidateQueries(["category-stores", categoryId ?? "nearby"]);
-    }, [queryClient, categoryId])
-  );
+  const listRef = useRef<FlatList<any>>(null);
+  const cacheKey = ["category-stores", categoryId ?? "nearby"];
+  const scrollKey = `${type ?? "nearby"}-${categoryId ?? "nearby"}`;
+  const savedOffsetRef = useRef(0);
 
   const query = useInfiniteQuery({
-    queryKey: ["category-stores", categoryId ?? "nearby"],
+    queryKey: cacheKey,
     queryFn: async ({ pageParam = 1 }) =>
       type === "nearby"
         ? getNearbyPaginatedUseCase.execute({ page: pageParam, pageSize: PAGE_SIZE, lat, lng })
         : getStoresByCategoryUseCase.execute({ categoryId: categoryId!, page: pageParam, pageSize: PAGE_SIZE }),
-    getNextPageParam: (lastPage) => (lastPage.hasNext ? lastPage.page + 1 : undefined)
+    getNextPageParam: (lastPage) => (lastPage.hasNext ? lastPage.page + 1 : undefined),
+    refetchOnMount: false,
+    refetchOnReconnect: false,
+    refetchOnWindowFocus: false,
+    staleTime: 5 * 60 * 1000
   });
 
   const stores = query.data?.pages.flatMap((p) => p.items) ?? [];
@@ -79,6 +80,20 @@ export function CategoryStoresScreen() {
   const shimmerStyle = {
     opacity: shimmer.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0.5, 1, 0.5] })
   };
+
+  // Restore scroll position when returning to the screen
+  useEffect(() => {
+    const stored = scrollOffsets.get(scrollKey) ?? 0;
+    savedOffsetRef.current = stored;
+  }, [scrollKey]);
+
+  useEffect(() => {
+    if (!isLoading && stores.length > 0 && listRef.current) {
+      requestAnimationFrame(() => {
+        listRef.current?.scrollToOffset({ offset: savedOffsetRef.current, animated: false });
+      });
+    }
+  }, [isLoading, stores.length, scrollKey]);
 
   const handleToggleFavorite = useCallback(
     async (store: ThriftStore) => {
@@ -256,6 +271,7 @@ export function CategoryStoresScreen() {
       </View>
       <View className="flex-1 bg-[#F3F4F6]">
         <FlatList
+          ref={listRef}
           data={stores}
           keyExtractor={(item) => item.id}
           contentContainerStyle={{ padding: 16, gap: 6, paddingBottom: 24 }}
@@ -268,6 +284,12 @@ export function CategoryStoresScreen() {
           className="bg-[#F3F4F6]"
           refreshing={Boolean(isRefreshing)}
           onRefresh={() => query.refetch()}
+          onScroll={(e) => {
+            const y = e.nativeEvent.contentOffset.y;
+            savedOffsetRef.current = y;
+            scrollOffsets.set(scrollKey, y);
+          }}
+          scrollEventThrottle={16}
         />
       </View>
     </SafeAreaView>
