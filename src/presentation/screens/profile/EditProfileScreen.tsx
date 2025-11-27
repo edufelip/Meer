@@ -418,13 +418,13 @@ export function EditProfileScreen() {
                 placeholder={email ?? "seuemail@dominio.com"}
                 autoCapitalize="none"
                 keyboardType="email-address"
-                className="w-full p-3 bg-white border border-gray-300 rounded-lg mt-2 mb-2"
+                className="w-full p-3 bg-white border border-gray-300 rounded-lg mt-4 mb-4"
               />
 
               <Pressable
                 disabled={!email || deleteEmailInput.trim().toLowerCase() !== (email ?? "").toLowerCase()}
                 onPress={handleDeleteAccount}
-                className={`items-center justify-center p-3 rounded-lg ${
+                className={`items-center justify-center p-3 rounded-lg mb-4 ${
                   !email || deleteEmailInput.trim().toLowerCase() !== (email ?? "").toLowerCase()
                     ? "bg-gray-300"
                     : "bg-red-600"
