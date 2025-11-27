@@ -88,11 +88,11 @@ export function CategoryStoresScreen() {
       className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex-row items-stretch"
       onPress={() => navigation.navigate("thriftDetail", { id: item.id, store: item })}
     >
-      <View style={{ width: 112, alignSelf: "stretch" }}>
+      <View style={{ width: 112, alignSelf: "stretch", minHeight: 120 }}>
         {item.coverImageUrl || item.galleryUrls?.[0] ? (
           <Image
             source={{ uri: item.coverImageUrl ?? item.galleryUrls?.[0] }}
-            style={{ width: "100%", height: "100%" }}
+            style={{ flex: 1, width: "100%", height: "100%" }}
             resizeMode="cover"
           />
         ) : (
@@ -100,7 +100,7 @@ export function CategoryStoresScreen() {
             colors={["#E5E7EB", "#D1D5DB"]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
-            style={{ width: "100%", height: "100%" }}
+            style={{ flex: 1, width: "100%", height: "100%" }}
           />
         )}
       </View>
