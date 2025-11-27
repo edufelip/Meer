@@ -24,7 +24,7 @@ export function AppProviders(props: PropsWithChildren) {
 }
 
 function FirebaseBootstrap() {
-  const { getProfileUseCase } = useDependencies();
+  const { getCachedProfileUseCase } = useDependencies();
   const [userId, setUserId] = useState<string | undefined>(undefined);
 
   useEffect(() => {
@@ -32,13 +32,14 @@ function FirebaseBootstrap() {
       const { token } = await getTokens();
       if (!token) return;
       try {
-        const profile = await getProfileUseCase.execute();
+        // avoid triggering another /auth/me call; rely on cached profile saved during auth/bootstrap
+        const profile = await getCachedProfileUseCase.execute();
         if (profile?.id) setUserId(profile.id);
       } catch {
         // ignore; crashlytics still enabled
       }
     })();
-  }, [getProfileUseCase]);
+  }, [getCachedProfileUseCase]);
 
   return null;
 }
