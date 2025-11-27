@@ -3,6 +3,7 @@ import { Image, Pressable, Text, View } from "react-native";
 import type { ThriftStore } from "../../domain/entities/ThriftStore";
 import { Ionicons } from "@expo/vector-icons";
 import { theme } from "../../shared/theme";
+import { LinearGradient } from "expo-linear-gradient";
 
 interface FavoriteThriftCardProps {
   store: ThriftStore;
@@ -10,9 +11,21 @@ interface FavoriteThriftCardProps {
 }
 
 export function FavoriteThriftCard({ store, onPress }: FavoriteThriftCardProps) {
+  const cover =
+    store.coverImageUrl ?? store.imageUrl ?? (store.galleryUrls && store.galleryUrls[0]) ?? null;
+
   return (
     <Pressable className="bg-white rounded-xl shadow-sm overflow-hidden" onPress={() => onPress?.(store)}>
-      <Image source={{ uri: store.imageUrl }} className="w-full h-40" />
+      {cover ? (
+        <Image source={{ uri: cover }} className="w-full h-40" resizeMode="cover" />
+      ) : (
+        <LinearGradient
+          colors={["#E5E7EB", "#D1D5DB"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={{ width: "100%", height: 160 }}
+        />
+      )}
       <View className="p-4 space-y-2">
         <View className="flex-row justify-between items-center">
           <Text className="text-lg font-bold text-[#1F2937]" numberOfLines={1}>
