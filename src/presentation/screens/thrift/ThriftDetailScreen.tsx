@@ -89,8 +89,8 @@ export function ThriftDetailScreen({ route }: ThriftDetailScreenProps) {
     return (
       <SafeAreaView className="flex-1 bg-[#F3F4F6]" edges={["left", "right", "bottom"]}>
         <StatusBar barStyle="light-content" translucent />
-        <Animated.View className="h-64 bg-[#E5E7EB]" style={shimmerStyle} />
-        <View className="bg-white rounded-t-2xl -mt-4 p-4 space-y-4">
+        <Animated.View className="h-64 bg-[#E5E7EB] mb-4" style={shimmerStyle} />
+        <View className="bg-white rounded-t-2xl -mt-4 p-4">
           {[1, 2, 3, 4, 5].map((key) => (
             <Animated.View
               key={key}
@@ -99,7 +99,8 @@ export function ThriftDetailScreen({ route }: ThriftDetailScreenProps) {
                   height: key === 1 ? 20 : 14,
                   borderRadius: 8,
                   backgroundColor: "#E5E7EB",
-                  width: key === 1 ? "70%" : key % 2 === 0 ? "85%" : "60%"
+                  width: key === 1 ? "70%" : key % 2 === 0 ? "85%" : "60%",
+                  marginBottom: 10
                 },
                 shimmerStyle
               ]}
@@ -112,7 +113,8 @@ export function ThriftDetailScreen({ route }: ThriftDetailScreenProps) {
                 {
                   height: 72,
                   borderRadius: 12,
-                  backgroundColor: "#E5E7EB"
+                  backgroundColor: "#E5E7EB",
+                  marginTop: key === 1 ? 6 : 10
                 },
                 shimmerStyle
               ]}
