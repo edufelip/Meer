@@ -243,7 +243,8 @@ export function BrechoFormScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-[#F3F4F6]" edges={["top", "left", "right"]}>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaView className="flex-1 bg-[#F3F4F6]" edges={["top", "left", "right"]}>
       <View className="bg-white/90 border-b border-gray-200">
         <View className="flex-row items-center justify-between p-4">
           <Pressable className="w-8 h-8 items-center justify-center" onPress={() => navigation.goBack()}>
@@ -293,34 +294,32 @@ export function BrechoFormScreen() {
 
         <View className="bg-white p-4 rounded-xl shadow-sm mb-4">
           <Text className="text-lg font-bold mb-4">Fotos do Brechó</Text>
-          <GestureHandlerRootView>
-            <DraggableFlatList
-              data={photos}
-              horizontal
-              keyExtractor={(item, index) => item.id ?? item.uri ?? `photo-${index}`}
-              onDragEnd={({ data }) => setPhotos([...data])}
-              renderItem={renderPhotoItem}
-              ListHeaderComponent={
-                photos.length >= MAX_PHOTOS ? null : (
-                  <Pressable
-                    className="h-24 w-24 mr-3 border-2 border-dashed border-gray-300 rounded-lg items-center justify-center bg-gray-100"
-                    onPress={() => {
-                      Alert.alert("Adicionar foto", "Escolha a origem", [
-                        { text: "Câmera", onPress: () => pickImage(true) },
-                        { text: "Galeria", onPress: () => pickImage(false) },
-                        { text: "Cancelar", style: "cancel" }
-                      ]);
-                    }}
-                  >
-                    <Ionicons name="add" size={28} color="#9CA3AF" />
-                  </Pressable>
-                )
-              }
-              activationDistance={12}
-              contentContainerStyle={{ paddingRight: 12, paddingVertical: 2 }}
-              showsHorizontalScrollIndicator={false}
-            />
-          </GestureHandlerRootView>
+          <DraggableFlatList
+            data={photos}
+            horizontal
+            keyExtractor={(item, index) => item.id ?? item.uri ?? `photo-${index}`}
+            onDragEnd={({ data }) => setPhotos([...data])}
+            renderItem={renderPhotoItem}
+            ListHeaderComponent={
+              photos.length >= MAX_PHOTOS ? null : (
+                <Pressable
+                  className="h-24 w-24 mr-3 border-2 border-dashed border-gray-300 rounded-lg items-center justify-center bg-gray-100"
+                  onPress={() => {
+                    Alert.alert("Adicionar foto", "Escolha a origem", [
+                      { text: "Câmera", onPress: () => pickImage(true) },
+                      { text: "Galeria", onPress: () => pickImage(false) },
+                      { text: "Cancelar", style: "cancel" }
+                    ]);
+                  }}
+                >
+                  <Ionicons name="add" size={28} color="#9CA3AF" />
+                </Pressable>
+              )
+            }
+            activationDistance={12}
+            contentContainerStyle={{ paddingRight: 12, paddingVertical: 2 }}
+            showsHorizontalScrollIndicator={false}
+          />
           <Text className="text-xs text-gray-500 mt-2">Segure para reordenar. A primeira foto é a capa.</Text>
         </View>
 
@@ -424,6 +423,7 @@ export function BrechoFormScreen() {
           </Pressable>
         </View>
       </ScrollView>
-    </SafeAreaView>
+      </SafeAreaView>
+    </GestureHandlerRootView>
   );
 }
