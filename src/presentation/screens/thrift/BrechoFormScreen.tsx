@@ -3,10 +3,13 @@ import type { RouteProp } from "@react-navigation/native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import * as ImagePicker from "expo-image-picker";
 import * as Location from "expo-location";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Animated as RNAnimated,
+  Easing,
+  Platform,
   Image,
   Pressable,
   ScrollView,
@@ -18,13 +21,6 @@ import {
 import DraggableFlatList, { RenderItemParams } from "react-native-draggable-flatlist";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaView } from "react-native-safe-area-context";
-import AnimatedRe, {
-  createAnimatedComponent,
-  interpolateColor,
-  useAnimatedStyle,
-  useSharedValue,
-  withTiming
-} from "react-native-reanimated";
 import type { RootStackParamList } from "../../../app/navigation/RootStack";
 import { useDependencies } from "../../../app/providers/AppProvidersWithDI";
 import type { ThriftStore } from "../../../domain/entities/ThriftStore";
@@ -50,7 +46,9 @@ export function BrechoFormScreen() {
   const [addressCoords, setAddressCoords] = useState<{ latitude?: number; longitude?: number } | null>(null);
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
-  const [social, setSocial] = useState(initial.social?.instagram ?? "");
+  const [instagram, setInstagram] = useState(
+    initial.social?.instagram?.replace(/^@+/, "") ?? ""
+  );
   const [categories, setCategories] = useState<string[]>(initial.categories ?? []);
   const [photos, setPhotos] = useState<Array<{ id?: string; uri: string; isNew?: boolean }>>(
     (initial.images ?? []).map((img) => ({ id: img.id ?? img.url, uri: img.url }))
@@ -66,37 +64,82 @@ export function BrechoFormScreen() {
     );
   };
 
-  const categoryOptions = ["Feminino", "Masculino", "Infantil", "Casa", "Plus Size", "Luxo"];
+  const categoryOptions = useMemo(
+    () => [
+      { id: "fem", label: "Feminino" },
+      { id: "masc", label: "Masculino" },
+      { id: "kids", label: "Infantil" },
+      { id: "home", label: "Casa" },
+      { id: "plus", label: "Plus Size" },
+      { id: "luxo", label: "Luxo" }
+    ],
+    []
+  );
 
-  const AnimatedPressable = createAnimatedComponent(Pressable);
-  const AnimatedText = createAnimatedComponent(Text);
-
-  const CategoryChip = ({ label, active }: { label: string; active: boolean }) => {
-    const activeSv = useSharedValue(active ? 1 : 0);
+  const CategoryChip = ({ id, label, active }: { id: string; label: string; active: boolean }) => {
+    const anim = useRef(new RNAnimated.Value(active ? 1 : 0)).current; // color/size based on active
+    const pressAnim = useRef(new RNAnimated.Value(0)).current; // tap bounce
 
     useEffect(() => {
-      activeSv.value = withTiming(active ? 1 : 0, { duration: 180 });
-    }, [active, activeSv]);
+      RNAnimated.timing(anim, {
+        toValue: active ? 1 : 0,
+        duration: 220,
+        easing: Easing.out(Easing.quad),
+        useNativeDriver: false
+      }).start();
+    }, [active, anim]);
 
-    const containerStyle = useAnimatedStyle(() => ({
-      backgroundColor: interpolateColor(activeSv.value, [0, 1], ["#E5E7EB", "#B55D05"])
-    }));
+    const bgStyle = {
+      backgroundColor: anim.interpolate({
+        inputRange: [0, 1],
+        outputRange: ["#E5E7EB", "#B55D05"]
+      })
+    };
 
-    const textStyle = useAnimatedStyle(() => ({
-      color: interpolateColor(activeSv.value, [0, 1], ["#374151", "#FFFFFF"])
-    }));
+    const textStyle = {
+      color: anim.interpolate({
+        inputRange: [0, 1],
+        outputRange: ["#374151", "#FFFFFF"]
+      })
+    };
+
+    const pressScale = pressAnim.interpolate({
+      inputRange: [0, 1],
+      outputRange: [1, 1.07]
+    });
+
+    const scaleStyle = {
+      transform: [
+        {
+          scale: anim.interpolate({
+            inputRange: [0, 1],
+            outputRange: [0.98, 1.08]
+          })
+        },
+        {
+          scale: pressScale
+        }
+      ]
+    };
 
     return (
-      <AnimatedPressable
-        key={label}
-        style={containerStyle}
-        className="py-2 px-4 rounded-full"
-        onPress={() => toggleCategory(label)}
+      <Pressable
+        key={id}
+        onPress={() => {
+          pressAnim.setValue(0);
+          RNAnimated.sequence([
+            RNAnimated.spring(pressAnim, { toValue: 1, useNativeDriver: true, speed: 22, bounciness: 7 }),
+            RNAnimated.timing(pressAnim, { toValue: 0, duration: 140, easing: Easing.out(Easing.quad), useNativeDriver: true })
+          ]).start();
+          toggleCategory(label);
+        }}
       >
-        <AnimatedText style={textStyle} className="text-sm font-semibold">
-          {label}
-        </AnimatedText>
-      </AnimatedPressable>
+        <RNAnimated.View style={[bgStyle, scaleStyle]} className="py-2 px-4 rounded-full">
+          <RNAnimated.Text style={textStyle} className="text-sm font-semibold">
+            {label}
+          </RNAnimated.Text>
+        </RNAnimated.View>
+      </Pressable>
     );
   };
 
@@ -198,7 +241,8 @@ export function BrechoFormScreen() {
     if (address.trim()) textChanges.addressLine = address.trim();
     if (phone.trim()) textChanges.phone = phone.trim();
     if (email.trim()) textChanges.email = email.trim();
-    if (social.trim()) textChanges.social = { instagram: social.trim() };
+    const instagramHandle = instagram.trim().replace(/^@+/, "");
+    if (instagramHandle) textChanges.social = { instagram: `@${instagramHandle}` };
     if (categories.length) textChanges.categories = categories;
 
     // Geocode address to get lat/lng when provided
@@ -413,13 +457,18 @@ export function BrechoFormScreen() {
               />
             </View>
             <View>
-              <Text className="text-sm font-medium text-gray-700 mb-2">Redes Sociais</Text>
-              <TextInput
-                value={social}
-                onChangeText={setSocial}
-                placeholder="@seu_brecho"
-                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-3 mb-2"
-              />
+              <Text className="text-sm font-medium text-gray-700 mb-2">Instagram</Text>
+              <View className="flex-row items-center rounded-lg border border-gray-300 bg-white px-3 py-3 mb-2">
+                <Text className="text-gray-500 mr-2">@</Text>
+                <TextInput
+                  value={instagram}
+                  onChangeText={(t) => setInstagram(t.replace(/^@+/, ""))}
+                  placeholder="seu_brecho"
+                  className="flex-1 text-base"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
+              </View>
             </View>
           </View>
         </View>
@@ -427,8 +476,8 @@ export function BrechoFormScreen() {
         <View className="bg-white p-4 rounded-xl shadow-sm mb-4">
           <Text className="text-lg font-bold mb-4">Categorias</Text>
           <View className="flex-row flex-wrap gap-2 mb-2">
-            {categoryOptions.map((label) => (
-              <CategoryChip key={label} label={label} active={categories.includes(label)} />
+            {categoryOptions.map((opt) => (
+              <CategoryChip key={opt.id} id={opt.id} label={opt.label} active={categories.includes(opt.label)} />
             ))}
           </View>
         </View>
