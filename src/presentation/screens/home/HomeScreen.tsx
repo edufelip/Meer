@@ -162,10 +162,9 @@ export function HomeScreen() {
     async (opts?: { force?: boolean; forceFeatured?: boolean; silent?: boolean }) => {
       if (!locationResolved.current || !getAccessTokenSync()) return;
       const now = Date.now();
-      if (!opts?.force) {
-        if (isFetching.current) return;
-        if (now - lastFetchRef.current < 2500) return; // throttle repeated triggers
-      }
+      // Even for forced fetches, avoid concurrent duplicate runs.
+      if (isFetching.current) return;
+      if (!opts?.force && now - lastFetchRef.current < 2500) return; // throttle repeated triggers
 
       isFetching.current = true;
       if (!opts?.silent) {
