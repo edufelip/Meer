@@ -19,6 +19,7 @@ import type { ThriftStore } from "../../../domain/entities/ThriftStore";
 import { theme } from "../../../shared/theme";
 import * as ImagePicker from "expo-image-picker";
 import DraggableFlatList, { RenderItemParams } from "react-native-draggable-flatlist";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useDependencies } from "../../../app/providers/AppProvidersWithDI";
 import { ActivityIndicator } from "react-native";
 import * as Location from "expo-location";
@@ -292,12 +293,12 @@ export function BrechoFormScreen() {
 
         <View className="bg-white p-4 rounded-xl shadow-sm mb-4">
           <Text className="text-lg font-bold mb-4">Fotos do Brechó</Text>
-          <View className="flex-row items-center">
+          <GestureHandlerRootView>
             <DraggableFlatList
               data={photos}
               horizontal
               keyExtractor={(item, index) => item.id ?? item.uri ?? `photo-${index}`}
-              onDragEnd={({ data }) => setPhotos(data)}
+              onDragEnd={({ data }) => setPhotos([...data])}
               renderItem={renderPhotoItem}
               ListHeaderComponent={
                 photos.length >= MAX_PHOTOS ? null : (
@@ -315,10 +316,11 @@ export function BrechoFormScreen() {
                   </Pressable>
                 )
               }
-              contentContainerStyle={{ paddingRight: 12 }}
+              activationDistance={12}
+              contentContainerStyle={{ paddingRight: 12, paddingVertical: 2 }}
               showsHorizontalScrollIndicator={false}
             />
-          </View>
+          </GestureHandlerRootView>
           <Text className="text-xs text-gray-500 mt-2">Segure para reordenar. A primeira foto é a capa.</Text>
         </View>
 
