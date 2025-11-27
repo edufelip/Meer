@@ -26,17 +26,17 @@ export function FavoriteThriftCard({ store, onPress }: FavoriteThriftCardProps) 
           style={{ width: "100%", height: 160 }}
         />
       )}
-      <View className="p-4 space-y-2">
+      <View className="p-4">
         <View className="flex-row justify-between items-center">
           <Text className="text-lg font-bold text-[#1F2937]" numberOfLines={1}>
             {store.name}
           </Text>
           <Ionicons name="heart" size={18} color={theme.colors.highlight} />
         </View>
-        <Text className="text-sm text-[#6B7280]" numberOfLines={2}>
+        <Text className="text-sm text-[#6B7280] mb-1" numberOfLines={2}>
           {store.description}
         </Text>
-        <View className="flex-row items-center">
+        <View className="flex-row items-center mb-1">
           <Ionicons name="location" size={14} color={theme.colors.highlight} style={{ marginRight: 8 }} />
           <Text className="text-sm text-[#6B7280]" numberOfLines={1}>
             {store.addressLine ?? store.neighborhood ?? "Endereço disponível em breve"}
