@@ -119,6 +119,9 @@ async function performRefresh(): Promise<string | null> {
   const refreshToken = getRefreshTokenSync();
   if (!refreshToken) return null;
 
+  // Ensure we never send an (expired) access token when refreshing
+  delete (refreshApi.defaults.headers.common as any).Authorization;
+
   const res = await refreshApi.post<{ token: string; refreshToken?: string }>("/auth/refresh", {
     refreshToken
   });

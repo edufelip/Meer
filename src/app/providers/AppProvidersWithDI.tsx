@@ -4,6 +4,7 @@ import { UserRepositoryImpl } from "../../data/repositories/UserRepositoryImpl";
 import { HttpThriftStoreRemoteDataSource } from "../../data/datasources/impl/HttpThriftStoreRemoteDataSource";
 import { HttpGuideContentRemoteDataSource } from "../../data/datasources/impl/HttpGuideContentRemoteDataSource";
 import { HttpCategoryRemoteDataSource } from "../../data/datasources/impl/HttpCategoryRemoteDataSource";
+import { AsyncStorageCategoryLocalDataSource } from "../../data/datasources/impl/AsyncStorageCategoryLocalDataSource";
 import { HttpProfileRemoteDataSource } from "../../data/datasources/impl/HttpProfileRemoteDataSource";
 import { AsyncStorageProfileLocalDataSource } from "../../data/datasources/impl/AsyncStorageProfileLocalDataSource";
 import { ThriftStoreRepositoryJson } from "../../data/repositories/ThriftStoreRepositoryJson";
@@ -16,6 +17,7 @@ import { GetNearbyThriftStoresUseCase } from "../../domain/usecases/GetNearbyThr
 import { GetGuideContentUseCase } from "../../domain/usecases/GetGuideContentUseCase";
 import { GetFavoriteThriftStoresUseCase } from "../../domain/usecases/GetFavoriteThriftStoresUseCase";
 import { GetCategoriesUseCase } from "../../domain/usecases/GetCategoriesUseCase";
+import { GetCachedCategoriesUseCase } from "../../domain/usecases/GetCachedCategoriesUseCase";
 import { GetThriftStoreByIdUseCase } from "../../domain/usecases/GetThriftStoreByIdUseCase";
 import { GetStoresByCategoryUseCase } from "../../domain/usecases/GetStoresByCategoryUseCase";
 import { SearchThriftStoresUseCase } from "../../domain/usecases/SearchThriftStoresUseCase";
@@ -46,6 +48,7 @@ interface Dependencies {
   toggleFavoriteThriftStoreUseCase: ToggleFavoriteThriftStoreUseCase;
   isFavoriteThriftStoreUseCase: IsFavoriteThriftStoreUseCase;
   getCategoriesUseCase: GetCategoriesUseCase;
+  getCachedCategoriesUseCase: GetCachedCategoriesUseCase;
   getThriftStoreByIdUseCase: GetThriftStoreByIdUseCase;
   getStoresByCategoryUseCase: GetStoresByCategoryUseCase;
   getNearbyPaginatedUseCase: GetNearbyPaginatedUseCase;
@@ -81,6 +84,7 @@ export function DependenciesProvider(props: PropsWithChildren) {
     const feedbackRemote = new HttpFeedbackRemoteDataSource();
     const guideContentRemote = new HttpGuideContentRemoteDataSource();
     const categoryRemote = new HttpCategoryRemoteDataSource();
+    const categoryLocal = new AsyncStorageCategoryLocalDataSource();
     const profileRemote = new HttpProfileRemoteDataSource();
     const profileLocal = new AsyncStorageProfileLocalDataSource();
     const favoriteRepository = new FavoriteRepositoryHybrid(favoriteRemote);
@@ -88,7 +92,7 @@ export function DependenciesProvider(props: PropsWithChildren) {
 
     const thriftStoreRepository = new ThriftStoreRepositoryJson(thriftStoreRemote);
     const guideContentRepository = new GuideContentRepositoryJson(guideContentRemote);
-    const categoryRepository = new CategoryRepositoryJson(categoryRemote);
+    const categoryRepository = new CategoryRepositoryJson(categoryRemote, categoryLocal);
     const profileRepository = new ProfileRepositoryJson(profileRemote, profileLocal);
 
     const getCurrentUserUseCase = new GetCurrentUserUseCase(userRepository);
@@ -100,6 +104,7 @@ export function DependenciesProvider(props: PropsWithChildren) {
     const toggleFavoriteThriftStoreUseCase = new ToggleFavoriteThriftStoreUseCase(favoriteRepository);
     const isFavoriteThriftStoreUseCase = new IsFavoriteThriftStoreUseCase(favoriteRepository);
     const getCategoriesUseCase = new GetCategoriesUseCase(categoryRepository);
+    const getCachedCategoriesUseCase = new GetCachedCategoriesUseCase(categoryRepository);
     const getThriftStoreByIdUseCase = new GetThriftStoreByIdUseCase(thriftStoreRepository);
     const getStoresByCategoryUseCase = new GetStoresByCategoryUseCase(thriftStoreRepository);
     const getNearbyPaginatedUseCase = new GetNearbyPaginatedUseCase(thriftStoreRepository);
@@ -122,6 +127,7 @@ export function DependenciesProvider(props: PropsWithChildren) {
       toggleFavoriteThriftStoreUseCase,
       isFavoriteThriftStoreUseCase,
       getCategoriesUseCase,
+      getCachedCategoriesUseCase,
       getThriftStoreByIdUseCase,
       getStoresByCategoryUseCase,
       getNearbyPaginatedUseCase,

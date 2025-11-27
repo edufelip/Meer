@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { ActivityIndicator, FlatList, Pressable, StatusBar, Text, View } from "react-native";
+import { ActivityIndicator, FlatList, LayoutAnimation, Platform, Pressable, StatusBar, Text, UIManager, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useDependencies } from "../../../app/providers/AppProvidersWithDI";
@@ -11,24 +11,54 @@ import { CategoryCard, getCategoryDisplayName } from "../../components/CategoryC
 import { theme } from "../../../shared/theme";
 
 export function CategoriesScreen() {
-  const { getCategoriesUseCase } = useDependencies();
+  const { getCategoriesUseCase, getCachedCategoriesUseCase } = useDependencies();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Enable layout animation on Android
+  useEffect(() => {
+    if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {
+      UIManager.setLayoutAnimationEnabledExperimental(true);
+    }
+  }, []);
+
+  const areDifferent = (a: Category[] = [], b: Category[] = []) => {
+    if (a.length !== b.length) return true;
+    for (let i = 0; i < a.length; i++) {
+      const ca = a[i];
+      const cb = b[i];
+      if (!cb || ca.id !== cb.id || ca.nameStringId !== cb.nameStringId || ca.imageResId !== cb.imageResId) {
+        return true;
+      }
+    }
+    return false;
+  };
+
   useEffect(() => {
     let isMounted = true;
     (async () => {
-      const data = await getCategoriesUseCase.execute();
-      if (isMounted) {
-        setCategories(data);
+      // 1) load cached first for instant UI
+      const cached = await getCachedCategoriesUseCase.execute();
+      if (isMounted && cached) {
+        setCategories(cached);
         setLoading(false);
+      }
+      // 2) fetch remote in background
+      try {
+        const remote = await getCategoriesUseCase.execute();
+        if (isMounted && areDifferent(remote, cached ?? [])) {
+          LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+          setCategories(remote);
+        }
+      } finally {
+        if (isMounted) setLoading(false);
       }
     })();
     return () => {
       isMounted = false;
     };
-  }, [getCategoriesUseCase]);
+  }, [getCachedCategoriesUseCase, getCategoriesUseCase]);
 
   return (
     <SafeAreaView className="flex-1 bg-white" edges={["top", "left", "right"]}>
