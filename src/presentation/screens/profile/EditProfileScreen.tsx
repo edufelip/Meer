@@ -393,7 +393,7 @@ export function EditProfileScreen() {
         <TouchableWithoutFeedback onPress={() => setShowDeleteModal(false)}>
           <View className="flex-1 bg-black/40" />
         </TouchableWithoutFeedback>
-        <View className="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl p-4 space-y-3 shadow-2xl">
+        <View className="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl p-4 pb-8 space-y-4 shadow-2xl">
           <View className="flex-row justify-between items-center">
             <Text className="text-lg font-bold text-[#1F2937]">Excluir conta</Text>
             <Pressable onPress={() => setShowDeleteModal(false)}>
