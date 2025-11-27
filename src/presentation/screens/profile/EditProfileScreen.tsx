@@ -51,6 +51,7 @@ export function EditProfileScreen() {
   const [showAvatarSheet, setShowAvatarSheet] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteEmailInput, setDeleteEmailInput] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
   const [initialProfile, setInitialProfile] = useState({
     name: preloaded?.name ?? "",
     bio: preloaded?.bio ?? "",

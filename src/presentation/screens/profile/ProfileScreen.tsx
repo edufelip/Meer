@@ -143,7 +143,7 @@ export function ProfileScreen() {
 
         {user?.ownedThriftStore ? (
           <View className="px-4 pt-0 pb-4">
-            <Text className="text-lg font-bold mb-2 text-[#1F2937]">Meu Brechó</Text>
+            <Text className="text-lg font-bold mb-2 text-[#1F2937]">Brechó</Text>
             <View className="bg-white rounded-lg shadow-sm">
               <Pressable
                 className="flex-row items-center justify-between p-4 border-b border-gray-200"
@@ -176,6 +176,7 @@ export function ProfileScreen() {
           </View>
         ) : (
           <View className="px-4 pt-0 pb-4">
+            <Text className="text-lg font-bold mb-2 text-[#1F2937]">Brechó</Text>
             <View className="bg-white rounded-lg shadow-sm">
               <Pressable
                 className="flex-row items-center justify-between p-4"
