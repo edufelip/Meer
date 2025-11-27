@@ -400,7 +400,7 @@ export function EditProfileScreen() {
               <Ionicons name="close" size={20} color="#6B7280" />
             </Pressable>
           </View>
-          <Text className="text-sm text-[#6B7280] mt-1">
+          <Text className="text-sm text-[#6B7280] mt-2">
             Esta ação é permanente. Digite seu e-mail para confirmar a exclusão da conta.
           </Text>
           <TextInput
@@ -409,12 +409,12 @@ export function EditProfileScreen() {
             placeholder={email ?? "seuemail@dominio.com"}
             autoCapitalize="none"
             keyboardType="email-address"
-            className="w-full p-3 bg-white border border-gray-300 rounded-lg mt-1"
+            className="w-full p-3 bg-white border border-gray-300 rounded-lg mt-2"
           />
           <Pressable
             disabled={!email || deleteEmailInput.trim().toLowerCase() !== (email ?? "").toLowerCase()}
             onPress={handleDeleteAccount}
-            className={`items-center justify-center p-3 rounded-lg mt-1 ${
+            className={`items-center justify-center p-3 rounded-lg mt-2 ${
               !email || deleteEmailInput.trim().toLowerCase() !== (email ?? "").toLowerCase()
                 ? "bg-gray-300"
                 : "bg-red-600"
@@ -430,7 +430,7 @@ export function EditProfileScreen() {
               Excluir conta
             </Text>
           </Pressable>
-          <Pressable className="items-center py-2 mt-1" onPress={() => setShowDeleteModal(false)}>
+          <Pressable className="items-center py-2 mt-2" onPress={() => setShowDeleteModal(false)}>
             <Text className="text-sm text-[#6B7280]">Cancelar</Text>
           </Pressable>
         </View>
