@@ -17,6 +17,13 @@ import {
   RefreshControl
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import AnimatedRe, {
+  createAnimatedComponent,
+  interpolateColor,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming
+} from "react-native-reanimated";
 import { SectionTitle } from "../../components/SectionTitle";
 import { FeaturedThriftCarousel } from "../../components/FeaturedThriftCarousel";
 import { NearbyMapCard } from "../../components/NearbyMapCard";
@@ -40,6 +47,9 @@ import {
 
 const DEFAULT_COORDS = { lat: -23.5561782, lng: -46.6375468 };
 const HOME_TTL = 24 * 60 * 60 * 1000; // 24h strict
+
+const AnimatedPressable = createAnimatedComponent(Pressable);
+const AnimatedText = createAnimatedComponent(Text);
 
 const bucketFor = (coords: { lat: number; lng: number }) => {
   const r = (v: number) => Math.round(v * 100) / 100;
@@ -110,6 +120,61 @@ export function HomeScreen() {
 
   const shimmerStyle = {
     opacity: shimmer.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0.5, 1, 0.5] })
+  };
+
+  const NeighborhoodChip = ({
+    label,
+    active,
+    isFirst,
+    onPress
+  }: {
+    label: string;
+    active: boolean;
+    isFirst: boolean;
+    onPress: () => void;
+  }) => {
+    const activeSv = useSharedValue(active ? 1 : 0);
+    const pressSv = useSharedValue(0);
+
+    useEffect(() => {
+      activeSv.value = withTiming(active ? 1 : 0, { duration: 180 });
+    }, [active, activeSv]);
+
+    const containerStyle = useAnimatedStyle(() => {
+      const bg = interpolateColor(activeSv.value, [0, 1], ["#E5E7EB", "#B55D05"]);
+      const scale = 1 - pressSv.value * 0.06;
+      return {
+        backgroundColor: bg,
+        transform: [{ scale }]
+      };
+    });
+
+    const textStyle = useAnimatedStyle(() => {
+      return {
+        color: interpolateColor(activeSv.value, [0, 1], ["#374151", "#FFFFFF"])
+      };
+    });
+
+    const iconColor = active ? "#FFFFFF" : "#374151";
+
+    return (
+      <AnimatedPressable
+        key={label}
+        style={containerStyle}
+        className="flex-row items-center gap-1.5 py-2 px-3 rounded-full"
+        onPress={() => {
+          LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+          onPress();
+        }}
+        onPressIn={() => (pressSv.value = withTiming(1, { duration: 80 }))}
+        onPressOut={() => (pressSv.value = withTiming(0, { duration: 120 }))}
+      >
+        {isFirst ? <Ionicons name="navigate" size={16} color={iconColor} /> : null}
+        <AnimatedText style={textStyle} className="text-sm font-semibold">
+          {label}
+        </AnimatedText>
+      </AnimatedPressable>
+    );
   };
 
   const updateCombined = useCallback((featuredList: ThriftStore[], nearbyList: ThriftStore[]) => {
@@ -532,29 +597,15 @@ export function HomeScreen() {
                 className="overflow-visible"
               >
                 <View className="flex-row gap-2">
-                  {neighborhoods.map((label, idx) => {
-                    const active = label === activeFilter;
-                    const isFirst = idx === 0;
-                    return (
-                      <Pressable
-                        key={`${label}-${idx}`}
-                        className={`flex-row items-center gap-1.5 py-2 px-3 rounded-full ${
-                          active ? "bg-[#B55D05]" : "bg-gray-200"
-                        }`}
-                        onPress={() => {
-                          LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-                          setActiveFilter(label);
-                        }}
-                      >
-                        {isFirst ? (
-                          <Ionicons name="navigate" size={16} color={active ? "white" : "#374151"} />
-                        ) : null}
-                        <Text className={`text-sm font-semibold ${active ? "text-white" : "text-gray-700"}`}>
-                          {label}
-                        </Text>
-                      </Pressable>
-                    );
-                  })}
+                  {neighborhoods.map((label, idx) => (
+                    <NeighborhoodChip
+                      key={`${label}-${idx}`}
+                      label={label}
+                      active={label === activeFilter}
+                      isFirst={idx === 0}
+                      onPress={() => setActiveFilter(label)}
+                    />
+                  ))}
                 </View>
               </ScrollView>
             </View>
