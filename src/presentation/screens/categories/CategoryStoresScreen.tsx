@@ -70,7 +70,12 @@ export function CategoryStoresScreen() {
       onPress={() => navigation.navigate("thriftDetail", { id: item.id, store: item })}
     >
       <Image
-        source={{ uri: item.coverImage }}
+        source={{
+          uri:
+            item.coverImageUrl ??
+            item.galleryUrls?.[0] ??
+            "https://images.unsplash.com/photo-1542293787938-4d273c3f4eb9?auto=format&fit=crop&w=800&q=80"
+        }}
         className="w-28 h-full"
         style={{ aspectRatio: 1 }}
         resizeMode="cover"
