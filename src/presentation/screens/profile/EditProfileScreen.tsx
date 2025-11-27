@@ -10,7 +10,8 @@ import {
   Switch,
   Alert,
   Modal,
-  TouchableWithoutFeedback
+  TouchableWithoutFeedback,
+  KeyboardAvoidingView
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -393,47 +394,59 @@ export function EditProfileScreen() {
         <TouchableWithoutFeedback onPress={() => setShowDeleteModal(false)}>
           <View className="flex-1 bg-black/40" />
         </TouchableWithoutFeedback>
-        <View className="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl p-4 pb-8 shadow-2xl">
-          <View className="flex-row justify-between items-center">
-            <Text className="text-lg font-bold text-[#1F2937]">Excluir conta</Text>
-            <Pressable onPress={() => setShowDeleteModal(false)}>
-              <Ionicons name="close" size={20} color="#6B7280" />
-            </Pressable>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          keyboardVerticalOffset={32}
+          className="absolute bottom-0 left-0 right-0"
+        >
+          <View className="bg-white rounded-t-2xl p-4 pb-8 shadow-2xl">
+            <View className="flex-row justify-between items-center">
+              <Text className="text-lg font-bold text-[#1F2937]">Excluir conta</Text>
+              <Pressable onPress={() => setShowDeleteModal(false)}>
+                <Ionicons name="close" size={20} color="#6B7280" />
+              </Pressable>
+            </View>
+
+            <View className="mt-2 space-y-2">
+              <Text className="text-sm text-[#6B7280]">
+                Esta ação é permanente. Digite seu e-mail para confirmar a exclusão da conta.
+              </Text>
+
+              <TextInput
+                value={deleteEmailInput}
+                onChangeText={setDeleteEmailInput}
+                placeholder={email ?? "seuemail@dominio.com"}
+                autoCapitalize="none"
+                keyboardType="email-address"
+                className="w-full p-3 bg-white border border-gray-300 rounded-lg"
+              />
+
+              <Pressable
+                disabled={!email || deleteEmailInput.trim().toLowerCase() !== (email ?? "").toLowerCase()}
+                onPress={handleDeleteAccount}
+                className={`items-center justify-center p-3 rounded-lg ${
+                  !email || deleteEmailInput.trim().toLowerCase() !== (email ?? "").toLowerCase()
+                    ? "bg-gray-300"
+                    : "bg-red-600"
+                }`}
+              >
+                <Text
+                  className={`font-bold ${
+                    !email || deleteEmailInput.trim().toLowerCase() !== (email ?? "").toLowerCase()
+                      ? "text-gray-500"
+                      : "text-white"
+                  }`}
+                >
+                  Excluir conta
+                </Text>
+              </Pressable>
+
+              <Pressable className="items-center py-2" onPress={() => setShowDeleteModal(false)}>
+                <Text className="text-sm text-[#6B7280]">Cancelar</Text>
+              </Pressable>
+            </View>
           </View>
-          <Text className="text-sm text-[#6B7280] mt-2">
-            Esta ação é permanente. Digite seu e-mail para confirmar a exclusão da conta.
-          </Text>
-          <TextInput
-            value={deleteEmailInput}
-            onChangeText={setDeleteEmailInput}
-            placeholder={email ?? "seuemail@dominio.com"}
-            autoCapitalize="none"
-            keyboardType="email-address"
-            className="w-full p-3 bg-white border border-gray-300 rounded-lg mt-2"
-          />
-          <Pressable
-            disabled={!email || deleteEmailInput.trim().toLowerCase() !== (email ?? "").toLowerCase()}
-            onPress={handleDeleteAccount}
-            className={`items-center justify-center p-3 rounded-lg mt-2 ${
-              !email || deleteEmailInput.trim().toLowerCase() !== (email ?? "").toLowerCase()
-                ? "bg-gray-300"
-                : "bg-red-600"
-            }`}
-          >
-            <Text
-              className={`font-bold ${
-                !email || deleteEmailInput.trim().toLowerCase() !== (email ?? "").toLowerCase()
-                  ? "text-gray-500"
-                  : "text-white"
-              }`}
-            >
-              Excluir conta
-            </Text>
-          </Pressable>
-          <Pressable className="items-center py-2 mt-2" onPress={() => setShowDeleteModal(false)}>
-            <Text className="text-sm text-[#6B7280]">Cancelar</Text>
-          </Pressable>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
     </SafeAreaView>
   );
