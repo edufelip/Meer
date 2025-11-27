@@ -134,7 +134,6 @@ export function HomeScreen() {
     onPress: () => void;
   }) => {
     const activeSv = useSharedValue(active ? 1 : 0);
-    const pressSv = useSharedValue(0);
 
     useEffect(() => {
       activeSv.value = withTiming(active ? 1 : 0, { duration: 180 });
@@ -142,10 +141,8 @@ export function HomeScreen() {
 
     const containerStyle = useAnimatedStyle(() => {
       const bg = interpolateColor(activeSv.value, [0, 1], ["#E5E7EB", "#B55D05"]);
-      const scale = 1 - pressSv.value * 0.06;
       return {
-        backgroundColor: bg,
-        transform: [{ scale }]
+        backgroundColor: bg
       };
     });
 
@@ -166,8 +163,6 @@ export function HomeScreen() {
           LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
           onPress();
         }}
-        onPressIn={() => (pressSv.value = withTiming(1, { duration: 80 }))}
-        onPressOut={() => (pressSv.value = withTiming(0, { duration: 120 }))}
       >
         {isFirst ? <Ionicons name="navigate" size={16} color={iconColor} /> : null}
         <AnimatedText style={textStyle} className="text-sm font-semibold">
