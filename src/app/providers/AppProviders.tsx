@@ -82,9 +82,8 @@ function AuthBootstrap({ children }: PropsWithChildren) {
     if (booting) return;
     if (validateTokenQuery.status === "success" && !hasRerouted.current) {
       hasRerouted.current = true;
-      const current = navigationRef.getCurrentRoute()?.name;
-      if (navigationRef.isReady() && (current === "login" || current === undefined)) {
-        navigationRef.navigate("tabs");
+      if (navigationRef.isReady()) {
+        navigationRef.reset({ index: 0, routes: [{ name: "tabs" }] });
       }
     }
   }, [booting, validateTokenQuery.status]);

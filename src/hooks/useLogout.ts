@@ -10,7 +10,7 @@ export function useLogout() {
     await clearTokens();
     queryClient.clear();
     if (navigationRef.isReady()) {
-      navigationRef.navigate("login");
+      navigationRef.reset({ index: 0, routes: [{ name: "login" }] });
     }
   }, [queryClient]);
 }

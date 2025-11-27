@@ -92,7 +92,7 @@ export function LoginScreen() {
       } catch {
         // ignore
       }
-      navigation.navigate("tabs");
+      navigation.reset({ index: 0, routes: [{ name: "tabs" }] });
     } catch (err) {
       setError("Não foi possível entrar com Google. Tente novamente.");
     } finally {
@@ -165,7 +165,7 @@ export function LoginScreen() {
                       } catch {
                         // ignore fetch failure; cached minimal profile will be used
                       }
-                      navigation.navigate("tabs");
+                      navigation.reset({ index: 0, routes: [{ name: "tabs" }] });
                     }
                   } catch (e: any) {
                       if (e?.code === "ERR_REQUEST_CANCELED") return;
@@ -266,7 +266,7 @@ export function LoginScreen() {
                     } catch {
                       // ignore
                     }
-                    navigation.navigate("tabs");
+                    navigation.reset({ index: 0, routes: [{ name: "tabs" }] });
                   } catch (e) {
                     setError("Não foi possível entrar. Verifique suas credenciais.");
                   } finally {

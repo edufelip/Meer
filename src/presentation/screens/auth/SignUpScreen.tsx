@@ -192,7 +192,7 @@ export function SignUpScreen() {
                     } catch {
                       // ignore
                     }
-                    navigation.navigate("tabs");
+                    navigation.reset({ index: 0, routes: [{ name: "tabs" }] });
                   } catch {
                     setError("Não foi possível criar a conta. Tente novamente.");
                   } finally {
