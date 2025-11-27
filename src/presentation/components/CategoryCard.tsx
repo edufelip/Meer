@@ -14,6 +14,25 @@ const categoryImages: Record<string, any> = {
   "categories-geral": require("../../../assets/images/categories-geral.jpg")
 };
 
+const categoryNameMap: Record<string, string> = {
+  brecho_de_casa: "Brechó de Casa",
+  brecho_masculino: "Brechó Masculino",
+  brecho_feminino: "Brechó Feminino",
+  brecho_infantil: "Brechó Infantil",
+  brecho_de_luxo: "Brechó de Luxo",
+  brecho_de_designer: "Brechó de Designer",
+  brecho_de_desapego: "Brechó de Desapego",
+  brechos_gerais: "Brechós Gerais"
+};
+
+export function getCategoryDisplayName(nameStringId: string): string {
+  if (categoryNameMap[nameStringId]) return categoryNameMap[nameStringId];
+  return nameStringId
+    .split("_")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
+
 interface CategoryCardProps {
   category: Category;
   onPress?: (category: Category) => void;
@@ -21,6 +40,7 @@ interface CategoryCardProps {
 
 export function CategoryCard({ category, onPress }: CategoryCardProps) {
   const imageSource = categoryImages[category.imageResId];
+  const displayName = getCategoryDisplayName(category.nameStringId);
 
   return (
     <Pressable
@@ -38,7 +58,7 @@ export function CategoryCard({ category, onPress }: CategoryCardProps) {
           <View className="h-10 w-10 rounded bg-white" />
         )}
       </View>
-      <Text className="text-center font-bold text-[#1F2937]">{category.nameStringId}</Text>
+      <Text className="text-center font-bold text-[#1F2937]">{displayName}</Text>
     </Pressable>
   );
 }

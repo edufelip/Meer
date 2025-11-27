@@ -43,12 +43,12 @@ export function FavoritesScreen() {
         </View>
       ) : favorites.length === 0 ? (
         <View className="flex-1 items-center justify-center bg-[#F3F4F6] px-6">
-          <View className="items-center space-y-4">
+          <View className="items-center">
             <View className="h-24 w-24 rounded-full bg-gray-200 items-center justify-center">
               <Ionicons name="heart-outline" size={48} color="#9CA3AF" />
             </View>
-            <Text className="text-xl font-bold text-[#374151]">Sua lista está vazia</Text>
-            <Text className="text-base text-[#6B7280] text-center max-w-xs">
+            <Text className="text-xl font-bold text-[#374151] mt-4">Sua lista está vazia</Text>
+            <Text className="text-base text-[#6B7280] text-center max-w-xs mt-2">
               Adicione os seus brechós preferidos aos favoritos e eles aparecerão aqui!
             </Text>
           </View>

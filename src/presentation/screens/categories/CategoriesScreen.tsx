@@ -7,7 +7,7 @@ import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../../../app/navigation/RootStack";
 import type { Category } from "../../../domain/entities/Category";
-import { CategoryCard } from "../../components/CategoryCard";
+import { CategoryCard, getCategoryDisplayName } from "../../components/CategoryCard";
 import { theme } from "../../../shared/theme";
 
 export function CategoriesScreen() {
@@ -59,7 +59,7 @@ export function CategoriesScreen() {
               onPress={() =>
                 navigation.navigate("categoryStores", {
                   categoryId: item.id,
-                  title: item.nameStringId
+                  title: getCategoryDisplayName(item.nameStringId)
                 })
               }
             />
