@@ -302,7 +302,7 @@ export function BrechoFormScreen() {
               <Text className="text-sm font-medium text-gray-700 mb-2">Nome do Brechó</Text>
               <TextInput
                 value={name}
-                onChangeText={setName}
+                onChangeText={(t) => setName(t.slice(0, 100))}
                 placeholder="Ex: Brechó Estilo Único"
                 className="w-full rounded-lg border border-gray-300 bg-white px-3 py-3 mb-2"
               />
@@ -311,7 +311,7 @@ export function BrechoFormScreen() {
               <Text className="text-sm font-medium text-gray-700 mb-2">Descrição</Text>
               <TextInput
                 value={description}
-                onChangeText={setDescription}
+                onChangeText={(t) => setDescription(t.slice(0, 200))}
                 placeholder="Descreva o que torna seu brechó especial"
                 multiline
                 numberOfLines={3}
@@ -323,7 +323,7 @@ export function BrechoFormScreen() {
               <Text className="text-sm font-medium text-gray-700 mb-2">Horário de Funcionamento</Text>
               <TextInput
                 value={hours}
-                onChangeText={setHours}
+                onChangeText={(t) => setHours(t.slice(0, 100))}
                 placeholder="Ex: Seg-Sex 9h-18h, Sáb 10h-14h"
                 className="w-full rounded-lg border border-gray-300 bg-white px-3 py-3 mb-2"
               />
