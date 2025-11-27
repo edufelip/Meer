@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useDependencies } from "../../../app/providers/AppProvidersWithDI";
 import type { ThriftStore } from "../../../domain/entities/ThriftStore";
@@ -69,17 +70,22 @@ export function CategoryStoresScreen() {
       className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex-row"
       onPress={() => navigation.navigate("thriftDetail", { id: item.id, store: item })}
     >
-      <Image
-        source={{
-          uri:
-            item.coverImageUrl ??
-            item.galleryUrls?.[0] ??
-            "https://images.unsplash.com/photo-1542293787938-4d273c3f4eb9?auto=format&fit=crop&w=800&q=80"
-        }}
-        className="w-28 h-full"
-        style={{ aspectRatio: 1 }}
-        resizeMode="cover"
-      />
+      {item.coverImageUrl || item.galleryUrls?.[0] ? (
+        <Image
+          source={{ uri: item.coverImageUrl ?? item.galleryUrls?.[0] }}
+          className="w-28 h-full"
+          style={{ aspectRatio: 1 }}
+          resizeMode="cover"
+        />
+      ) : (
+        <LinearGradient
+          colors={["#E5E7EB", "#D1D5DB"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          className="w-28 h-full"
+          style={{ aspectRatio: 1 }}
+        />
+      )}
       <View className="p-4 flex-1">
         <View className="flex-row justify-between items-start">
           <Text className="font-bold text-[#374151] text-lg" numberOfLines={1}>
