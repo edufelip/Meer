@@ -1,28 +1,27 @@
+import { Ionicons } from "@expo/vector-icons";
+import type { RouteProp } from "@react-navigation/native";
+import { useNavigation, useRoute } from "@react-navigation/native";
+import * as ImagePicker from "expo-image-picker";
+import * as Location from "expo-location";
 import React, { useEffect, useMemo, useState } from "react";
 import {
+  ActivityIndicator,
+  Alert,
+  Image,
   Pressable,
   ScrollView,
   Text,
   TextInput,
-  View,
-  FlatList,
-  Image,
-  Alert,
-  TouchableOpacity
+  TouchableOpacity,
+  View
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
-import { useNavigation, useRoute } from "@react-navigation/native";
-import type { RouteProp } from "@react-navigation/native";
-import type { RootStackParamList } from "../../../app/navigation/RootStack";
-import type { ThriftStore } from "../../../domain/entities/ThriftStore";
-import { theme } from "../../../shared/theme";
-import * as ImagePicker from "expo-image-picker";
 import DraggableFlatList, { RenderItemParams } from "react-native-draggable-flatlist";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { SafeAreaView } from "react-native-safe-area-context";
+import type { RootStackParamList } from "../../../app/navigation/RootStack";
 import { useDependencies } from "../../../app/providers/AppProvidersWithDI";
-import { ActivityIndicator } from "react-native";
-import * as Location from "expo-location";
+import type { ThriftStore } from "../../../domain/entities/ThriftStore";
+import { theme } from "../../../shared/theme";
 
 export function BrechoFormScreen() {
   const navigation = useNavigation();
@@ -261,40 +260,40 @@ export function BrechoFormScreen() {
           <Text className="text-lg font-bold mb-4">Informações Gerais</Text>
           <View className="space-y-4">
             <View>
-              <Text className="text-sm font-medium text-gray-700 mb-1">Nome do Brechó</Text>
+              <Text className="text-sm font-medium text-gray-700 mb-2">Nome do Brechó</Text>
               <TextInput
                 value={name}
                 onChangeText={setName}
                 placeholder="Ex: Brechó Estilo Único"
-                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-3"
+                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-3 mb-2"
               />
             </View>
             <View>
-              <Text className="text-sm font-medium text-gray-700 mb-1">Descrição</Text>
+              <Text className="text-sm font-medium text-gray-700 mb-2">Descrição</Text>
               <TextInput
                 value={description}
                 onChangeText={setDescription}
                 placeholder="Descreva o que torna seu brechó especial"
                 multiline
                 numberOfLines={3}
-                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-3"
+                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-3 mb-2"
                 textAlignVertical="top"
               />
             </View>
             <View>
-              <Text className="text-sm font-medium text-gray-700 mb-1">Horário de Funcionamento</Text>
+              <Text className="text-sm font-medium text-gray-700 mb-2">Horário de Funcionamento</Text>
               <TextInput
                 value={hours}
                 onChangeText={setHours}
                 placeholder="Ex: Seg-Sex 9h-18h, Sáb 10h-14h"
-                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-3"
+                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-3 mb-2"
               />
             </View>
           </View>
         </View>
 
         <View className="bg-white p-4 rounded-xl shadow-sm mb-4">
-          <Text className="text-lg font-bold mb-4">Fotos do Brechó</Text>
+          <Text className="text-lg font-bold mb-2">Fotos do Brechó</Text>
           <DraggableFlatList
             data={photos}
             horizontal
@@ -328,7 +327,7 @@ export function BrechoFormScreen() {
           <Text className="text-lg font-bold mb-4">Endereço e Contato</Text>
           <View className="space-y-4">
             <View>
-              <Text className="text-sm font-medium text-gray-700 mb-1">Endereço</Text>
+              <Text className="text-sm font-medium text-gray-700 mb-2">Endereço</Text>
               <TextInput
                 value={address}
                 onChangeText={(text) => {
@@ -336,7 +335,7 @@ export function BrechoFormScreen() {
                   setAddressCoords(null);
                 }}
                 placeholder="Rua, Número, Bairro"
-                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-3"
+                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-3 mb-2"
               />
               {addressSuggestions.length > 0 && (
                 <View className="mt-2 bg-white border border-gray-200 rounded-lg">
@@ -357,30 +356,30 @@ export function BrechoFormScreen() {
               )}
             </View>
             <View>
-              <Text className="text-sm font-medium text-gray-700 mb-1">Telefone / WhatsApp</Text>
+              <Text className="text-sm font-medium text-gray-700 mb-2">Telefone / WhatsApp</Text>
               <TextInput
                 value={phone}
                 onChangeText={setPhone}
                 placeholder="(11) 99999-9999"
-                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-3"
+                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-3 mb-2"
               />
             </View>
             <View>
-              <Text className="text-sm font-medium text-gray-700 mb-1">E-mail</Text>
+              <Text className="text-sm font-medium text-gray-700 mb-2">E-mail</Text>
               <TextInput
                 value={email}
                 onChangeText={setEmail}
                 placeholder="contato@brecho.com"
-                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-3"
+                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-3 mb-2"
               />
             </View>
             <View>
-              <Text className="text-sm font-medium text-gray-700 mb-1">Redes Sociais</Text>
+              <Text className="text-sm font-medium text-gray-700 mb-2">Redes Sociais</Text>
               <TextInput
                 value={social}
                 onChangeText={setSocial}
                 placeholder="@seu_brecho"
-                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-3"
+                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-3 mb-2"
               />
             </View>
           </View>
@@ -388,7 +387,7 @@ export function BrechoFormScreen() {
 
         <View className="bg-white p-4 rounded-xl shadow-sm mb-4">
           <Text className="text-lg font-bold mb-4">Categorias</Text>
-          <View className="flex-row flex-wrap gap-2">
+          <View className="flex-row flex-wrap gap-2 mb-2">
             {categoryOptions.map((label) => {
               const active = categories.includes(label);
               return (
