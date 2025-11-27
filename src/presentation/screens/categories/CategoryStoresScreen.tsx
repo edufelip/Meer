@@ -149,7 +149,7 @@ export function CategoryStoresScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView className="flex-1 bg-[#F3F4F6]" edges={["top", "left", "right"]}>
+      <SafeAreaView className="flex-1 bg-white" edges={["top", "left", "right"]}>
         <StatusBar barStyle="dark-content" />
         <View className="bg-white px-4 py-4 border-b border-gray-100">
           <View className="flex-row items-center">
@@ -159,7 +159,7 @@ export function CategoryStoresScreen() {
             <Text className="flex-1 text-center text-xl font-bold text-[#374151] pr-10">{title}</Text>
           </View>
         </View>
-        <View className="px-4 py-4 gap-12">
+        <View className="flex-1 bg-[#F3F4F6] px-4 py-4 gap-12">
           {[1, 2, 3, 4].map((key) => (
             <Animated.View
               key={key}
@@ -217,7 +217,7 @@ export function CategoryStoresScreen() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-[#F3F4F6]" edges={["top", "left", "right"]}>
+    <SafeAreaView className="flex-1 bg-white" edges={["top", "left", "right"]}>
       <StatusBar barStyle="dark-content" />
       <View className="bg-white px-4 py-4 border-b border-gray-200">
         <View className="flex-row items-center">
@@ -227,18 +227,20 @@ export function CategoryStoresScreen() {
           <Text className="flex-1 text-center text-xl font-bold text-[#374151] pr-10">{title}</Text>
         </View>
       </View>
-      <FlatList
-        data={stores}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={{ padding: 16, gap: 12, paddingBottom: 24 }}
-        ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
-        renderItem={renderItem}
-        onEndReached={() => hasNext && query.fetchNextPage()}
-        onEndReachedThreshold={0.6}
-        ListFooterComponent={hasNext ? <ListFooter /> : null}
-        showsVerticalScrollIndicator={false}
-        className="bg-[#F3F4F6]"
-      />
+      <View className="flex-1 bg-[#F3F4F6]">
+        <FlatList
+          data={stores}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={{ padding: 16, gap: 12, paddingBottom: 24 }}
+          ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
+          renderItem={renderItem}
+          onEndReached={() => hasNext && query.fetchNextPage()}
+          onEndReachedThreshold={0.6}
+          ListFooterComponent={hasNext ? <ListFooter /> : null}
+          showsVerticalScrollIndicator={false}
+          className="bg-[#F3F4F6]"
+        />
+      </View>
     </SafeAreaView>
   );
 }
