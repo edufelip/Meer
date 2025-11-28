@@ -1,9 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { ActivityIndicator, FlatList, Pressable, StatusBar, Text, TextInput, View } from "react-native";
+import { FlatList, Pressable, StatusBar, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
-import { theme } from "../../../shared/theme";
 import { useDependencies } from "../../../app/providers/AppProvidersWithDI";
 import { NearbyThriftListItem } from "../../components/NearbyThriftListItem";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -227,7 +226,9 @@ export function SearchScreen() {
                 />
               ))
             ) : hasSearched && !error ? (
-              <Text className="text-[#6B7280]">Nenhum resultado para "{query}".</Text>
+              <Text className="text-[#6B7280]">
+                Nenhum resultado para &quot;{query}&quot;.
+              </Text>
             ) : null}
           </View>
         }

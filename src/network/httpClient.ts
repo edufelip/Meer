@@ -59,7 +59,7 @@ async function safeReadErrorMessage(response: Response): Promise<string | undefi
   try {
     const data = await response.json();
     if (typeof data?.message === "string") return data.message;
-  } catch (e) {
+  } catch {
     // ignore parse errors
   }
   return undefined;

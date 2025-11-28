@@ -17,13 +17,7 @@ import {
   RefreshControl
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import AnimatedRe, {
-  createAnimatedComponent,
-  interpolateColor,
-  useAnimatedStyle,
-  useSharedValue,
-  withTiming
-} from "react-native-reanimated";
+import { createAnimatedComponent, interpolateColor, useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 import { SectionTitle } from "../../components/SectionTitle";
 import { FeaturedThriftCarousel } from "../../components/FeaturedThriftCarousel";
 import { NearbyMapCard } from "../../components/NearbyMapCard";
@@ -89,16 +83,6 @@ export function HomeScreen() {
   const hasFetchedOnce = useRef(false);
   const featuredDoneRef = useRef(false);
   const nearbyDoneRef = useRef(false);
-
-  const handleAppStateChange = useCallback(
-    (nextState: string) => {
-      if (appState.current.match(/inactive|background/) && nextState === "active") {
-        requestLocation(false);
-      }
-      appState.current = nextState;
-    },
-    []
-  );
 
   const shimmer = useRef(new Animated.Value(0)).current;
   const filterAnim = useRef(new Animated.Value(1)).current;
@@ -409,6 +393,16 @@ export function HomeScreen() {
     [loadCacheAndFetch]
   );
 
+  const handleAppStateChange = useCallback(
+    (nextState: string) => {
+      if (appState.current.match(/inactive|background/) && nextState === "active") {
+        requestLocation(false);
+      }
+      appState.current = nextState;
+    },
+    [requestLocation]
+  );
+
   useEffect(() => {
     requestLocation(false);
     // intentionally no deps to avoid re-request loops
@@ -435,7 +429,7 @@ export function HomeScreen() {
       easing: Easing.out(Easing.ease),
       useNativeDriver: true
     }).start();
-  }, [activeFilter, nearby, allStores]);
+  }, [activeFilter, nearby, allStores, filterAnim]);
 
   useEffect(() => {
     if (!neighborhoods.includes(activeFilter)) {

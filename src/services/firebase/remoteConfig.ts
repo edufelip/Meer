@@ -1,4 +1,6 @@
+// eslint-disable-next-line import/no-unresolved
 import { initializeApp, getApps, getApp } from "firebase/app";
+// eslint-disable-next-line import/no-unresolved
 import { getRemoteConfig, fetchAndActivate, getValue } from "firebase/remote-config";
 import { firebaseConfig } from "./firebaseConfig";
 

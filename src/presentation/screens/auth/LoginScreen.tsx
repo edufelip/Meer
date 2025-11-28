@@ -93,7 +93,7 @@ export function LoginScreen() {
         // ignore
       }
       navigation.reset({ index: 0, routes: [{ name: "tabs" }] });
-    } catch (err) {
+    } catch {
       setError("Não foi possível entrar com Google. Tente novamente.");
     } finally {
       setLoading(false);
@@ -267,7 +267,7 @@ export function LoginScreen() {
                       // ignore
                     }
                     navigation.reset({ index: 0, routes: [{ name: "tabs" }] });
-                  } catch (e) {
+                  } catch {
                     setError("Não foi possível entrar. Verifique suas credenciais.");
                   } finally {
                     setLoading(false);
@@ -340,7 +340,7 @@ export function LoginScreen() {
                     }
                     try {
                       setResetLoading(true);
-                      const res = await forgotPasswordMutation.mutateAsync({ email: resetEmail.trim() });
+                      await forgotPasswordMutation.mutateAsync({ email: resetEmail.trim() });
                       setResetSuccess(true);
                     } catch {
                       setResetError("Não foi possível enviar o e-mail. Tente novamente.");

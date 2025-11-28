@@ -7,11 +7,10 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
-  Animated as RNAnimated,
   Easing,
-  Platform,
   Image,
   Pressable,
+  Animated as RNAnimated,
   ScrollView,
   Text,
   TextInput,
@@ -127,9 +126,10 @@ export function BrechoFormScreen() {
   const [description, setDescription] = useState(initial.description ?? initial.tagline ?? "");
   const [hours, setHours] = useState(initial.openingHours ?? "");
   const [address, setAddress] = useState(initial.addressLine ?? "");
-  const [addressSuggestions, setAddressSuggestions] = useState<
-    Array<{ label: string; latitude?: number; longitude?: number }>
-  >([]);
+  const [addressSuggestions, setAddressSuggestions] = useState<{ label: string; latitude?: number; longitude?: number }[]>(
+    []
+  );
+  const skipGeocodeRef = useRef(false);
   const [addressCoords, setAddressCoords] = useState<{ latitude?: number; longitude?: number } | null>(null);
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
@@ -137,12 +137,12 @@ export function BrechoFormScreen() {
     initial.social?.instagram?.replace(/^@+/, "") ?? ""
   );
   const [categories, setCategories] = useState<string[]>(initial.categories ?? []);
-  const [photos, setPhotos] = useState<Array<{ id?: string; uri: string; isNew?: boolean }>>(
+  const [photos, setPhotos] = useState<{ id?: string; uri: string; isNew?: boolean }[]>(
     (initial.images ?? []).map((img) => ({ id: img.id ?? img.url, uri: img.url }))
   );
 
   const MAX_PHOTOS = 10;
-  const { createOrUpdateStoreUseCase } = useDependencies();
+  const { createOrUpdateStoreUseCase, getProfileUseCase } = useDependencies();
   const [saving, setSaving] = useState(false);
 
   const toggleCategory = (label: string) => {
@@ -197,6 +197,11 @@ export function BrechoFormScreen() {
   };
 
   useEffect(() => {
+    if (skipGeocodeRef.current) {
+      skipGeocodeRef.current = false;
+      return;
+    }
+
     const trimmed = address.trim();
     if (trimmed.length < 4) {
       setAddressSuggestions([]);
@@ -208,8 +213,8 @@ export function BrechoFormScreen() {
         const results = await Location.geocodeAsync(trimmed);
         console.log("[Geocode] results", results);
 
-        const suggestions = await Promise.all(
-          results.slice(0, 3).map(async (r) => {
+        const suggestionsRaw = await Promise.all(
+          results.slice(0, 1).map(async (r) => {
             try {
               const [rev] = await Location.reverseGeocodeAsync({ latitude: r.latitude, longitude: r.longitude });
               const parts = [
@@ -235,7 +240,11 @@ export function BrechoFormScreen() {
           })
         );
 
-        setAddressSuggestions(suggestions);
+        const deduped = suggestionsRaw.filter(
+          (s, idx, arr) => idx === arr.findIndex((o) => o.label === s.label && o.latitude === s.latitude && o.longitude === s.longitude)
+        );
+
+        setAddressSuggestions(deduped);
       } catch {
         setAddressSuggestions([]);
       }
@@ -355,8 +364,15 @@ export function BrechoFormScreen() {
         await createOrUpdateStoreUseCase.executeCreate(form);
       }
 
+      try {
+        // refresh profile cache so Profile screen reflects owned thrift store
+        await getProfileUseCase.execute();
+      } catch (err) {
+        console.log("[BrechoForm] refresh profile failed", err);
+      }
+
       navigation.goBack();
-    } catch (e) {
+    } catch {
       Alert.alert("Erro", "Não foi possível salvar. Tente novamente.");
     } finally {
       setSaving(false);
@@ -466,6 +482,7 @@ export function BrechoFormScreen() {
                       key={s.label + s.latitude}
                       className="px-3 py-2"
                       onPress={() => {
+                        skipGeocodeRef.current = true;
                         setAddress(s.label);
                         setAddressCoords({ latitude: s.latitude, longitude: s.longitude });
                         setAddressSuggestions([]);

@@ -13,7 +13,8 @@ import {
   TouchableWithoutFeedback,
   KeyboardAvoidingView,
   ActivityIndicator,
-  Keyboard
+  Keyboard,
+  Platform
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -24,7 +25,6 @@ import type { RouteProp } from "@react-navigation/native";
 import type { RootStackParamList } from "../../../app/navigation/RootStack";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as ImagePicker from "expo-image-picker";
-import { Platform } from "react-native";
 import { useLogout } from "../../../hooks/useLogout";
 
 export function EditProfileScreen() {
@@ -205,7 +205,7 @@ export function EditProfileScreen() {
     try {
       await deleteAccountUseCase.execute(deleteEmailInput.trim());
       await logout();
-    } catch (e) {
+    } catch {
       Alert.alert("Erro", "Não foi possível excluir a conta agora. Tente novamente.");
     } finally {
       setIsDeleting(false);

@@ -8,14 +8,12 @@ import type { RootStackParamList } from "../../../app/navigation/RootStack";
 import { useDependencies } from "../../../app/providers/AppProvidersWithDI";
 import type { User } from "../../../domain/entities/User";
 import { theme } from "../../../shared/theme";
-import { useLogout } from "../../../hooks/useLogout";
 import { getTokens } from "../../../storage/authStorage";
 import { Buffer } from "buffer";
 
 export function ProfileScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { getCachedProfileUseCase } = useDependencies();
-  const logout = useLogout();
   const [user, setUser] = useState<(User & { bio?: string; notifyNewStores: boolean; notifyPromos: boolean }) | null>(
     null
   );
@@ -45,7 +43,7 @@ export function ProfileScreen() {
     const { token } = await getTokens();
     const payload = decodeJwtPayload(token);
     if (payload?.sub && payload?.name && payload?.email) {
-      setUser({
+      const fallbackProfile = {
         id: String(payload.sub),
         name: payload.name,
         email: payload.email,
@@ -54,7 +52,8 @@ export function ProfileScreen() {
         bio: payload.bio,
         notifyNewStores: payload.notifyNewStores ?? false,
         notifyPromos: payload.notifyPromos ?? false
-      });
+      };
+      setUser(fallbackProfile);
     } else {
       setUser(null);
       setHasArticles(false);
@@ -153,7 +152,7 @@ export function ProfileScreen() {
                   })
                 }
               >
-                <Text className="text-[#374151]">Gerenciar Brechó</Text>
+                <Text className="text-[#374151]">Meu brechó</Text>
                 <Ionicons name="chevron-forward" size={18} color={theme.colors.highlight} />
               </Pressable>
               <Pressable
@@ -186,7 +185,7 @@ export function ProfileScreen() {
                   })
                 }
               >
-                <Text className="text-[#374151]">Criar Brechó</Text>
+                <Text className="text-[#374151]">Criar brechó</Text>
                 <Ionicons name="chevron-forward" size={18} color={theme.colors.highlight} />
               </Pressable>
             </View>

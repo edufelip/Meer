@@ -59,7 +59,7 @@ export class FavoriteRepositoryHybrid implements FavoriteRepository {
       const remote = await this.remote.list();
       await writeAll(remote);
       return remote;
-    } catch (e) {
+    } catch {
       // fallback to cache
       return readAll();
     }
@@ -119,7 +119,7 @@ export class FavoriteRepositoryHybrid implements FavoriteRepository {
           }
           queue = rest;
           await writeQueue(queue);
-        } catch (e) {
+        } catch {
           // stop on first failure; will retry later (e.g., app foreground)
           break;
         }

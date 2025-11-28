@@ -20,7 +20,6 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../../../app/navigation/RootStack";
 import { theme } from "../../../shared/theme";
-import { ToggleFavoriteThriftStoreUseCase } from "../../../domain/usecases/ToggleFavoriteThriftStoreUseCase";
 
 const PAGE_SIZE = 10;
 const scrollOffsets = new Map<string, number>();

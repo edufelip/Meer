@@ -25,7 +25,7 @@ export function AppProviders(props: PropsWithChildren) {
 
 function FirebaseBootstrap() {
   const { getCachedProfileUseCase } = useDependencies();
-  const [userId, setUserId] = useState<string | undefined>(undefined);
+  const [, setUserId] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     (async () => {
