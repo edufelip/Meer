@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import type { RouteProp } from "@react-navigation/native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import * as ImagePicker from "expo-image-picker";
+import * as ImageManipulator from "expo-image-manipulator";
 import * as Location from "expo-location";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -15,7 +16,9 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View
+  View,
+  KeyboardAvoidingView,
+  Platform
 } from "react-native";
 import DraggableFlatList, { RenderItemParams } from "react-native-draggable-flatlist";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -131,6 +134,7 @@ export function BrechoFormScreen() {
   );
   const skipGeocodeRef = useRef(false);
   const [addressCoords, setAddressCoords] = useState<{ latitude?: number; longitude?: number } | null>(null);
+  const [addressConfirmed, setAddressConfirmed] = useState<boolean>(Boolean(thriftStore?.id && initial.addressLine));
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [instagram, setInstagram] = useState(
@@ -144,11 +148,41 @@ export function BrechoFormScreen() {
   const MAX_PHOTOS = 10;
   const { createOrUpdateStoreUseCase, getProfileUseCase } = useDependencies();
   const [saving, setSaving] = useState(false);
+  const [dirty, setDirty] = useState(false);
+
+  const markDirty = () => setDirty(true);
+
+  const isValidPhone = (raw: string) => {
+    const digits = (raw || "").replace(/\D/g, "");
+    return digits.length >= 10 && digits.length <= 13;
+  };
+
+  const compressPhotos = async (items: { uri: string; isNew?: boolean; id?: string }[]) => {
+    return Promise.all(
+      items.map(async (item) => {
+        try {
+          const manipulated = await ImageManipulator.manipulateAsync(
+            item.uri,
+            [{ resize: { width: 1400 } }],
+            {
+              compress: 0.65,
+              format: ImageManipulator.SaveFormat.JPEG
+            }
+          );
+          return { ...item, uri: manipulated.uri };
+        } catch {
+          return item;
+        }
+      })
+    );
+  };
 
   const toggleCategory = (label: string) => {
-    setCategories((prev) =>
-      prev.includes(label) ? prev.filter((c) => c !== label) : [...prev, label]
-    );
+    setCategories((prev) => {
+      const next = prev.includes(label) ? prev.filter((c) => c !== label) : [...prev, label];
+      return next;
+    });
+    markDirty();
   };
 
   const categoryOptions = useMemo(
@@ -172,28 +206,52 @@ export function BrechoFormScreen() {
       return;
     }
 
-    const result = fromCamera
-      ? await ImagePicker.launchCameraAsync({ allowsEditing: true, aspect: [1, 1], quality: 0.9 })
-      : await ImagePicker.launchImageLibraryAsync({
-          mediaTypes: ImagePicker.MediaTypeOptions.Images,
-          allowsEditing: true,
-          aspect: [1, 1],
-          quality: 0.9,
-          selectionLimit: 1
-        });
-
-    if (!result.canceled && result.assets.length > 0) {
+    if (fromCamera) {
+      const result = await ImagePicker.launchCameraAsync({ allowsEditing: true, aspect: [1, 1], quality: 0.8 });
+      if (result.canceled || result.assets.length === 0) return;
       const asset = result.assets[0];
       setPhotos((prev) => {
         if (prev.length >= MAX_PHOTOS) return prev;
         const next = [...prev, { uri: asset.uri, isNew: true }];
+        markDirty();
+        return next;
+      });
+      return;
+    }
+
+    // Gallery: allow multiple selections up to remaining slots.
+    const remaining = Math.max(1, MAX_PHOTOS - photos.length);
+    const allowMulti = remaining > 1;
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: allowMulti ? false : true, // editing forces single select
+      aspect: allowMulti ? undefined : [1, 1],
+      quality: 0.8,
+      selectionLimit: remaining,
+      allowsMultipleSelection: allowMulti
+    });
+
+    if (!result.canceled && result.assets.length > 0) {
+      setPhotos((prev) => {
+        const remainingSlots = Math.max(0, MAX_PHOTOS - prev.length);
+        if (remainingSlots === 0) return prev;
+        const newAssets = result.assets.slice(0, remainingSlots).map((asset) => ({
+          uri: asset.uri,
+          isNew: true
+        }));
+        const next = [...prev, ...newAssets];
+        if (newAssets.length) markDirty();
         return next;
       });
     }
   };
 
   const handleDeletePhoto = (uri: string) => {
-    setPhotos((prev) => prev.filter((p) => p.uri !== uri));
+    setPhotos((prev) => {
+      const next = prev.filter((p) => p.uri !== uri);
+      if (next.length !== prev.length) markDirty();
+      return next;
+    });
   };
 
   useEffect(() => {
@@ -326,13 +384,34 @@ export function BrechoFormScreen() {
       Alert.alert("Nome obrigatório", "Informe o nome do brechó.");
       return;
     }
+    if (!description.trim()) {
+      Alert.alert("Descrição obrigatória", "Descreva seu brechó.");
+      return;
+    }
+    if (!hours.trim()) {
+      Alert.alert("Horário obrigatório", "Informe o horário de funcionamento.");
+      return;
+    }
+    if (!address.trim() || !addressConfirmed || (!thriftStore && !addressCoords)) {
+      Alert.alert("Endereço inválido", "Selecione um endereço da lista de sugestões.");
+      return;
+    }
+    if (!phone.trim() || !isValidPhone(phone)) {
+      Alert.alert("Telefone inválido", "Digite um número de telefone ou WhatsApp válido.");
+      return;
+    }
+    if (photos.length === 0) {
+      Alert.alert("Fotos obrigatórias", "Adicione ao menos uma foto do brechó.");
+      return;
+    }
 
     const { textChanges, newOnes, deletePhotoIds, order } = await buildPayload();
+    const compressedNewOnes = await compressPhotos(newOnes);
 
     if (
       !thriftStore &&
       Object.keys(textChanges).length === 0 &&
-      newOnes.length === 0 &&
+      compressedNewOnes.length === 0 &&
       deletePhotoIds.length === 0
     ) {
       Alert.alert("Nada para salvar", "Adicione informações antes de enviar.");
@@ -350,7 +429,7 @@ export function BrechoFormScreen() {
       if (deletePhotoIds.length) form.append("deletePhotoIds", JSON.stringify(deletePhotoIds));
       if (order.length) form.append("photoOrder", JSON.stringify(order));
 
-      newOnes.forEach((photo, idx) => {
+      compressedNewOnes.forEach((photo, idx) => {
         form.append("newPhotos", {
           uri: photo.uri,
           name: `photo-${idx}.jpg`,
@@ -384,7 +463,19 @@ export function BrechoFormScreen() {
       <SafeAreaView className="flex-1 bg-white" edges={["top", "left", "right"]}>
       <View className="bg-white/90 border-b border-gray-200">
         <View className="flex-row items-center justify-between p-4">
-          <Pressable className="w-8 h-8 items-center justify-center" onPress={() => navigation.goBack()}>
+          <Pressable
+            className="w-8 h-8 items-center justify-center"
+            onPress={() => {
+              if (dirty) {
+                Alert.alert("Tem certeza?", "Se voce voltar vai perder todas as mudanças que fez", [
+                  { text: "Cancelar", style: "cancel" },
+                  { text: "Voltar", style: "destructive", onPress: () => navigation.goBack() }
+                ]);
+              } else {
+                navigation.goBack();
+              }
+            }}
+          >
             <Ionicons name="arrow-back" size={22} color={theme.colors.highlight} />
           </Pressable>
           <Text className="text-xl font-bold text-[#374151]">{thriftStore ? "Meu Brechó" : "Cadastrar Brechó"}</Text>
@@ -392,8 +483,17 @@ export function BrechoFormScreen() {
         </View>
       </View>
 
-      <View className="flex-1 bg-[#F3F4F6]">
-        <ScrollView className="flex-1 p-4" contentContainerStyle={{ paddingBottom: 24 }}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        keyboardVerticalOffset={0}
+      >
+        <View className="flex-1 bg-[#F3F4F6]">
+          <ScrollView
+            className="flex-1 p-4"
+            contentContainerStyle={{ paddingBottom: 24 }}
+            keyboardShouldPersistTaps="handled"
+          >
         <View className="bg-white p-4 rounded-xl shadow-sm mb-4">
           <Text className="text-lg font-bold mb-4">Informações Gerais</Text>
           <View className="space-y-4">
@@ -401,7 +501,10 @@ export function BrechoFormScreen() {
               <Text className="text-sm font-medium text-gray-700 mb-2">Nome do Brechó</Text>
               <TextInput
                 value={name}
-                onChangeText={(t) => setName(t.slice(0, 100))}
+                onChangeText={(t) => {
+                  setName(t.slice(0, 100));
+                  markDirty();
+                }}
                 placeholder="Ex: Brechó Estilo Único"
                 className="w-full rounded-lg border border-gray-300 bg-white px-3 py-3 mb-2"
               />
@@ -410,7 +513,10 @@ export function BrechoFormScreen() {
               <Text className="text-sm font-medium text-gray-700 mb-2">Descrição</Text>
               <TextInput
                 value={description}
-                onChangeText={(t) => setDescription(t.slice(0, 200))}
+                onChangeText={(t) => {
+                  setDescription(t.slice(0, 200));
+                  markDirty();
+                }}
                 placeholder="Descreva o que torna seu brechó especial"
                 multiline
                 numberOfLines={3}
@@ -422,7 +528,10 @@ export function BrechoFormScreen() {
               <Text className="text-sm font-medium text-gray-700 mb-2">Horário de Funcionamento</Text>
               <TextInput
                 value={hours}
-                onChangeText={(t) => setHours(t.slice(0, 100))}
+                onChangeText={(t) => {
+                  setHours(t.slice(0, 100));
+                  markDirty();
+                }}
                 placeholder="Ex: Seg-Sex 9h-18h, Sáb 10h-14h"
                 className="w-full rounded-lg border border-gray-300 bg-white px-3 py-3 mb-2"
               />
@@ -436,7 +545,10 @@ export function BrechoFormScreen() {
             data={photos}
             horizontal
             keyExtractor={(item, index) => item.id ?? item.uri ?? `photo-${index}`}
-            onDragEnd={({ data }) => setPhotos([...data])}
+            onDragEnd={({ data }) => {
+              setPhotos([...data]);
+              markDirty();
+            }}
             renderItem={renderPhotoItem}
             ListHeaderComponent={
               photos.length >= MAX_PHOTOS ? null : (
@@ -471,6 +583,8 @@ export function BrechoFormScreen() {
                 onChangeText={(text) => {
                   setAddress(text);
                   setAddressCoords(null);
+                  setAddressConfirmed(false);
+                  markDirty();
                 }}
                 placeholder="Rua, Número, Bairro"
                 className="w-full rounded-lg border border-gray-300 bg-white px-3 py-3 mb-2"
@@ -486,6 +600,8 @@ export function BrechoFormScreen() {
                         setAddress(s.label);
                         setAddressCoords({ latitude: s.latitude, longitude: s.longitude });
                         setAddressSuggestions([]);
+                        setAddressConfirmed(true);
+                        markDirty();
                       }}
                     >
                       <Text className="text-sm text-[#374151]">{s.label}</Text>
@@ -498,7 +614,10 @@ export function BrechoFormScreen() {
               <Text className="text-sm font-medium text-gray-700 mb-2">Telefone / WhatsApp</Text>
               <TextInput
                 value={phone}
-                onChangeText={setPhone}
+                onChangeText={(t) => {
+                  setPhone(t);
+                  markDirty();
+                }}
                 placeholder="(11) 99999-9999"
                 className="w-full rounded-lg border border-gray-300 bg-white px-3 py-3 mb-2"
               />
@@ -507,7 +626,10 @@ export function BrechoFormScreen() {
               <Text className="text-sm font-medium text-gray-700 mb-2">E-mail</Text>
               <TextInput
                 value={email}
-                onChangeText={setEmail}
+                onChangeText={(t) => {
+                  setEmail(t);
+                  markDirty();
+                }}
                 placeholder="contato@brecho.com"
                 className="w-full rounded-lg border border-gray-300 bg-white px-3 py-3 mb-2"
               />
@@ -518,7 +640,10 @@ export function BrechoFormScreen() {
                 <Text className="text-gray-500 mr-2">@</Text>
                 <TextInput
                   value={instagram}
-                  onChangeText={(t) => setInstagram(t.replace(/^@+/, ""))}
+                  onChangeText={(t) => {
+                    setInstagram(t.replace(/^@+/, ""));
+                    markDirty();
+                  }}
                   placeholder="seu_brecho"
                   className="flex-1 text-base"
                   autoCapitalize="none"
@@ -544,23 +669,24 @@ export function BrechoFormScreen() {
           </View>
         </View>
 
-        <View className="pt-2 pb-4">
-          <Pressable
-            className={`w-full rounded-full py-3 px-4 shadow-lg items-center ${
-              saving ? "bg-gray-300" : "bg-[#B55D05]"
-            }`}
-            disabled={saving}
-            onPress={handleSubmit}
-          >
-            {saving ? (
-              <ActivityIndicator color="white" />
-            ) : (
-              <Text className="font-bold text-white">{thriftStore ? "Salvar alterações" : "Criar Brechó"}</Text>
-            )}
-          </Pressable>
+          <View className="pt-2 pb-4">
+            <Pressable
+              className={`w-full rounded-full py-3 px-4 shadow-lg items-center ${
+                saving ? "bg-gray-300" : "bg-[#B55D05]"
+              }`}
+              disabled={saving}
+              onPress={handleSubmit}
+            >
+              {saving ? (
+                <ActivityIndicator color="white" />
+              ) : (
+                <Text className="font-bold text-white">{thriftStore ? "Salvar alterações" : "Criar Brechó"}</Text>
+              )}
+            </Pressable>
+          </View>
+          </ScrollView>
         </View>
-        </ScrollView>
-      </View>
+      </KeyboardAvoidingView>
       </SafeAreaView>
     </GestureHandlerRootView>
   );

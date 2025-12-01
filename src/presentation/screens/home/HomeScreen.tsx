@@ -639,41 +639,43 @@ export function HomeScreen() {
             </View>
           </View>
 
-          <View className="px-4 py-6 bg-[#F3F4F6]">
-            <View className="flex-row justify-between items-center mb-4">
-              <Text className="text-xl font-bold text-[#374151]">Conteúdos e Dicas</Text>
-              <Text className="text-sm font-semibold text-[#B55D05]">Ver todos</Text>
-            </View>
-            {guidesLoading ? (
-              <Animated.View
-                style={[
-                  { height: 140, borderRadius: 12, backgroundColor: "#E5E7EB" },
-                  shimmerStyle
-                ]}
-              />
-            ) : guides[0] ? (
-              <View className="bg-white rounded-xl shadow-sm overflow-hidden">
-                <View className="flex-row">
-                  <Image source={{ uri: guides[0].imageUrl }} className="w-1/3 h-full aspect-[4/5]" />
-                  <View className="p-4 flex-1">
-                    <Text className="font-bold text-[#374151] mb-1" numberOfLines={2}>
-                      {guides[0].title}
-                    </Text>
-                    <Text className="text-sm text-[#6B7280] mb-2" numberOfLines={2}>
-                      {guides[0].description}
-                    </Text>
-                    <View className="bg-[#B55D05] self-start rounded-full px-2 py-1">
-                      <Text className="text-xs font-semibold text-white uppercase">
-                        {guides[0].categoryLabel}
-                      </Text>
+          {(guidesLoading || guides.length > 0) && (
+            <View className="px-4 py-6 bg-[#F3F4F6]">
+              <View className="flex-row justify-between items-center mb-4">
+                <Text className="text-xl font-bold text-[#374151]">Conteúdos e Dicas</Text>
+                <Text className="text-sm font-semibold text-[#B55D05]">Ver todos</Text>
+              </View>
+              {guidesLoading ? (
+                <Animated.View
+                  style={[
+                    { height: 140, borderRadius: 12, backgroundColor: "#E5E7EB" },
+                    shimmerStyle
+                  ]}
+                />
+              ) : (
+                guides[0] && (
+                  <View className="bg-white rounded-xl shadow-sm overflow-hidden">
+                    <View className="flex-row">
+                      <Image source={{ uri: guides[0].imageUrl }} className="w-1/3 h-full aspect-[4/5]" />
+                      <View className="p-4 flex-1">
+                        <Text className="font-bold text-[#374151] mb-1" numberOfLines={2}>
+                          {guides[0].title}
+                        </Text>
+                        <Text className="text-sm text-[#6B7280] mb-2" numberOfLines={2}>
+                          {guides[0].description}
+                        </Text>
+                        <View className="bg-[#B55D05] self-start rounded-full px-2 py-1">
+                          <Text className="text-xs font-semibold text-white uppercase">
+                            {guides[0].categoryLabel}
+                          </Text>
+                        </View>
+                      </View>
                     </View>
                   </View>
-                </View>
-              </View>
-            ) : (
-              <Text className="text-sm text-gray-500">Nenhum conteúdo disponível no momento.</Text>
-            )}
-          </View>
+                )
+              )}
+            </View>
+          )}
         </ScrollView>
       )}
     </SafeAreaView>
