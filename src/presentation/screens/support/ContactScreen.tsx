@@ -100,13 +100,18 @@ export function ContactScreen() {
               <Pressable
                 key={item.title}
                 className={`flex-row items-center gap-4 p-4 bg-white rounded-xl shadow-sm ${index < 2 ? "mb-4" : ""}`}
+                disabled
               >
                 <View className="bg-[#B55D05]1a p-3 rounded-full" style={{ backgroundColor: `${theme.colors.highlight}1a` }}>
                   <Ionicons name={item.icon as any} size={20} color={theme.colors.highlight} />
                 </View>
-                <View className="flex-1">
+                <View className="flex-1 relative">
                   <Text className="font-bold text-[#1F2937]">{item.title}</Text>
                   <Text className="text-sm text-gray-500">{item.desc}</Text>
+                  <View className="absolute inset-0 bg-white/60 rounded-lg" pointerEvents="none" />
+                  <View className="absolute top-1 right-1 bg-[#111827] rounded-full px-2 py-0.5" pointerEvents="none">
+                    <Text className="text-[11px] font-semibold text-white">em breve</Text>
+                  </View>
                 </View>
                 <Ionicons name="chevron-forward" size={18} color="#9CA3AF" />
               </Pressable>
