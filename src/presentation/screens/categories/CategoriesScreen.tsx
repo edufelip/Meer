@@ -7,6 +7,7 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../../../app/navigation/RootStack";
 import type { Category } from "../../../domain/entities/Category";
 import { CategoryCard, getCategoryDisplayName } from "../../components/CategoryCard";
+import { theme } from "../../../shared/theme";
 
 export function CategoriesScreen() {
   const { getCategoriesUseCase, getCachedCategoriesUseCase } = useDependencies();

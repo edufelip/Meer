@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Animated, FlatList, RefreshControl, StatusBar, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useFocusEffect, useNavigation } from "@react-navigation/native";
+import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -13,9 +13,9 @@ import type { RootStackParamList } from "../../../app/navigation/RootStack";
 
 const STORAGE_KEY = "favorites";
 const STORAGE_META_KEY = "favorites_meta";
-const STALE_MS = 15 * 60 * 1000; // 15 minutes
-
 type CachedFavorites = { items: ThriftStore[]; fetchedAt: number | null };
+
+let hasFetchedThisSession = false;
 
 async function readCachedFavorites(): Promise<CachedFavorites> {
   try {
@@ -112,37 +112,33 @@ export function FavoritesScreen() {
     fetchRemote(true);
   }, [fetchRemote]);
 
-  useFocusEffect(
-    useCallback(() => {
-      let active = true;
-      (async () => {
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      setLoading(true);
+      const cached = await readCachedFavorites();
+      if (!active) return;
+
+      if (cached.items.length > 0) {
+        updateFavorites(cached.items);
+        fetchedAtRef.current = cached.fetchedAt;
+        setLoading(false);
+      } else {
         setLoading(true);
-        const cached = await readCachedFavorites();
-        if (!active) return;
+      }
 
-        if (cached.items.length > 0) {
-          updateFavorites(cached.items);
-          fetchedAtRef.current = cached.fetchedAt;
-          setLoading(false);
-        }
+      if (!hasFetchedThisSession) {
+        await fetchRemote();
+        hasFetchedThisSession = true;
+      } else {
+        setLoading(false);
+      }
+    })();
 
-        const isStale =
-          cached.items.length === 0 ||
-          !cached.fetchedAt ||
-          Date.now() - cached.fetchedAt > STALE_MS;
-
-        if (isStale) {
-          fetchRemote();
-        } else {
-          setLoading(false);
-        }
-      })();
-
-      return () => {
-        active = false;
-      };
-    }, [fetchRemote])
-  );
+    return () => {
+      active = false;
+    };
+  }, [fetchRemote]);
 
   return (
     <SafeAreaView className="flex-1 bg-white" edges={["top", "left", "right"]}>
