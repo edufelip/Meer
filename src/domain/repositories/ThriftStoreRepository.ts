@@ -1,4 +1,5 @@
 import type { ThriftStore, ThriftStoreId } from "../entities/ThriftStore";
+import type { CreateStorePayload, PhotoUploadSlot } from "../../data/datasources/ThriftStoreRemoteDataSource";
 
 export interface ThriftStoreRepository {
   getFeatured(params?: {
@@ -28,6 +29,12 @@ export interface ThriftStoreRepository {
     lng?: number;
   }): Promise<{ items: ThriftStore[]; page: number; hasNext: boolean }>;
 
-  createStore(form: FormData): Promise<ThriftStore>;
-  updateStore(id: ThriftStoreId, form: FormData): Promise<ThriftStore>;
+  createStore(payload: CreateStorePayload): Promise<ThriftStore>;
+  updateStore(id: ThriftStoreId, payload: Partial<CreateStorePayload>): Promise<ThriftStore>;
+  requestPhotoUploads(storeId: ThriftStoreId, body: { count: number; contentTypes: string[] }): Promise<PhotoUploadSlot[]>;
+  confirmPhotos(
+    storeId: ThriftStoreId,
+    photos: { fileKey?: string; photoId?: string; position: number }[],
+    deletePhotoIds?: string[]
+  ): Promise<ThriftStore>;
 }

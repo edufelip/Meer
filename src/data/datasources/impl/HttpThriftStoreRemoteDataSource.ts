@@ -1,5 +1,9 @@
 import type { ThriftStore, ThriftStoreId } from "../../../domain/entities/ThriftStore";
-import type { ThriftStoreRemoteDataSource } from "../ThriftStoreRemoteDataSource";
+import type {
+  CreateStorePayload,
+  PhotoUploadSlot,
+  ThriftStoreRemoteDataSource
+} from "../ThriftStoreRemoteDataSource";
 import { api } from "../../../api/client";
 
 export class HttpThriftStoreRemoteDataSource implements ThriftStoreRemoteDataSource {
@@ -76,17 +80,30 @@ export class HttpThriftStoreRemoteDataSource implements ThriftStoreRemoteDataSou
     return res.data;
   }
 
-  async createStore(form: FormData): Promise<ThriftStore> {
-    const res = await api.post<ThriftStore>("/stores", form, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    });
+  async createStore(payload: CreateStorePayload): Promise<ThriftStore> {
+    const res = await api.post<ThriftStore>("/stores", payload);
     return res.data;
   }
 
-  async updateStore(id: ThriftStoreId, form: FormData): Promise<ThriftStore> {
-    const res = await api.put<ThriftStore>(`/stores/${id}`, form, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    });
+  async updateStore(id: ThriftStoreId, payload: Partial<CreateStorePayload>): Promise<ThriftStore> {
+    const res = await api.put<ThriftStore>(`/stores/${id}`, payload);
+    return res.data;
+  }
+
+  async requestPhotoUploads(
+    storeId: ThriftStoreId,
+    body: { count: number; contentTypes: string[] }
+  ): Promise<PhotoUploadSlot[]> {
+    const res = await api.post<{ uploads: PhotoUploadSlot[] }>(`/stores/${storeId}/photos/uploads`, body);
+    return res.data.uploads ?? [];
+  }
+
+  async confirmPhotos(
+    storeId: ThriftStoreId,
+    photos: { fileKey?: string; photoId?: string; position: number }[],
+    deletePhotoIds?: string[]
+  ): Promise<ThriftStore> {
+    const res = await api.put<ThriftStore>(`/stores/${storeId}/photos`, { photos, deletePhotoIds });
     return res.data;
   }
 }

@@ -125,10 +125,19 @@ export function ThriftDetailScreen({ route }: ThriftDetailScreenProps) {
     );
   }
 
-  const heroImage = store.coverImageUrl ?? store.imageUrl;
-  const baseGallery = (store.galleryUrls?.filter(Boolean) ?? []) as string[];
-  const resolvedGallery = baseGallery.length > 0 ? baseGallery : heroImage ? [heroImage] : [];
-  const galleryImages = resolvedGallery.map((uri) => ({ uri }));
+  const heroImage =
+    store.coverImageUrl ??
+    store.images?.find((img) => img.isCover)?.url ??
+    store.images?.[0]?.url ??
+    store.imageUrl;
+
+  const galleryImages =
+    (store.images ?? [])
+      .filter((img) => !!img?.url)
+      .sort((a: any, b: any) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0))
+      .map((img) => ({ uri: img.url })) || [];
+
+  const resolvedGallery = galleryImages.length > 0 ? galleryImages.map((g) => g.uri) : heroImage ? [heroImage] : [];
 
   return (
     <SafeAreaView className="flex-1 bg-[#F3F4F6]" edges={["left", "right", "bottom"]}>

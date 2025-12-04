@@ -3,6 +3,8 @@ import type { RouteProp } from "@react-navigation/native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import * as ImagePicker from "expo-image-picker";
 import * as ImageManipulator from "expo-image-manipulator";
+import { getInfoAsync, uploadAsync } from "expo-file-system/legacy";
+import * as Crypto from "expo-crypto";
 import * as Location from "expo-location";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -133,48 +135,113 @@ export function BrechoFormScreen() {
     []
   );
   const skipGeocodeRef = useRef(false);
+  const [geocodeEnabled, setGeocodeEnabled] = useState(false);
   const [addressCoords, setAddressCoords] = useState<{ latitude?: number; longitude?: number } | null>(null);
+  const [neighborhood, setNeighborhood] = useState<string | undefined>(initial.neighborhood);
   const [addressConfirmed, setAddressConfirmed] = useState<boolean>(Boolean(thriftStore?.id && initial.addressLine));
-  const [phone, setPhone] = useState("");
-  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState((thriftStore as any)?.phone ?? (thriftStore as any)?.whatsapp ?? "");
+  const [email, setEmail] = useState((thriftStore as any)?.email ?? "");
   const [instagram, setInstagram] = useState(
     initial.social?.instagram?.replace(/^@+/, "") ?? ""
   );
   const [categories, setCategories] = useState<string[]>(initial.categories ?? []);
-  const [photos, setPhotos] = useState<{ id?: string; uri: string; isNew?: boolean }[]>(
-    (initial.images ?? []).map((img) => ({ id: img.id ?? img.url, uri: img.url }))
+  type UiPhoto =
+    | {
+        state: "existing";
+        photoId: string;
+        fileKey?: string;
+        url: string;
+        uiPosition: number;
+        markedForDelete?: boolean;
+      }
+    | {
+        state: "new";
+        tempId: string;
+        uri: string;
+        contentType: string;
+        uiPosition: number;
+      };
+
+  const [photos, setPhotos] = useState<UiPhoto[]>(
+    (initial.images ?? []).map((img, idx) => ({
+      state: "existing",
+      photoId: img.id ?? img.url,
+      fileKey: (img as any).fileKey, // if backend provides
+      url: img.url,
+      uiPosition: idx
+    }))
   );
 
   const MAX_PHOTOS = 10;
-  const { createOrUpdateStoreUseCase, getProfileUseCase } = useDependencies();
+  const {
+    createOrUpdateStoreUseCase,
+    getProfileUseCase,
+    requestStorePhotoUploadsUseCase,
+    confirmStorePhotosUseCase
+  } = useDependencies();
   const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
+  const [progressLabel, setProgressLabel] = useState<string | null>(null);
 
   const markDirty = () => setDirty(true);
+  const genId = () => (Crypto.randomUUID ? Crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2));
 
   const isValidPhone = (raw: string) => {
     const digits = (raw || "").replace(/\D/g, "");
     return digits.length >= 10 && digits.length <= 13;
   };
 
-  const compressPhotos = async (items: { uri: string; isNew?: boolean; id?: string }[]) => {
+  const compressPhotos = async (items: { uri: string; tempId?: string }[]) => {
+    const TARGET_BYTES = 1 * 1024 * 1024; // aim <1MB
+    const MAX_BYTES = 1.5 * 1024 * 1024; // hard cap 1.5MB
+    const qualitySteps = [0.6, 0.45, 0.35, 0.25, 0.18, 0.12, 0.08];
+
     return Promise.all(
       items.map(async (item) => {
-        try {
+        let currentUri = item.uri;
+        let width = 1400;
+        for (const q of qualitySteps) {
           const manipulated = await ImageManipulator.manipulateAsync(
-            item.uri,
-            [{ resize: { width: 1400 } }],
-            {
-              compress: 0.65,
-              format: ImageManipulator.SaveFormat.JPEG
-            }
+            currentUri,
+            [{ resize: { width } }],
+            { compress: q, format: ImageManipulator.SaveFormat.JPEG }
           );
-          return { ...item, uri: manipulated.uri };
-        } catch {
-          return item;
+
+          const info = await getInfoAsync(manipulated.uri);
+          if (info.exists && info.size != null && info.size <= TARGET_BYTES) {
+            return { ...item, uri: manipulated.uri };
+          }
+
+          currentUri = manipulated.uri;
+          width = Math.max(500, Math.floor(width * 0.75));
+          if (info.exists && info.size != null && info.size <= MAX_BYTES) {
+            return { ...item, uri: manipulated.uri };
+          }
         }
+
+        const finalInfo = await getInfoAsync(currentUri);
+        if (finalInfo.exists && finalInfo.size != null && finalInfo.size <= MAX_BYTES) {
+          return { ...item, uri: currentUri };
+        }
+        throw new Error("Foto acima de 2MB mesmo após compressão. Escolha uma imagem menor.");
       })
     );
+  };
+
+  const uploadPhotoToSlot = async (
+    photo: { uri: string; tempId?: string },
+    slot: { uploadUrl: string; contentType: string },
+    index: number,
+    total: number
+  ) => {
+    setProgressLabel(`Subindo Foto ${index + 1} de ${total}`);
+    const result = await uploadAsync(slot.uploadUrl, photo.uri, {
+      httpMethod: "PUT",
+      headers: { "Content-Type": slot.contentType || "image/jpeg" }
+    });
+    if (result.status >= 400) {
+      throw new Error(`Falha ao subir foto (${result.status})`);
+    }
   };
 
   const toggleCategory = (label: string) => {
@@ -211,16 +278,26 @@ export function BrechoFormScreen() {
       if (result.canceled || result.assets.length === 0) return;
       const asset = result.assets[0];
       setPhotos((prev) => {
-        if (prev.length >= MAX_PHOTOS) return prev;
-        const next = [...prev, { uri: asset.uri, isNew: true }];
+        if (prev.filter((p) => !p.markedForDelete).length >= MAX_PHOTOS) return prev;
+          const next: UiPhoto[] = [
+            ...prev,
+            {
+              state: "new",
+              tempId: genId(),
+              uri: asset.uri,
+              contentType: "image/jpeg",
+              uiPosition: prev.length
+            }
+          ];
         markDirty();
         return next;
       });
       return;
     }
 
-    // Gallery: allow multiple selections up to remaining slots.
-    const remaining = Math.max(1, MAX_PHOTOS - photos.length);
+    // Gallery: allow multiple selections up to remaining slots (visible only).
+    const currentVisible = photos.filter((p) => !p.markedForDelete).length;
+    const remaining = Math.max(1, MAX_PHOTOS - currentVisible);
     const allowMulti = remaining > 1;
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -233,11 +310,14 @@ export function BrechoFormScreen() {
 
     if (!result.canceled && result.assets.length > 0) {
       setPhotos((prev) => {
-        const remainingSlots = Math.max(0, MAX_PHOTOS - prev.length);
+        const remainingSlots = Math.max(0, MAX_PHOTOS - prev.filter((p) => !p.markedForDelete).length);
         if (remainingSlots === 0) return prev;
         const newAssets = result.assets.slice(0, remainingSlots).map((asset) => ({
+          state: "new" as const,
+          tempId: genId(),
           uri: asset.uri,
-          isNew: true
+          contentType: "image/jpeg",
+          uiPosition: prev.filter((p) => !p.markedForDelete).length
         }));
         const next = [...prev, ...newAssets];
         if (newAssets.length) markDirty();
@@ -246,10 +326,17 @@ export function BrechoFormScreen() {
     }
   };
 
-  const handleDeletePhoto = (uri: string) => {
+  const handleDeletePhoto = (photo: UiPhoto) => {
     setPhotos((prev) => {
-      const next = prev.filter((p) => p.uri !== uri);
-      if (next.length !== prev.length) markDirty();
+      if (photo.state === "new") {
+        const next = prev.filter((p) => !(p.state === "new" && p.tempId === photo.tempId));
+        if (next.length !== prev.length) markDirty();
+        return next;
+      }
+      const next = prev.map((p) =>
+        p.state === "existing" && p.photoId === photo.photoId ? { ...p, markedForDelete: true } : p
+      );
+      markDirty();
       return next;
     });
   };
@@ -259,6 +346,8 @@ export function BrechoFormScreen() {
       skipGeocodeRef.current = false;
       return;
     }
+
+    if (!geocodeEnabled) return;
 
     const trimmed = address.trim();
     if (trimmed.length < 4) {
@@ -275,24 +364,27 @@ export function BrechoFormScreen() {
           results.slice(0, 1).map(async (r) => {
             try {
               const [rev] = await Location.reverseGeocodeAsync({ latitude: r.latitude, longitude: r.longitude });
+              const neighborhoodLabel = rev?.district ?? rev?.subregion;
               const parts = [
                 rev?.street ?? rev?.name,
                 rev?.streetNumber,
-                rev?.district ?? rev?.subregion,
+                neighborhoodLabel,
                 rev?.city ?? rev?.region,
                 rev?.country
               ].filter(Boolean);
               return {
                 label: parts.join(", ") || trimmed,
                 latitude: r.latitude,
-                longitude: r.longitude
+                longitude: r.longitude,
+                neighborhood: neighborhoodLabel
               };
             } catch (err) {
               console.log("[Geocode] reverse failed", err);
               return {
                 label: trimmed,
                 latitude: r.latitude,
-                longitude: r.longitude
+                longitude: r.longitude,
+                neighborhood: undefined
               };
             }
           })
@@ -309,9 +401,10 @@ export function BrechoFormScreen() {
     }, 1000);
 
     return () => clearTimeout(timer);
-  }, [address]);
+  }, [address, geocodeEnabled]);
 
-  const renderPhotoItem = ({ item, drag, isActive, index }: RenderItemParams<{ id?: string; uri: string; isNew?: boolean }>) => {
+  const renderPhotoItem = ({ item, drag, isActive, index }: RenderItemParams<UiPhoto>) => {
+    if (item.markedForDelete) return null;
     const isCover = index === 0;
     return (
       <TouchableOpacity
@@ -327,9 +420,9 @@ export function BrechoFormScreen() {
               <Text className="text-xs font-semibold text-white">Capa</Text>
             </View>
           )}
-          <Image source={{ uri: item.uri }} className="h-24 w-24 rounded-lg" resizeMode="cover" />
+          <Image source={{ uri: item.state === "existing" ? item.url : item.uri }} className="h-24 w-24 rounded-lg" resizeMode="cover" />
           <TouchableOpacity
-            onPress={() => handleDeletePhoto(item.uri)}
+            onPress={() => handleDeletePhoto(item)}
             className="absolute inset-0 bg-black/35 items-center justify-center rounded-lg"
           >
             <Ionicons name="close" size={22} color="white" />
@@ -345,16 +438,17 @@ export function BrechoFormScreen() {
     if (description.trim()) textChanges.description = description.trim();
     if (hours.trim()) textChanges.openingHours = hours.trim();
     if (address.trim()) textChanges.addressLine = address.trim();
-    if (phone.trim()) textChanges.phone = phone.trim();
+    textChanges.phone = phone.trim();
     if (email.trim()) textChanges.email = email.trim();
     const instagramHandle = instagram.trim().replace(/^@+/, "");
     if (instagramHandle) textChanges.social = { instagram: `@${instagramHandle}` };
-    if (categories.length) textChanges.categories = categories;
+    if (categories.length) textChanges.categories = categories.map((c) => c.toLowerCase());
 
     // Geocode address to get lat/lng when provided
     if (addressCoords?.latitude && addressCoords?.longitude) {
       textChanges.latitude = addressCoords.latitude;
       textChanges.longitude = addressCoords.longitude;
+      if (neighborhood) textChanges.neighborhood = neighborhood;
     } else if (address.trim()) {
       try {
         const geocode = await Location.geocodeAsync(address.trim());
@@ -367,16 +461,10 @@ export function BrechoFormScreen() {
       }
     }
 
-    const existing = photos.filter((p) => !p.isNew && p.id);
-    const newOnes = photos.filter((p) => p.isNew);
-
-    const deletePhotoIds = (initial.images ?? [])
-      .map((img) => img.id ?? img.url)
-      .filter((id) => !photos.some((p) => p.id === id));
-
-    const order = photos.map((p) => p.id ?? p.uri);
-
-    return { textChanges, existing, newOnes, deletePhotoIds, order };
+    const visible = photos.filter((p) => !p.markedForDelete).sort((a, b) => a.uiPosition - b.uiPosition);
+    const newPhotos = visible.filter((p): p is UiPhoto & { state: "new" } => p.state === "new");
+    const existingPhotos = visible.filter((p): p is UiPhoto & { state: "existing" } => p.state === "existing");
+    return { textChanges, orderedVisible: visible, newPhotos, existingPhotos };
   };
 
   const handleSubmit = async () => {
@@ -405,42 +493,100 @@ export function BrechoFormScreen() {
       return;
     }
 
-    const { textChanges, newOnes, deletePhotoIds, order } = await buildPayload();
-    const compressedNewOnes = await compressPhotos(newOnes);
+    const { textChanges, orderedVisible, newPhotos, existingPhotos } = await buildPayload();
 
-    if (
-      !thriftStore &&
-      Object.keys(textChanges).length === 0 &&
-      compressedNewOnes.length === 0 &&
-      deletePhotoIds.length === 0
-    ) {
+    if (!thriftStore && Object.keys(textChanges).length === 0 && newPhotos.length === 0 && existingPhotos.length === (initial.images ?? []).length) {
       Alert.alert("Nada para salvar", "Adicione informações antes de enviar.");
+      return;
+    }
+    if (orderedVisible.length > MAX_PHOTOS) {
+      Alert.alert("Limite de fotos", `Envie no máximo ${MAX_PHOTOS} fotos.`);
       return;
     }
 
     setSaving(true);
+    setProgressLabel(thriftStore ? "Salvando" : "Criando Brechó");
     try {
-      const form = new FormData();
-      Object.entries(textChanges).forEach(([k, v]) => {
-        if (v === undefined) return;
-        form.append(k, typeof v === "object" ? JSON.stringify(v) : String(v));
+      let storeId = thriftStore?.id;
+
+      if (!thriftStore?.id) {
+        // Step 1: create store metadata only
+        const created = await createOrUpdateStoreUseCase.executeCreate({
+          name: textChanges.name,
+          addressLine: textChanges.addressLine,
+          description: textChanges.description,
+          phone: textChanges.phone,
+          latitude: textChanges.latitude,
+          longitude: textChanges.longitude,
+          openingHours: textChanges.openingHours,
+          email: textChanges.email,
+          social: textChanges.social,
+          categories: textChanges.categories
+        });
+        storeId = created.id;
+      }
+
+      // Step 2: upload new photos (if any) and confirm all photos (existing + new) to define order
+      let newFileKeys: string[] = [];
+      const visibleNew = orderedVisible.filter((p): p is UiPhoto & { state: "new" } => p.state === "new");
+      const deletedExisting = photos
+        .filter((p) => p.state === "existing" && p.markedForDelete)
+        .map((p) => p.photoId);
+
+      if (visibleNew.length) {
+        const compressedNew = await compressPhotos(visibleNew.map((p) => ({ uri: p.uri, tempId: p.tempId })));
+
+        setProgressLabel("Solicitando uploads");
+        const slots = await requestStorePhotoUploadsUseCase.execute({
+          storeId: storeId!,
+          count: compressedNew.length,
+          contentTypes: compressedNew.map(() => "image/jpeg")
+        });
+
+        if (slots.length < compressedNew.length) {
+          throw new Error("Upload slots insuficientes");
+        }
+
+        for (let i = 0; i < compressedNew.length; i++) {
+          await uploadPhotoToSlot(compressedNew[i], slots[i], i, compressedNew.length);
+          newFileKeys.push(slots[i].fileKey);
+        }
+      }
+
+      // Build final photos payload in UI order
+      setProgressLabel("Salvando");
+      let newKeyIndex = 0;
+      const photosPayload = orderedVisible.map((p, idx) => {
+        if (p.state === "existing") {
+          return { photoId: p.photoId, position: idx };
+        }
+        const key = newFileKeys[newKeyIndex++];
+        return { fileKey: key, position: idx };
       });
 
-      if (deletePhotoIds.length) form.append("deletePhotoIds", JSON.stringify(deletePhotoIds));
-      if (order.length) form.append("photoOrder", JSON.stringify(order));
-
-      compressedNewOnes.forEach((photo, idx) => {
-        form.append("newPhotos", {
-          uri: photo.uri,
-          name: `photo-${idx}.jpg`,
-          type: "image/jpeg"
-        } as any);
+      const confirmed = await confirmStorePhotosUseCase.execute({
+        storeId: storeId!,
+        photos: photosPayload,
+        deletePhotoIds: deletedExisting
       });
 
+      // Step 3: update metadata (now include cover/gallery URLs from confirm) for updates
       if (thriftStore?.id) {
-        await createOrUpdateStoreUseCase.executeUpdate(thriftStore.id, form);
-      } else {
-        await createOrUpdateStoreUseCase.executeCreate(form);
+        await createOrUpdateStoreUseCase.executeUpdate(thriftStore.id, {
+          name: textChanges.name,
+          addressLine: textChanges.addressLine,
+          description: textChanges.description,
+          phone: textChanges.phone,
+          latitude: textChanges.latitude,
+          longitude: textChanges.longitude,
+          neighborhood: textChanges.neighborhood,
+          openingHours: textChanges.openingHours,
+          email: textChanges.email,
+          social: textChanges.social,
+          categories: textChanges.categories,
+          coverImageUrl: confirmed.coverImageUrl,
+          galleryUrls: confirmed.galleryUrls
+        });
       }
 
       try {
@@ -451,10 +597,17 @@ export function BrechoFormScreen() {
       }
 
       navigation.goBack();
-    } catch {
-      Alert.alert("Erro", "Não foi possível salvar. Tente novamente.");
+    } catch (err: any) {
+      console.log("[BrechoForm] erro ao salvar", err?.response ?? err?.message ?? err);
+      const msg =
+        err?.response?.data?.message ??
+        (err?.response?.status === 413
+          ? "Imagem acima de 2MB mesmo após compressão. Escolha fotos menores."
+          : err?.message ?? "Não foi possível salvar. Tente novamente.");
+      Alert.alert("Erro", msg);
     } finally {
       setSaving(false);
+      setProgressLabel(null);
     }
   };
 
@@ -542,11 +695,16 @@ export function BrechoFormScreen() {
         <View className="bg-white p-4 rounded-xl shadow-sm mb-4">
           <Text className="text-lg font-bold mb-2">Fotos do Brechó</Text>
           <DraggableFlatList
-            data={photos}
+            data={photos.filter((p) => !p.markedForDelete).sort((a, b) => a.uiPosition - b.uiPosition)}
             horizontal
-            keyExtractor={(item, index) => item.id ?? item.uri ?? `photo-${index}`}
+            keyExtractor={(item, index) => (item.state === "existing" ? item.photoId : item.tempId) ?? `photo-${index}`}
             onDragEnd={({ data }) => {
-              setPhotos([...data]);
+              // reindex uiPosition
+              const reordered = data.map((p, idx) => ({ ...p, uiPosition: idx }));
+              setPhotos((prev) => {
+                const others = prev.filter((p) => p.markedForDelete);
+                return [...reordered, ...others];
+              });
               markDirty();
             }}
             renderItem={renderPhotoItem}
@@ -584,6 +742,7 @@ export function BrechoFormScreen() {
                   setAddress(text);
                   setAddressCoords(null);
                   setAddressConfirmed(false);
+                  setGeocodeEnabled(true);
                   markDirty();
                 }}
                 placeholder="Rua, Número, Bairro"
@@ -599,8 +758,10 @@ export function BrechoFormScreen() {
                         skipGeocodeRef.current = true;
                         setAddress(s.label);
                         setAddressCoords({ latitude: s.latitude, longitude: s.longitude });
+                        setNeighborhood(s.neighborhood);
                         setAddressSuggestions([]);
                         setAddressConfirmed(true);
+                        setGeocodeEnabled(false);
                         markDirty();
                       }}
                     >
@@ -686,6 +847,14 @@ export function BrechoFormScreen() {
           </View>
           </ScrollView>
         </View>
+        {saving && progressLabel ? (
+          <View className="absolute inset-0 bg-black/25 items-center justify-center px-8">
+            <View className="bg-white rounded-2xl px-6 py-5 items-center gap-3 shadow-lg w-full max-w-sm">
+              <ActivityIndicator color={theme.colors.highlight} />
+              <Text className="text-base font-semibold text-[#374151] text-center">{progressLabel}</Text>
+            </View>
+          </View>
+        ) : null}
       </KeyboardAvoidingView>
       </SafeAreaView>
     </GestureHandlerRootView>

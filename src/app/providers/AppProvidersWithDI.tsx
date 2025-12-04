@@ -41,6 +41,8 @@ import { CreateOrUpdateStoreUseCase } from "../../domain/usecases/CreateOrUpdate
 import { HttpSupportRemoteDataSource } from "../../data/datasources/impl/HttpSupportRemoteDataSource";
 import { SupportRepositoryImpl } from "../../data/repositories/SupportRepositoryImpl";
 import { SendSupportMessageUseCase } from "../../domain/usecases/SendSupportMessageUseCase";
+import { RequestStorePhotoUploadsUseCase } from "../../domain/usecases/RequestStorePhotoUploadsUseCase";
+import { ConfirmStorePhotosUseCase } from "../../domain/usecases/ConfirmStorePhotosUseCase";
 
 interface Dependencies {
   getCurrentUserUseCase: GetCurrentUserUseCase;
@@ -61,6 +63,8 @@ interface Dependencies {
   updateProfileUseCase: UpdateProfileUseCase;
   deleteAccountUseCase: DeleteAccountUseCase;
   createOrUpdateStoreUseCase: CreateOrUpdateStoreUseCase;
+  requestStorePhotoUploadsUseCase: RequestStorePhotoUploadsUseCase;
+  confirmStorePhotosUseCase: ConfirmStorePhotosUseCase;
   favoriteRepository: FavoriteRepository;
   getMyFeedbackUseCase: GetMyFeedbackUseCase;
   upsertFeedbackUseCase: UpsertFeedbackUseCase;
@@ -121,6 +125,8 @@ export function DependenciesProvider(props: PropsWithChildren) {
     const updateProfileUseCase = new UpdateProfileUseCase(profileRepository);
     const deleteAccountUseCase = new DeleteAccountUseCase(profileRepository);
     const createOrUpdateStoreUseCase = new CreateOrUpdateStoreUseCase(thriftStoreRepository);
+    const requestStorePhotoUploadsUseCase = new RequestStorePhotoUploadsUseCase(thriftStoreRepository);
+    const confirmStorePhotosUseCase = new ConfirmStorePhotosUseCase(thriftStoreRepository);
     const getMyFeedbackUseCase = new GetMyFeedbackUseCase(feedbackRepository);
     const upsertFeedbackUseCase = new UpsertFeedbackUseCase(feedbackRepository);
     const deleteMyFeedbackUseCase = new DeleteMyFeedbackUseCase(feedbackRepository);
@@ -145,6 +151,8 @@ export function DependenciesProvider(props: PropsWithChildren) {
       updateProfileUseCase,
       deleteAccountUseCase,
       createOrUpdateStoreUseCase,
+      requestStorePhotoUploadsUseCase,
+      confirmStorePhotosUseCase,
       favoriteRepository,
       getMyFeedbackUseCase,
       upsertFeedbackUseCase,

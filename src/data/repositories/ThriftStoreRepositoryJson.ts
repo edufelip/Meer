@@ -1,6 +1,10 @@
 import type { ThriftStore, ThriftStoreId } from "../../domain/entities/ThriftStore";
 import type { ThriftStoreRepository } from "../../domain/repositories/ThriftStoreRepository";
-import type { ThriftStoreRemoteDataSource } from "../datasources/ThriftStoreRemoteDataSource";
+import type {
+  CreateStorePayload,
+  PhotoUploadSlot,
+  ThriftStoreRemoteDataSource
+} from "../datasources/ThriftStoreRemoteDataSource";
 import type { FeaturedLocalDataSource } from "../datasources/FeaturedLocalDataSource";
 
 export class ThriftStoreRepositoryJson implements ThriftStoreRepository {
@@ -128,11 +132,26 @@ export class ThriftStoreRepositoryJson implements ThriftStoreRepository {
     return this.remote.listNearbyPaginated(params);
   }
 
-  createStore(form: FormData): Promise<ThriftStore> {
-    return this.remote.createStore(form);
+  createStore(payload: CreateStorePayload): Promise<ThriftStore> {
+    return this.remote.createStore(payload);
   }
 
-  updateStore(id: ThriftStoreId, form: FormData): Promise<ThriftStore> {
-    return this.remote.updateStore(id, form);
+  updateStore(id: ThriftStoreId, payload: Partial<CreateStorePayload>): Promise<ThriftStore> {
+    return this.remote.updateStore(id, payload);
+  }
+
+  requestPhotoUploads(
+    storeId: ThriftStoreId,
+    body: { count: number; contentTypes: string[] }
+  ): Promise<PhotoUploadSlot[]> {
+    return this.remote.requestPhotoUploads(storeId, body);
+  }
+
+  confirmPhotos(
+    storeId: ThriftStoreId,
+    photos: { fileKey?: string; photoId?: string; position: number }[],
+    deletePhotoIds?: string[]
+  ): Promise<ThriftStore> {
+    return this.remote.confirmPhotos(storeId, photos, deletePhotoIds);
   }
 }

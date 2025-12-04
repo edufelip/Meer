@@ -138,9 +138,9 @@ export function CategoryStoresScreen() {
       onPress={() => navigation.navigate("thriftDetail", { id: item.id, store: item })}
     >
       <View style={{ width: 112, alignSelf: "stretch", minHeight: 120 }}>
-        {item.coverImageUrl || item.galleryUrls?.[0] ? (
+        {item.coverImageUrl || item.images?.[0]?.url ? (
           <Image
-            source={{ uri: item.coverImageUrl ?? item.galleryUrls?.[0] }}
+            source={{ uri: item.coverImageUrl ?? item.images?.[0]?.url }}
             style={{ flex: 1, width: "100%", height: "100%" }}
             resizeMode="cover"
           />

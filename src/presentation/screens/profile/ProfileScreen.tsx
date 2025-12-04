@@ -13,7 +13,7 @@ import { Buffer } from "buffer";
 
 export function ProfileScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const { getCachedProfileUseCase } = useDependencies();
+  const { getCachedProfileUseCase, getProfileUseCase } = useDependencies();
   const [user, setUser] = useState<(User & { bio?: string; notifyNewStores: boolean; notifyPromos: boolean }) | null>(
     null
   );
@@ -36,6 +36,16 @@ export function ProfileScreen() {
     if (cached) {
       setUser(cached);
       setHasArticles(Boolean(cached.ownedThriftStore && (cached as any).articlesCount > 0));
+      // If we don't have the owned store yet, fetch fresh to update the cache.
+      if (!cached.ownedThriftStore) {
+        try {
+          const fresh = await getProfileUseCase.execute();
+          setUser(fresh);
+          setHasArticles(Boolean(fresh.ownedThriftStore && (fresh as any).articlesCount > 0));
+        } catch {
+          // ignore network error; keep cached
+        }
+      }
       return;
     }
 
@@ -58,7 +68,7 @@ export function ProfileScreen() {
       setUser(null);
       setHasArticles(false);
     }
-  }, [getCachedProfileUseCase]);
+  }, [getCachedProfileUseCase, getProfileUseCase]);
 
   // Load once on mount
   useEffect(() => {
