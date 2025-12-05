@@ -1,4 +1,4 @@
-import { AntDesign, Ionicons, MaterialIcons } from "@expo/vector-icons";
+import { AntDesign, Ionicons } from "@expo/vector-icons";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -13,7 +13,8 @@ import {
   ScrollView,
   Text,
   TextInput,
-  View
+  View,
+  Image
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import type { RootStackParamList } from "../../../app/navigation/RootStack";
@@ -22,7 +23,6 @@ import { useForgotPassword } from "../../../hooks/useForgotPassword";
 import { useLogin } from "../../../hooks/useLogin";
 import { useLoginWithApple } from "../../../hooks/useLoginWithApple";
 import { useLoginWithGoogle } from "../../../hooks/useLoginWithGoogle";
-import { theme } from "../../../shared/theme";
 import { saveTokens } from "../../../storage/authStorage";
 import { primeApiToken } from "../../../api/client";
 import { cacheProfile } from "../../../storage/profileCache";
@@ -112,9 +112,12 @@ export function LoginScreen() {
           keyboardShouldPersistTaps="handled"
         >
           <View className="w-full max-w-md items-center">
-            <View className="flex-row items-center gap-2 pb-8">
-              <MaterialIcons name="storefront" size={32} color={theme.colors.accent} />
-              <Text className="text-2xl font-bold text-[#374151]">Guia Brechó</Text>
+            <View className="items-center pb-4">
+              <Image
+                source={require("../../../../assets/images/app-icon.png")}
+                style={{ width: 48, height: 48 }}
+                resizeMode="contain"
+              />
             </View>
 
             <Text className="text-[32px] font-bold text-center text-[#374151] leading-tight">

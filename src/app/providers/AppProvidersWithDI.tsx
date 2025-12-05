@@ -16,6 +16,10 @@ import { GetCurrentUserUseCase } from "../../domain/usecases/GetCurrentUserUseCa
 import { GetFeaturedThriftStoresUseCase } from "../../domain/usecases/GetFeaturedThriftStoresUseCase";
 import { GetNearbyThriftStoresUseCase } from "../../domain/usecases/GetNearbyThriftStoresUseCase";
 import { GetGuideContentUseCase } from "../../domain/usecases/GetGuideContentUseCase";
+import { CreateContentUseCase } from "../../domain/usecases/CreateContentUseCase";
+import { UpdateContentUseCase } from "../../domain/usecases/UpdateContentUseCase";
+import { RequestContentImageUploadUseCase } from "../../domain/usecases/RequestContentImageUploadUseCase";
+import { DeleteContentUseCase } from "../../domain/usecases/DeleteContentUseCase";
 import { GetFavoriteThriftStoresUseCase } from "../../domain/usecases/GetFavoriteThriftStoresUseCase";
 import { GetCategoriesUseCase } from "../../domain/usecases/GetCategoriesUseCase";
 import { GetCachedCategoriesUseCase } from "../../domain/usecases/GetCachedCategoriesUseCase";
@@ -50,6 +54,10 @@ interface Dependencies {
   getFeaturedThriftStoresUseCase: GetFeaturedThriftStoresUseCase;
   getNearbyThriftStoresUseCase: GetNearbyThriftStoresUseCase;
   getGuideContentUseCase: GetGuideContentUseCase;
+  createContentUseCase: CreateContentUseCase;
+  updateContentUseCase: UpdateContentUseCase;
+  requestContentImageUploadUseCase: RequestContentImageUploadUseCase;
+  deleteContentUseCase: DeleteContentUseCase;
   getFavoriteThriftStoresUseCase: GetFavoriteThriftStoresUseCase;
   searchThriftStoresUseCase: SearchThriftStoresUseCase;
   toggleFavoriteThriftStoreUseCase: ToggleFavoriteThriftStoreUseCase;
@@ -113,6 +121,10 @@ export function DependenciesProvider(props: PropsWithChildren) {
     const getFeaturedThriftStoresUseCase = new GetFeaturedThriftStoresUseCase(thriftStoreRepository);
     const getNearbyThriftStoresUseCase = new GetNearbyThriftStoresUseCase(thriftStoreRepository);
     const getGuideContentUseCase = new GetGuideContentUseCase(guideContentRepository);
+    const createContentUseCase = new CreateContentUseCase(guideContentRepository);
+    const updateContentUseCase = new UpdateContentUseCase(guideContentRepository);
+    const requestContentImageUploadUseCase = new RequestContentImageUploadUseCase(guideContentRepository);
+    const deleteContentUseCase = new DeleteContentUseCase(guideContentRepository);
     const getFavoriteThriftStoresUseCase = new GetFavoriteThriftStoresUseCase(favoriteRepository);
     const searchThriftStoresUseCase = new SearchThriftStoresUseCase(thriftStoreRepository);
     const toggleFavoriteThriftStoreUseCase = new ToggleFavoriteThriftStoreUseCase(favoriteRepository);
@@ -140,6 +152,10 @@ export function DependenciesProvider(props: PropsWithChildren) {
       getFeaturedThriftStoresUseCase,
       getNearbyThriftStoresUseCase,
       getGuideContentUseCase,
+      createContentUseCase,
+      updateContentUseCase,
+      requestContentImageUploadUseCase,
+      deleteContentUseCase,
       getFavoriteThriftStoresUseCase,
       searchThriftStoresUseCase,
       toggleFavoriteThriftStoreUseCase,

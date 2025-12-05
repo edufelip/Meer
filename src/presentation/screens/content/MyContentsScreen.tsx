@@ -1,40 +1,44 @@
 import React, { useMemo } from "react";
 import { FlatList, Image, Pressable, StatusBar, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { useNavigation, useRoute } from "@react-navigation/native";
+import { useNavigation, useRoute, useFocusEffect } from "@react-navigation/native";
 import type { RouteProp } from "@react-navigation/native";
 import { useDependencies } from "../../../app/providers/AppProvidersWithDI";
 import type { RootStackParamList } from "../../../app/navigation/RootStack";
 import { theme } from "../../../shared/theme";
 
 export function MyContentsScreen() {
+  const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const route = useRoute<RouteProp<RootStackParamList, "myContents">>();
   const { getGuideContentUseCase } = useDependencies();
 
-  const [articles, setArticles] = React.useState(() => [] as Awaited<ReturnType<typeof getGuideContentUseCase.execute>>);
+  const [articles, setArticles] = React.useState(() => [] as Awaited<ReturnType<typeof getGuideContentUseCase.execute>>["items"]);
   const [loading, setLoading] = React.useState(true);
 
-  React.useEffect(() => {
-    let active = true;
-    (async () => {
-      const list = await getGuideContentUseCase.execute();
-      if (!active) return;
-      setArticles(list.filter((a) => a.storeId === route.params.storeId));
-      setLoading(false);
-    })();
-    return () => {
-      active = false;
-    };
-  }, [getGuideContentUseCase, route.params.storeId]);
+  useFocusEffect(
+    React.useCallback(() => {
+      let active = true;
+      (async () => {
+        const res = await getGuideContentUseCase.execute({ storeId: route.params.storeId, page: 0, pageSize: 50 });
+        const list = res?.items ?? [];
+        if (!active) return;
+        setArticles(list);
+        setLoading(false);
+      })();
+      return () => {
+        active = false;
+      };
+    }, [getGuideContentUseCase, route.params.storeId])
+  );
 
   const listData = useMemo(() => articles, [articles]);
 
   return (
-    <SafeAreaView className="flex-1 bg-[#F3F4F6]" edges={["top", "left", "right"]}>
+    <SafeAreaView className="flex-1 bg-[#F3F4F6]" edges={["left", "right", "bottom"]}>
       <StatusBar barStyle="dark-content" />
-      <View className="bg-white/90 border-b border-gray-200">
+      <View className="bg-white/90 border-b border-gray-200" style={{ paddingTop: insets.top }}>
         <View className="flex-row items-center justify-between p-4">
           <Pressable className="w-8 h-8 items-center justify-center" onPress={() => navigation.goBack()}>
             <Ionicons name="arrow-back" size={22} color={theme.colors.highlight} />
@@ -52,18 +56,25 @@ export function MyContentsScreen() {
             <Pressable
               className="flex-row items-center bg-white rounded-lg shadow-sm overflow-hidden"
               style={{ marginBottom: 12 }}
-              onPress={() => navigation.navigate("editContent" as never, { articleId: item.id, storeId: route.params.storeId } as never)}
+              onPress={() =>
+                navigation.navigate(
+                  "editContent" as never,
+                  { articleId: item.id, storeId: route.params.storeId, article: item } as never
+                )
+              }
             >
               <View style={{ width: 96, height: 96 }}>
                 <Image source={{ uri: item.imageUrl }} className="w-full h-full" resizeMode="cover" />
               </View>
-              <View className="flex-1 p-3">
-                <Text className="font-bold text-base text-[#1F2937]" numberOfLines={2}>
+              <View className="flex-1 p-3 pr-4">
+                <Text className="font-bold text-base text-[#1F2937]" numberOfLines={1}>
                   {item.title}
                 </Text>
-                <Text className="text-sm text-gray-500 mt-1">{item.categoryLabel}</Text>
+                <Text className="text-sm text-gray-500 mt-1" numberOfLines={1}>
+                  {item.description ?? item.categoryLabel}
+                </Text>
               </View>
-              <View className="px-2">
+              <View className="pl-3 pr-4">
                 <Ionicons name="pencil" size={18} color="#9CA3AF" />
               </View>
             </Pressable>

@@ -28,7 +28,9 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import type { RootStackParamList } from "../../../app/navigation/RootStack";
 import { useDependencies } from "../../../app/providers/AppProvidersWithDI";
 import type { ThriftStore } from "../../../domain/entities/ThriftStore";
+import type { Category } from "../../../domain/entities/Category";
 import { theme } from "../../../shared/theme";
+import { getCategoryDisplayName } from "../../components/CategoryCard";
 
 type CategoryChipProps = {
   id: string;
@@ -131,9 +133,9 @@ export function BrechoFormScreen() {
   const [description, setDescription] = useState(initial.description ?? initial.tagline ?? "");
   const [hours, setHours] = useState(initial.openingHours ?? "");
   const [address, setAddress] = useState(initial.addressLine ?? "");
-  const [addressSuggestions, setAddressSuggestions] = useState<{ label: string; latitude?: number; longitude?: number }[]>(
-    []
-  );
+  const [addressSuggestions, setAddressSuggestions] = useState<
+    { label: string; latitude?: number; longitude?: number; neighborhood?: string }[]
+  >([]);
   const skipGeocodeRef = useRef(false);
   const [geocodeEnabled, setGeocodeEnabled] = useState(false);
   const [addressCoords, setAddressCoords] = useState<{ latitude?: number; longitude?: number } | null>(null);
@@ -144,7 +146,9 @@ export function BrechoFormScreen() {
   const [instagram, setInstagram] = useState(
     initial.social?.instagram?.replace(/^@+/, "") ?? ""
   );
-  const [categories, setCategories] = useState<string[]>(initial.categories ?? []);
+  const [categoryOptions, setCategoryOptions] = useState<Category[]>([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(false);
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
   type UiPhoto =
     | {
         state: "existing";
@@ -177,7 +181,9 @@ export function BrechoFormScreen() {
     createOrUpdateStoreUseCase,
     getProfileUseCase,
     requestStorePhotoUploadsUseCase,
-    confirmStorePhotosUseCase
+    confirmStorePhotosUseCase,
+    getCachedCategoriesUseCase,
+    getCategoriesUseCase
   } = useDependencies();
   const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
@@ -190,6 +196,50 @@ export function BrechoFormScreen() {
     const digits = (raw || "").replace(/\D/g, "");
     return digits.length >= 10 && digits.length <= 13;
   };
+
+  // Load categories from cache (and only fetch remote if cache is empty; home screen keeps cache fresh on its cadence).
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      setCategoriesLoading(true);
+      try {
+        const cached = await getCachedCategoriesUseCase.execute();
+        if (!mounted) return;
+        if (cached?.length) {
+          setCategoryOptions(cached);
+          return;
+        }
+        const remote = await getCategoriesUseCase.execute();
+        if (mounted && remote?.length) setCategoryOptions(remote);
+      } finally {
+        if (mounted) setCategoriesLoading(false);
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, [getCachedCategoriesUseCase, getCategoriesUseCase]);
+
+  // Preselect categories based on the store being edited, once options are available.
+  useEffect(() => {
+    if (!categoryOptions.length) return;
+    if (selectedCategoryIds.length) return;
+    const existing = (initial.categories ?? []).map((c) => c.toLowerCase());
+    if (!existing.length) return;
+    const matches = categoryOptions
+      .filter((opt) => {
+        const display = getCategoryDisplayName(opt.nameStringId).toLowerCase();
+        return (
+          existing.includes(opt.id.toLowerCase()) ||
+          existing.includes(opt.nameStringId.toLowerCase()) ||
+          existing.includes(display)
+        );
+      })
+      .map((opt) => opt.id);
+    if (matches.length) {
+      setSelectedCategoryIds(matches);
+    }
+  }, [categoryOptions, initial.categories, selectedCategoryIds.length]);
 
   const compressPhotos = async (items: { uri: string; tempId?: string }[]) => {
     const TARGET_BYTES = 1 * 1024 * 1024; // aim <1MB
@@ -244,25 +294,13 @@ export function BrechoFormScreen() {
     }
   };
 
-  const toggleCategory = (label: string) => {
-    setCategories((prev) => {
-      const next = prev.includes(label) ? prev.filter((c) => c !== label) : [...prev, label];
+  const toggleCategory = (id: string) => {
+    setSelectedCategoryIds((prev) => {
+      const next = prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id];
       return next;
     });
     markDirty();
   };
-
-  const categoryOptions = useMemo(
-    () => [
-      { id: "fem", label: "Feminino" },
-      { id: "masc", label: "Masculino" },
-      { id: "kids", label: "Infantil" },
-      { id: "home", label: "Casa" },
-      { id: "plus", label: "Plus Size" },
-      { id: "luxo", label: "Luxo" }
-    ],
-    []
-  );
 
   const pickImage = async (fromCamera: boolean) => {
     const perm = fromCamera
@@ -456,7 +494,7 @@ export function BrechoFormScreen() {
     if (email.trim()) textChanges.email = email.trim();
     const instagramHandle = instagram.trim().replace(/^@+/, "");
     if (instagramHandle) textChanges.social = { instagram: `@${instagramHandle}` };
-    if (categories.length) textChanges.categories = categories.map((c) => c.toLowerCase());
+    if (selectedCategoryIds.length) textChanges.categories = selectedCategoryIds.map((c) => c.toLowerCase());
 
     // Geocode address to get lat/lng when provided
     if (addressCoords?.latitude && addressCoords?.longitude) {
@@ -790,11 +828,15 @@ export function BrechoFormScreen() {
               <TextInput
                 value={phone}
                 onChangeText={(t) => {
-                  setPhone(t);
+                  const digitsOnly = t.replace(/[^0-9]/g, "");
+                  setPhone(digitsOnly);
                   markDirty();
                 }}
                 placeholder="(11) 99999-9999"
                 className="w-full rounded-lg border border-gray-300 bg-white px-3 py-3 mb-2"
+                keyboardType="number-pad"
+                inputMode="numeric"
+                maxLength={14}
               />
             </View>
             <View>
@@ -831,17 +873,23 @@ export function BrechoFormScreen() {
 
         <View className="bg-white p-4 rounded-xl shadow-sm mb-4">
           <Text className="text-lg font-bold mb-4">Categorias</Text>
-          <View className="flex-row flex-wrap gap-2 mb-2">
-            {categoryOptions.map((opt) => (
-              <CategoryChip
-                key={opt.id}
-                id={opt.id}
-                label={opt.label}
-                active={categories.includes(opt.label)}
-                onToggle={() => toggleCategory(opt.label)}
-              />
-            ))}
-          </View>
+          {categoriesLoading && categoryOptions.length === 0 ? (
+            <View className="py-4 items-center justify-center">
+              <ActivityIndicator color={theme.colors.highlight} />
+            </View>
+          ) : (
+            <View className="flex-row flex-wrap gap-2 mb-2">
+              {categoryOptions.map((opt) => (
+                <CategoryChip
+                  key={opt.id}
+                  id={opt.id}
+                  label={getCategoryDisplayName(opt.nameStringId)}
+                  active={selectedCategoryIds.includes(opt.id)}
+                  onToggle={() => toggleCategory(opt.id)}
+                />
+              ))}
+            </View>
+          )}
         </View>
 
           <View className="pt-2 pb-4">

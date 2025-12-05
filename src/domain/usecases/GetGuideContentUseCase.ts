@@ -8,7 +8,11 @@ export class GetGuideContentUseCase {
     this.repository = repository;
   }
 
-  execute(limit?: number): Promise<GuideContent[]> {
-    return this.repository.listLatest(limit);
+  execute(params?: { page?: number; pageSize?: number; storeId?: string }): Promise<{
+    items: GuideContent[];
+    page: number;
+    hasNext: boolean;
+  }> {
+    return this.repository.listLatest(params);
   }
 }

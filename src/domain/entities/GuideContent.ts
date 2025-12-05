@@ -7,4 +7,6 @@ export interface GuideContent {
   categoryLabel: string;
   imageUrl: string;
   storeId: import("./ThriftStore").ThriftStoreId;
+  thriftStoreName?: string;
+  createdAt?: string;
 }

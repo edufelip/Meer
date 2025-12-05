@@ -5,7 +5,6 @@ import {
   View,
   Text,
   Pressable,
-  Image,
   Animated,
   Easing,
   Alert,
@@ -22,8 +21,10 @@ import { SectionTitle } from "../../components/SectionTitle";
 import { FeaturedThriftCarousel } from "../../components/FeaturedThriftCarousel";
 import { NearbyMapCard } from "../../components/NearbyMapCard";
 import { NearbyThriftListItem } from "../../components/NearbyThriftListItem";
+import { GuideContentCard } from "../../components/GuideContentCard";
 import type { ThriftStore } from "../../../domain/entities/ThriftStore";
 import type { GuideContent } from "../../../domain/entities/GuideContent";
+import type { Category } from "../../../domain/entities/Category";
 import { useDependencies } from "../../../app/providers/AppProvidersWithDI";
 import { theme } from "../../../shared/theme";
 import { useNavigation } from "@react-navigation/native";
@@ -56,7 +57,12 @@ if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental
 
 export function HomeScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const { getFeaturedThriftStoresUseCase, getNearbyPaginatedUseCase, getGuideContentUseCase } =
+  const {
+    getFeaturedThriftStoresUseCase,
+    getNearbyPaginatedUseCase,
+    getGuideContentUseCase,
+    getCategoriesUseCase
+  } =
     useDependencies();
   const [featured, setFeatured] = useState<ThriftStore[]>([]);
   const [nearby, setNearby] = useState<ThriftStore[]>([]);
@@ -83,6 +89,7 @@ export function HomeScreen() {
   const hasFetchedOnce = useRef(false);
   const featuredDoneRef = useRef(false);
   const nearbyDoneRef = useRef(false);
+  const categoriesRef = useRef<Category[]>([]);
 
   const shimmer = useRef(new Animated.Value(0)).current;
   const filterAnim = useRef(new Animated.Value(1)).current;
@@ -289,16 +296,25 @@ export function HomeScreen() {
         });
 
       const guidesPromise = getGuideContentUseCase
-        .execute(10)
+        .execute({ page: 0, pageSize: 10 })
         .then((res) => {
-          guidesData = res ?? [];
+          guidesData = res?.items ?? [];
           guidesOk = true;
           setGuides(guidesData);
         })
         .catch(() => setGuides([]))
         .finally(() => setGuidesLoading(false));
 
-      await Promise.allSettled([featuredPromise, nearbyPromise, guidesPromise]);
+      const categoriesPromise = getCategoriesUseCase
+        .execute()
+        .then((data) => {
+          categoriesRef.current = data ?? [];
+        })
+        .catch(() => {
+          // keep previous categoriesRef
+        });
+
+      await Promise.allSettled([featuredPromise, nearbyPromise, guidesPromise, categoriesPromise]);
 
       if (featuredOk && nearbyOk && guidesOk) {
         void saveHomeCache(bucket, {
@@ -313,7 +329,7 @@ export function HomeScreen() {
       lastFetchRef.current = Date.now();
       isFetching.current = false;
     },
-    [getFeaturedThriftStoresUseCase, getNearbyPaginatedUseCase, getGuideContentUseCase, updateCombined]
+    [getFeaturedThriftStoresUseCase, getNearbyPaginatedUseCase, getGuideContentUseCase, getCategoriesUseCase, updateCombined]
   );
 
   useEffect(() => {
@@ -643,7 +659,7 @@ export function HomeScreen() {
             <View className="px-4 py-6 bg-[#F3F4F6]">
               <View className="flex-row justify-between items-center mb-4">
                 <Text className="text-xl font-bold text-[#374151]">Conteúdos e Dicas</Text>
-                <Text className="text-sm font-semibold text-[#B55D05]">Ver todos</Text>
+                <View />
               </View>
               {guidesLoading ? (
                 <Animated.View
@@ -654,24 +670,10 @@ export function HomeScreen() {
                 />
               ) : (
                 guides[0] && (
-                  <View className="bg-white rounded-xl shadow-sm overflow-hidden">
-                    <View className="flex-row">
-                      <Image source={{ uri: guides[0].imageUrl }} className="w-1/3 h-full aspect-[4/5]" />
-                      <View className="p-4 flex-1">
-                        <Text className="font-bold text-[#374151] mb-1" numberOfLines={2}>
-                          {guides[0].title}
-                        </Text>
-                        <Text className="text-sm text-[#6B7280] mb-2" numberOfLines={2}>
-                          {guides[0].description}
-                        </Text>
-                        <View className="bg-[#B55D05] self-start rounded-full px-2 py-1">
-                          <Text className="text-xs font-semibold text-white uppercase">
-                            {guides[0].categoryLabel}
-                          </Text>
-                        </View>
-                      </View>
-                    </View>
-                  </View>
+                  <GuideContentCard
+                    content={guides[0]}
+                    onPress={() => navigation.navigate("contentDetail", { content: guides[0] })}
+                  />
                 )
               )}
             </View>

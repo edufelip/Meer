@@ -8,6 +8,7 @@ interface GuideContentCardProps {
 }
 
 export function GuideContentCard({ content, onPress }: GuideContentCardProps) {
+  const createdAtLabel = content.createdAt ? new Date(content.createdAt).toLocaleDateString() : undefined;
   return (
     <Pressable className="bg-white rounded-xl shadow-sm overflow-hidden" onPress={onPress}>
       <View className="flex-row">
@@ -19,8 +20,17 @@ export function GuideContentCard({ content, onPress }: GuideContentCardProps) {
           <Text className="text-sm text-[#6B7280] mb-2" numberOfLines={2}>
             {content.description}
           </Text>
-          <View className="bg-[#B55D05] self-start rounded-full px-2 py-1">
-            <Text className="text-xs font-semibold text-white uppercase">{content.categoryLabel}</Text>
+          <View className="flex-row items-center justify-between mt-auto pt-2">
+            <Text className="text-xs text-[#4B5563]" numberOfLines={1}>
+              {content.thriftStoreName ?? ""}
+            </Text>
+            {createdAtLabel ? (
+              <Text className="text-xs text-[#9CA3AF]" numberOfLines={1}>
+                {createdAtLabel}
+              </Text>
+            ) : (
+              <View />
+            )}
           </View>
         </View>
       </View>

@@ -1,4 +1,3 @@
-import type { GuideContent } from "../../domain/entities/GuideContent";
 import type { GuideContentRepository } from "../../domain/repositories/GuideContentRepository";
 import type { GuideContentRemoteDataSource } from "../datasources/GuideContentRemoteDataSource";
 
@@ -9,7 +8,26 @@ export class GuideContentRepositoryJson implements GuideContentRepository {
     this.remote = remote;
   }
 
-  listLatest(limit?: number): Promise<GuideContent[]> {
-    return this.remote.listLatest(limit);
+  listLatest(params?: { page?: number; pageSize?: number; storeId?: string }) {
+    return this.remote.listLatest(params);
+  }
+
+  createContent(payload: { title: string; description?: string; storeId: string }): Promise<{ id: string }> {
+    return this.remote.createContent(payload);
+  }
+
+  updateContent(id: string, payload: { title?: string; description?: string; imageUrl?: string }): Promise<void> {
+    return this.remote.updateContent(id, payload);
+  }
+
+  requestImageUpload(
+    contentId: string,
+    contentType?: string
+  ): Promise<{ uploadUrl: string; fileKey: string; contentType: string }> {
+    return this.remote.requestImageUpload(contentId, contentType);
+  }
+
+  deleteContent(id: string): Promise<void> {
+    return this.remote.deleteContent(id);
   }
 }
