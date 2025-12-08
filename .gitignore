@@ -34,6 +34,8 @@ yarn-error.*
 
 # local env files
 .env*.local
+web-admin/.env.local
+web-admin/.next
 
 # typescript
 *.tsbuildinfo

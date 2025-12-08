@@ -45,6 +45,22 @@ EXPO_PUBLIC_GOOGLE_IOS_ID=<ios client id>
 ```
 (Keys stay local; production IDs go in your own env).
 
+### Web Admin (Next.js)
+
+- Path: `web-admin/`
+- Create `web-admin/.env.local` with at least:
+```
+NEXT_PUBLIC_API_BASE_URL=http://192.168.15.64:8080   # your backend base URL
+NEXT_PUBLIC_APP_PACKAGE=com.edufelip.meer
+```
+- Run:
+```
+cd web-admin
+npm install
+npm run dev
+```
+The web admin calls the backend through the `/api` proxy (see `next.config.js`), so `/api/dashboard/login` rewrites to your `NEXT_PUBLIC_API_BASE_URL/dashboard/login`. If you see HTML in responses, the request is still hitting the Next app—check that the env is set and restart `npm run dev`.
+
 ## Run / Build
 - Dev client (required for Google Sign-In):  
   ```bash
