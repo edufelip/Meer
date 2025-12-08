@@ -47,15 +47,15 @@ EXPO_PUBLIC_GOOGLE_IOS_ID=<ios client id>
 
 ### Web Admin (Next.js)
 
-- Path: `web-admin/`
-- Create `web-admin/.env.local` with at least:
+- Path: `web/`
+- Create `web/.env.local` with at least:
 ```
 NEXT_PUBLIC_API_BASE_URL=http://192.168.15.64:8080   # your backend base URL
 NEXT_PUBLIC_APP_PACKAGE=com.edufelip.meer
 ```
 - Run:
 ```
-cd web-admin
+cd web
 npm install
 npm run dev
 ```
