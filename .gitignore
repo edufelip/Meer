@@ -43,10 +43,11 @@ web/.next
 app-example
 
 # generated native folders
-/ios
-/android
+# iOS/Android Firebase configs
 GoogleService-Info.plist
+android/app/google-services.json
 google-services.json
+
 .env.local
 .env
-src/services/firebase/firebaseConfig.ts 
+src/services/firebase/firebaseConfig.ts
