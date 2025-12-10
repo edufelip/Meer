@@ -92,8 +92,19 @@ android {
         applicationId 'com.edufelip.meer'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 2
-        versionName "1.0.0"
+        // Auto-incremented versionCode: uses CI_VERSION_CODE if provided; otherwise git commit count.
+        def envVersionCode = System.getenv("CI_VERSION_CODE")
+        def autoVersionCode = envVersionCode ? envVersionCode.toInteger() : 0
+        if (autoVersionCode == 0) {
+            try {
+                def gitCount = "git rev-list --count HEAD".execute(null, rootProject.rootDir).text.trim()
+                autoVersionCode = gitCount.toInteger()
+            } catch (ignored) {
+                autoVersionCode = 1
+            }
+        }
+        versionCode autoVersionCode
+        versionName "1.0.${versionCode}"
 
         buildConfigField "String", "REACT_NATIVE_RELEASE_LEVEL", "\"${findProperty('reactNativeReleaseLevel') ?: 'stable'}\""
     }
