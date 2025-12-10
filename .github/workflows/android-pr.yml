@@ -23,7 +23,7 @@ jobs:
           distribution: temurin
           java-version: 17
       - name: Set CI version code
-        run: echo "CI_VERSION_CODE=$(git rev-list --count HEAD)" >> $GITHUB_ENV
+        run: echo "CI_VERSION_CODE=${{ github.run_number }}" >> $GITHUB_ENV
       - uses: gradle/gradle-build-action@v2
         with:
           gradle-version: wrapper

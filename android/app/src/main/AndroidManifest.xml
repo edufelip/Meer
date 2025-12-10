@@ -28,6 +28,7 @@
         <category android:name="android.intent.category.DEFAULT"/>
         <category android:name="android.intent.category.BROWSABLE"/>
         <data android:scheme="meer"/>
+        <data android:scheme="exp+meer"/>
       </intent-filter>
     </activity>
   </application>
