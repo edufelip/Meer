@@ -12,12 +12,6 @@ jobs:
         working-directory: android
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 18
-      - name: Install JS deps
-        run: npm install --no-audit --no-fund
-        working-directory: .
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
