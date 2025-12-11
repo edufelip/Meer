@@ -18,7 +18,10 @@ jobs:
         run: yarn install --frozen-lockfile
         working-directory: .
       - name: Install pods
+        env:
+          COCOAPODS_CACHE_DIR: ${{ runner.temp }}/.cocoapods-cache
         run: |
+          mkdir -p "$COCOAPODS_CACHE_DIR"
           cd ios
           pod install --silent
       - name: Write GoogleService-Info.plist
