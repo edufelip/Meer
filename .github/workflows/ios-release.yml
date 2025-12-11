@@ -80,6 +80,7 @@ jobs:
 
       - name: Build archive
         env:
+          IOS_PROFILE_NAME: ${{ secrets.IOS_PROFILE_NAME }}
           KEYCHAIN_PATH: ${{ runner.temp }}/app-signing.keychain-db
         run: |
           cd ios
@@ -89,8 +90,10 @@ jobs:
             -configuration Release \
             -archivePath "$PWD/build/Meer.xcarchive" \
             archive \
-            CODE_SIGNING_ALLOWED=YES \
+            CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_IDENTITY="Apple Distribution" \
             DEVELOPMENT_TEAM=${{ secrets.IOS_TEAM_ID }} \
+            PROVISIONING_PROFILE_SPECIFIER="$IOS_PROFILE_NAME" \
             OTHER_CODE_SIGN_FLAGS="--keychain $KEYCHAIN_PATH"
 
       - name: Export IPA
@@ -120,7 +123,6 @@ jobs:
             -archivePath "$PWD/build/Meer.xcarchive" \
             -exportOptionsPlist ExportOptions.plist \
             -exportPath "$PWD/build" \
-            CODE_SIGNING_ALLOWED=YES \
             OTHER_CODE_SIGN_FLAGS="--keychain $KEYCHAIN_PATH"
 
       - name: Upload IPA to TestFlight
