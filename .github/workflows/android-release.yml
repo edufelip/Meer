@@ -15,19 +15,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 18
-      - name: Debug current dir
-        run: |
-          pwd
-          ls
-        working-directory: .
+          cache: yarn
+          cache-dependency-path: yarn.lock
       - name: Install JS deps
-        run: |
-          npm install --no-audit --no-fund
-        working-directory: .
-      - name: Check node and npm
-        run: |
-          node -v
-          npm -v
+        run: yarn install --frozen-lockfile
         working-directory: .
       - uses: actions/setup-java@v4
         with:
