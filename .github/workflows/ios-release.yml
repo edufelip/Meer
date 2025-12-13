@@ -21,6 +21,10 @@ jobs:
           ${{ secrets.ENV_FILE }}
           EOF
 
+      - name: Bump iOS build number
+        run: |
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $GITHUB_RUN_NUMBER" ios/Meer/Info.plist
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
