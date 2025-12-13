@@ -6,10 +6,11 @@ import {
   Pressable,
   ScrollView,
   KeyboardAvoidingView,
-  Platform
+  Platform,
+  Image
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { MaterialIcons, Ionicons } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../../../app/navigation/RootStack";
@@ -56,10 +57,11 @@ export function SignUpScreen() {
                 <Ionicons name="arrow-back" size={22} color={theme.colors.highlight} />
               </Pressable>
               <View className="flex-1 items-center">
-                <View className="flex-row items-center gap-2">
-                  <MaterialIcons name="storefront" size={28} color={theme.colors.accent} />
-                  <Text className="text-xl font-bold text-[#374151]">Guia Brechó</Text>
-                </View>
+                <Image
+                  source={require("../../../../assets/images/app-icon.png")}
+                  style={{ width: 48, height: 48 }}
+                  resizeMode="contain"
+                />
               </View>
               <View style={{ width: 38 }} />
             </View>
