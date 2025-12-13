@@ -3,6 +3,8 @@ name: iOS Release
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - "web/**"
 
 jobs:
   release:
@@ -20,6 +22,13 @@ jobs:
           cat <<'EOF' > .env
           ${{ secrets.ENV_FILE }}
           EOF
+
+      - name: Export env vars
+        run: |
+          set -a
+          source .env
+          set +a
+          env | grep '^EXPO_PUBLIC_' >> "$GITHUB_ENV"
 
       - name: Bump iOS build number
         run: |
