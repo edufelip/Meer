@@ -36,7 +36,11 @@ export class HttpProfileRemoteDataSource implements ProfileRemoteDataSource {
   }
 
   async requestAvatarUploadSlot(contentType?: string): Promise<{ uploadUrl: string; fileKey: string; contentType: string }> {
-    const res = await api.post("/profile/avatar/upload", contentType ? { contentType } : {});
+    const res = await api.post(
+      "/profile/avatar/upload",
+      contentType ? { contentType } : {},
+      { headers: { "Content-Type": "application/json" } }
+    );
     return res.data;
   }
 }

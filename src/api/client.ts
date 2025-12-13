@@ -26,6 +26,16 @@ const refreshApi = axios.create({
 
 refreshApi.defaults.headers.common["X-App-Package"] = APP_PACKAGE;
 
+function clearDefaultAuthHeaders() {
+  delete (api.defaults.headers.common as any).Authorization;
+  delete (refreshApi.defaults.headers.common as any).Authorization;
+}
+
+export async function clearAuthSession() {
+  clearDefaultAuthHeaders();
+  await clearTokens();
+}
+
 // Logging for refresh calls
 refreshApi.interceptors.request.use(
   (config) => {
@@ -170,14 +180,14 @@ api.interceptors.response.use(
 
     // If no refresh token, logout immediately
     if (!hasRefresh) {
-      await clearTokens();
+      await clearAuthSession();
       if (navigationRef.isReady()) navigationRef.navigate("login");
       return Promise.reject(error);
     }
 
     // If we've already retried this request, avoid loops
     if (config?._retry) {
-      await clearTokens();
+      await clearAuthSession();
       if (navigationRef.isReady()) navigationRef.navigate("login");
       return Promise.reject(error);
     }
@@ -223,7 +233,7 @@ api.interceptors.response.use(
       notifyTokenRefreshed(newToken);
 
       if (!newToken) {
-        await clearTokens();
+        await clearAuthSession();
         if (navigationRef.isReady()) navigationRef.navigate("login");
         return Promise.reject(error);
       }
@@ -241,7 +251,7 @@ api.interceptors.response.use(
       refreshPromise = null;
       notifyTokenRefreshed(null);
       refreshAttempts = 0;
-      await clearTokens();
+      await clearAuthSession();
       if (navigationRef.isReady()) navigationRef.navigate("login");
       return Promise.reject(refreshErr);
     }

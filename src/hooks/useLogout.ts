@@ -1,13 +1,13 @@
 import { useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { clearTokens } from "../storage/authStorage";
+import { clearAuthSession } from "../api/client";
 import { navigationRef } from "../app/navigation/navigationRef";
 
 export function useLogout() {
   const queryClient = useQueryClient();
 
   return useCallback(async () => {
-    await clearTokens();
+    await clearAuthSession();
     queryClient.clear();
     if (navigationRef.isReady()) {
       navigationRef.reset({ index: 0, routes: [{ name: "login" }] });

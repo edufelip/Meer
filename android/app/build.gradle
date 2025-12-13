@@ -95,9 +95,15 @@ android {
         def major = 1
         def minor = 0
         def patch = 0
-        def envVersionCode = System.getenv("CI_VERSION_CODE")
+        def envVersionCode = System.getenv("CI_VERSION_CODE") ?: System.getenv("LOCAL_VERSION_CODE")
         if (!envVersionCode) {
-            throw new GradleException("CI_VERSION_CODE not set. Provide it in CI (e.g., GITHUB_RUN_NUMBER).")
+            def isCi = System.getenv("CI") == "true"
+            if (isCi) {
+                throw new GradleException("CI_VERSION_CODE not set. Provide it in CI (e.g., GITHUB_RUN_NUMBER).")
+            } else {
+                // Local builds: fall back to 1 to keep `expo run:android` working without env vars
+                envVersionCode = "1"
+            }
         }
         versionCode envVersionCode.toInteger()
         versionName "${major}.${minor}.${patch}"

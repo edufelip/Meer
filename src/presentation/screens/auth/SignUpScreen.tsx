@@ -7,7 +7,8 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
-  Image
+  Image,
+  ActivityIndicator
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -208,6 +209,21 @@ export function SignUpScreen() {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+      {loading ? (
+        <View
+          pointerEvents="auto"
+          style={{
+            position: "absolute",
+            inset: 0,
+            backgroundColor: "rgba(0,0,0,0.2)",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 50
+          }}
+        >
+          <ActivityIndicator size="large" color="#B55D05" />
+        </View>
+      ) : null}
     </SafeAreaView>
   );
 }

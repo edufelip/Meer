@@ -3,7 +3,8 @@ import { AppState } from "react-native";
 import { DependenciesProvider, useDependencies } from "./AppProvidersWithDI";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "../../hooks/reactQueryClient";
-import { getTokens, clearTokens } from "../../storage/authStorage";
+import { getTokens } from "../../storage/authStorage";
+import { clearAuthSession } from "../../api/client";
 import { useValidateToken } from "../../hooks/useValidateToken";
 import { navigationRef } from "../navigation/navigationRef";
 import { primeApiToken } from "../../api/client";
@@ -70,7 +71,7 @@ function AuthBootstrap({ children }: PropsWithChildren) {
 
   useEffect(() => {
     if (validateTokenQuery.status === "error") {
-      clearTokens();
+      clearAuthSession();
       // fallback navigation to login when navigation is ready
       if (navigationRef.isReady()) {
         navigationRef.navigate("login");

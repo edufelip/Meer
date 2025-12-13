@@ -6,6 +6,7 @@ import * as AppleAuthentication from "expo-apple-authentication";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Image,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -13,20 +14,19 @@ import {
   ScrollView,
   Text,
   TextInput,
-  View,
-  Image
+  View
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { primeApiToken } from "../../../api/client";
 import type { RootStackParamList } from "../../../app/navigation/RootStack";
+import { useDependencies } from "../../../app/providers/AppProvidersWithDI";
 import { isValidEmail, validatePassword } from "../../../domain/validation/auth";
 import { useForgotPassword } from "../../../hooks/useForgotPassword";
 import { useLogin } from "../../../hooks/useLogin";
 import { useLoginWithApple } from "../../../hooks/useLoginWithApple";
 import { useLoginWithGoogle } from "../../../hooks/useLoginWithGoogle";
 import { saveTokens } from "../../../storage/authStorage";
-import { primeApiToken } from "../../../api/client";
 import { cacheProfile } from "../../../storage/profileCache";
-import { useDependencies } from "../../../app/providers/AppProvidersWithDI";
 
 export function LoginScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -121,7 +121,7 @@ export function LoginScreen() {
             </View>
 
             <Text className="text-[32px] font-bold text-center text-[#374151] leading-tight">
-              Conheça seu novo{"\n"}Guia de Brechós!
+              Conheça seu novo{"\n"}Guia Brechó!
             </Text>
             <Text className="text-xl text-center text-[#374151]/80 pt-2 pb-8">
               Explore achados únicos
@@ -364,6 +364,21 @@ export function LoginScreen() {
           </View>
         </Pressable>
       </Modal>
+      {loading ? (
+        <View
+          pointerEvents="auto"
+          style={{
+            position: "absolute",
+            inset: 0,
+            backgroundColor: "rgba(0,0,0,0.2)",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 50
+          }}
+        >
+          <ActivityIndicator size="large" color="#B55D05" />
+        </View>
+      ) : null}
     </SafeAreaView>
   );
 }
