@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { ActivityIndicator, FlatList, Platform, StatusBar, Text, UIManager, View } from "react-native";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { ActivityIndicator, FlatList, Platform, RefreshControl, StatusBar, Text, UIManager, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useDependencies } from "../../../app/providers/AppProvidersWithDI";
 import { useNavigation } from "@react-navigation/native";
@@ -10,10 +10,18 @@ import { CategoryCard, getCategoryDisplayName } from "../../components/CategoryC
 import { theme } from "../../../shared/theme";
 
 export function CategoriesScreen() {
-  const { getCachedCategoriesUseCase } = useDependencies();
+  const { getCachedCategoriesUseCase, getCategoriesUseCase } = useDependencies();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const isMountedRef = useRef(true);
+
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   // Enable layout animation on Android
   useEffect(() => {
@@ -23,18 +31,32 @@ export function CategoriesScreen() {
   }, []);
 
   useEffect(() => {
-    let isMounted = true;
     (async () => {
-      const cached = await getCachedCategoriesUseCase.execute();
-      if (isMounted && cached) {
-        setCategories(cached);
+      try {
+        const cached = await getCachedCategoriesUseCase.execute();
+        if (isMountedRef.current && cached) {
+          setCategories(cached);
+        }
+      } finally {
+        if (isMountedRef.current) setLoading(false);
       }
-      if (isMounted) setLoading(false);
     })();
-    return () => {
-      isMounted = false;
-    };
   }, [getCachedCategoriesUseCase]);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      const fresh = await getCategoriesUseCase.execute();
+      if (isMountedRef.current) {
+        setCategories(fresh ?? []);
+      }
+    } finally {
+      if (isMountedRef.current) {
+        setRefreshing(false);
+        setLoading(false);
+      }
+    }
+  }, [getCategoriesUseCase]);
 
   return (
     <SafeAreaView className="flex-1 bg-white" edges={["top", "left", "right"]}>
@@ -47,19 +69,13 @@ export function CategoriesScreen() {
         <View className="flex-1 items-center justify-center bg-[#F3F4F6]">
           <ActivityIndicator size="large" color={theme.colors.highlight} />
         </View>
-      ) : categories.length === 0 ? (
-        <View className="flex-1 items-center justify-center bg-[#F3F4F6] px-6">
-          <Text className="text-sm text-[#6B7280] text-center">
-            Nenhuma categoria em cache. Abra a tela inicial com conexão para atualizar.
-          </Text>
-        </View>
       ) : (
         <FlatList
           data={categories}
           keyExtractor={(item) => item.id}
           numColumns={2}
           columnWrapperStyle={{ gap: 16 }}
-          contentContainerStyle={{ padding: 16, gap: 16, paddingBottom: 32 }}
+          contentContainerStyle={{ padding: 16, gap: 16, paddingBottom: 32, flexGrow: 1 }}
           renderItem={({ item }) => (
             <CategoryCard
               category={item}
@@ -71,6 +87,21 @@ export function CategoriesScreen() {
               }
             />
           )}
+          ListEmptyComponent={() => (
+            <View className="flex-1 items-center justify-center bg-[#F3F4F6] px-6">
+              <Text className="text-sm text-[#6B7280] text-center">
+                Nenhuma categoria em cache. Abra a tela inicial com conexão para atualizar.
+              </Text>
+            </View>
+          )}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={theme.colors.highlight}
+              colors={[theme.colors.highlight]}
+            />
+          }
           showsVerticalScrollIndicator={false}
           className="bg-[#F3F4F6]"
         />
