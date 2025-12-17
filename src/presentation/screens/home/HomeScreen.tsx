@@ -670,7 +670,13 @@ export function HomeScreen() {
             <View className="px-4 py-6 bg-[#F3F4F6]">
               <View className="flex-row justify-between items-center mb-4">
                 <Text className="text-xl font-bold text-[#374151]">Conteúdos e Dicas</Text>
-                <View />
+                <Pressable
+                  onPress={() => navigation.navigate("contents")}
+                  accessibilityRole="button"
+                  accessibilityLabel="Ver todos os conteúdos"
+                >
+                  <Text className="text-sm font-semibold text-[#B55D05]">Ver todos</Text>
+                </Pressable>
               </View>
               {guidesLoading ? (
                 <Animated.View

@@ -11,6 +11,7 @@ import { SearchScreen } from "../../presentation/screens/search/SearchScreen";
 import { ContactScreen } from "../../presentation/screens/support/ContactScreen";
 import { EditContentScreen } from "../../presentation/screens/content/EditContentScreen";
 import { ContentDetailScreen } from "../../presentation/screens/content/ContentDetailScreen";
+import { ContentsScreen } from "../../presentation/screens/content/ContentsScreen";
 import { CategoryStoresScreen } from "../../presentation/screens/categories/CategoryStoresScreen";
 import type { ThriftStoreId } from "../../domain/entities/ThriftStore";
 import type { User } from "../../domain/entities/User";
@@ -31,6 +32,7 @@ export type RootStackParamList = {
   editContent: { articleId?: string; storeId: ThriftStoreId; article?: GuideContent };
   categoryStores: { categoryId?: string; title: string; type?: "nearby" | "category" };
   contentDetail: { content: GuideContent };
+  contents: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -49,6 +51,7 @@ export function RootStack() {
       <Stack.Screen name="contact" component={ContactScreen} />
       <Stack.Screen name="editContent" component={EditContentScreen} />
       <Stack.Screen name="contentDetail" component={ContentDetailScreen} />
+      <Stack.Screen name="contents" component={ContentsScreen} />
       <Stack.Screen name="categoryStores" component={CategoryStoresScreen} />
     </Stack.Navigator>
   );
