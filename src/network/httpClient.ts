@@ -1,4 +1,5 @@
-import { API_BASE_URL, DEFAULT_TIMEOUT_MS } from "./config";
+import { DEFAULT_TIMEOUT_MS } from "./config";
+import { ensureDebugApiBaseUrlLoaded, getApiBaseUrlSync } from "./apiBaseUrl";
 
 export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
@@ -27,6 +28,9 @@ export class HttpError extends Error {
 export async function request<TResponse = unknown, TBody = unknown>(options: RequestOptions<TBody>): Promise<TResponse> {
   const { path, method = "GET", body, headers = {}, timeoutMs = DEFAULT_TIMEOUT_MS } = options;
 
+  await ensureDebugApiBaseUrlLoaded();
+  const baseUrl = getApiBaseUrlSync();
+
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
@@ -42,7 +46,7 @@ export async function request<TResponse = unknown, TBody = unknown>(options: Req
       ...headers
     };
 
-    const response = await fetch(`${API_BASE_URL}${path}`, {
+    const response = await fetch(`${baseUrl}${path}`, {
       method,
       headers: resolvedHeaders,
       body: resolvedBody,

@@ -6,6 +6,7 @@ import * as AppleAuthentication from "expo-apple-authentication";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  DevSettings,
   Image,
   KeyboardAvoidingView,
   Modal,
@@ -18,7 +19,7 @@ import {
   Alert
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { primeApiToken } from "../../../api/client";
+import { getApiBaseUrl, primeApiToken, setDebugApiBaseUrlOverride } from "../../../api/client";
 import type { RootStackParamList } from "../../../app/navigation/RootStack";
 import { useDependencies } from "../../../app/providers/AppProvidersWithDI";
 import { isValidEmail, validatePassword } from "../../../domain/validation/auth";
@@ -46,6 +47,9 @@ export function LoginScreen() {
   const [resetError, setResetError] = useState<string | null>(null);
   const [resetLoading, setResetLoading] = useState(false);
   const [resetSuccess, setResetSuccess] = useState(false);
+  const [debugBaseUrlVisible, setDebugBaseUrlVisible] = useState(false);
+  const [debugBaseUrlValue, setDebugBaseUrlValue] = useState("");
+
   useEffect(() => {
     if (!resetVisible) {
       // Reset state after the modal fully unmounts to avoid flicker on dismiss
@@ -61,6 +65,18 @@ export function LoginScreen() {
       webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_ID
     });
   }, []);
+
+  const openDebugBaseUrlDialog = async () => {
+    if (!__DEV__) return;
+    try {
+      const url = await getApiBaseUrl();
+      setDebugBaseUrlValue(url);
+      setDebugBaseUrlVisible(true);
+    } catch {
+      setDebugBaseUrlValue("");
+      setDebugBaseUrlVisible(true);
+    }
+  };
 
   const handleGoogleLogin = async () => {
     try {
@@ -121,9 +137,22 @@ export function LoginScreen() {
               />
             </View>
 
-            <Text className="text-[32px] font-bold text-center text-[#374151] leading-tight">
-              Conheça seu novo{"\n"}Guia Brechó!
-            </Text>
+            {__DEV__ ? (
+              <Pressable
+                onLongPress={openDebugBaseUrlDialog}
+                delayLongPress={550}
+                accessibilityRole="button"
+                accessibilityLabel="Configurar URL da API (debug)"
+              >
+                <Text className="text-[32px] font-bold text-center text-[#374151] leading-tight">
+                  Conheça seu novo{"\n"}Guia Brechó!
+                </Text>
+              </Pressable>
+            ) : (
+              <Text className="text-[32px] font-bold text-center text-[#374151] leading-tight">
+                Conheça seu novo{"\n"}Guia Brechó!
+              </Text>
+            )}
             <Text className="text-xl text-center text-[#374151]/80 pt-2 pb-8">
               Explore achados únicos
             </Text>
@@ -300,6 +329,63 @@ export function LoginScreen() {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+      {__DEV__ ? (
+        <Modal
+          visible={debugBaseUrlVisible}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setDebugBaseUrlVisible(false)}
+        >
+          <Pressable className="flex-1 bg-black/40" onPress={() => setDebugBaseUrlVisible(false)}>
+            <View className="flex-1 items-center justify-center px-6">
+              <Pressable
+                className="w-full max-w-md bg-white rounded-2xl p-6"
+                onPress={(e) => e.stopPropagation()}
+              >
+                <Text className="text-base font-bold text-[#374151] mb-2">Base URL da API (debug)</Text>
+                <Text className="text-sm text-[#6B7280] mb-4">
+                  Altere o endereço do backend usado pelo app. Ao salvar, o app recarrega apenas se a URL mudar.
+                </Text>
+
+                <TextInput
+                  value={debugBaseUrlValue}
+                  onChangeText={setDebugBaseUrlValue}
+                  placeholder="https://seu-backend.com"
+                  placeholderTextColor="#9CA3AF"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  className="h-12 rounded-lg border border-[#E5E7EB] bg-[#F3F4F6] px-4 text-base text-[#374151]"
+                />
+
+                <View className="flex-row gap-3 mt-4">
+                  <Pressable
+                    className="flex-1 h-12 rounded-lg bg-[#F3F4F6] items-center justify-center"
+                    onPress={() => setDebugBaseUrlVisible(false)}
+                  >
+                    <Text className="font-bold text-[#374151]">Cancelar</Text>
+                  </Pressable>
+                  <Pressable
+                    className="flex-1 h-12 rounded-lg bg-[#B55D05] items-center justify-center"
+                    onPress={async () => {
+                      try {
+                        const res = await setDebugApiBaseUrlOverride(debugBaseUrlValue);
+                        setDebugBaseUrlVisible(false);
+                        if (res.changed) {
+                          DevSettings.reload();
+                        }
+                      } catch {
+                        Alert.alert("URL inválida", "Digite uma URL válida (http/https), sem espaços.");
+                      }
+                    }}
+                  >
+                    <Text className="text-white font-bold">Salvar</Text>
+                  </Pressable>
+                </View>
+              </Pressable>
+            </View>
+          </Pressable>
+        </Modal>
+      ) : null}
       <Modal
         visible={resetVisible}
         transparent

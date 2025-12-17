@@ -1,5 +1,6 @@
 import axios from "axios";
 import { API_BASE_URL } from "../network/config";
+import { ensureDebugApiBaseUrlLoaded, getApiBaseUrl, getApiBaseUrlSync, setDebugApiBaseUrlOverride } from "../network/apiBaseUrl";
 import { navigationRef } from "../app/navigation/navigationRef";
 import {
   clearTokens,
@@ -11,6 +12,8 @@ import {
 } from "../storage/authStorage";
 
 const APP_PACKAGE = "com.edufelip.meer";
+
+export { getApiBaseUrl, getApiBaseUrlSync, setDebugApiBaseUrlOverride };
 
 export const api = axios.create({
   baseURL: API_BASE_URL,
@@ -38,7 +41,10 @@ export async function clearAuthSession() {
 
 // Logging for refresh calls
 refreshApi.interceptors.request.use(
-  (config) => {
+  async (config) => {
+    await ensureDebugApiBaseUrlLoaded();
+    config.baseURL = getApiBaseUrlSync();
+
     console.log(
       `[API][REQUEST][REFRESH] ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`,
       {
@@ -83,6 +89,8 @@ async function ensureTokenLoaded() {
 
 api.interceptors.request.use(
   async (config) => {
+    await ensureDebugApiBaseUrlLoaded();
+    config.baseURL = getApiBaseUrlSync();
     await ensureTokenLoaded();
     const token = getAccessTokenSync();
     const merged = {
