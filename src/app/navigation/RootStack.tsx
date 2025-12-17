@@ -32,7 +32,14 @@ export type RootStackParamList = {
   editContent: { articleId?: string; storeId: ThriftStoreId; article?: GuideContent };
   categoryStores: { categoryId?: string; title: string; type?: "nearby" | "category" };
   contentDetail: { content: GuideContent };
-  contents: undefined;
+  contents:
+    | {
+        initialItems?: GuideContent[];
+        initialPage?: number;
+        initialHasNext?: boolean;
+        initialPageSize?: number;
+      }
+    | undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();

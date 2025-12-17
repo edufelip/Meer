@@ -13,9 +13,11 @@ import {
 } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useRoute } from "@react-navigation/native";
+import type { RouteProp } from "@react-navigation/native";
 import { useDependencies } from "../../../app/providers/AppProvidersWithDI";
 import type { GuideContent } from "../../../domain/entities/GuideContent";
+import type { RootStackParamList } from "../../../app/navigation/RootStack";
 import { theme } from "../../../shared/theme";
 
 const PAGE_SIZE = 20;
@@ -66,23 +68,29 @@ function ContentGridCard({
 export function ContentsScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
+  const route = useRoute<RouteProp<RootStackParamList, "contents">>();
   const { getGuideContentUseCase } = useDependencies();
+
+  const initialItems = route.params?.initialItems ?? null;
+  const initialPage = route.params?.initialPage ?? 0;
+  const initialHasNext = route.params?.initialHasNext ?? (initialItems?.length ? true : false);
+  const pageSize = route.params?.initialPageSize ?? PAGE_SIZE;
 
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
 
-  const [items, setItems] = useState<GuideContent[]>([]);
-  const [page, setPage] = useState(0);
-  const [hasNext, setHasNext] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [items, setItems] = useState<GuideContent[]>(initialItems ?? []);
+  const [page, setPage] = useState(initialItems ? initialPage : 0);
+  const [hasNext, setHasNext] = useState(initialItems ? initialHasNext : false);
+  const [loading, setLoading] = useState(!initialItems);
   const [loadingMore, setLoadingMore] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const inputRef = useRef<TextInput>(null);
   const requestIdRef = useRef(0);
-  const lastIssuedQueryRef = useRef<string>("__init__");
+  const lastIssuedQueryRef = useRef<string>(initialItems ? "" : "__init__");
   const searchAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -120,7 +128,7 @@ export function ContentsScreen() {
       setError(null);
 
       try {
-        const res = await getGuideContentUseCase.execute({ q, page: nextPage, pageSize: PAGE_SIZE });
+        const res = await getGuideContentUseCase.execute({ q, page: nextPage, pageSize });
         if (requestId !== requestIdRef.current) return;
         const newItems = res?.items ?? [];
         setHasNext(!!res?.hasNext);
@@ -137,7 +145,7 @@ export function ContentsScreen() {
         }
       }
     },
-    [getGuideContentUseCase]
+    [getGuideContentUseCase, pageSize]
   );
 
   useEffect(() => {

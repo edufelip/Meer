@@ -197,6 +197,11 @@ export function BrechoFormScreen() {
     return digits.length >= 10 && digits.length <= 13;
   };
 
+  const isSingleWord = (raw: string) => {
+    const trimmed = (raw || "").trim();
+    return trimmed.length > 0 && !/\s/.test(trimmed);
+  };
+
   // Load categories from cache (and only fetch remote if cache is empty; home screen keeps cache fresh on its cadence).
   useEffect(() => {
     let mounted = true;
@@ -538,6 +543,11 @@ export function BrechoFormScreen() {
     }
     if (!phone.trim() || !isValidPhone(phone)) {
       Alert.alert("Telefone inválido", "Digite um número de telefone ou WhatsApp válido.");
+      return;
+    }
+    const instagramHandle = instagram.trim().replace(/^@+/, "");
+    if (instagramHandle && !isSingleWord(instagramHandle)) {
+      Alert.alert("Instagram inválido", "Digite apenas um nome de usuário (uma única palavra, sem espaços).");
       return;
     }
     if (photos.length === 0) {

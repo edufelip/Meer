@@ -8,6 +8,7 @@ import {
   Linking,
   Pressable,
   ScrollView,
+  Share,
   StatusBar,
   Text,
   TextInput,
@@ -32,6 +33,7 @@ import { useDependencies } from "../../../app/providers/AppProvidersWithDI";
 import type { ThriftStore, ThriftStoreId } from "../../../domain/entities/ThriftStore";
 import { theme } from "../../../shared/theme";
 import ImageViewing from "react-native-image-viewing";
+import { buildThriftStoreShareUrl } from "../../../shared/deepLinks";
 
 interface ThriftDetailScreenProps {
   route?: { params?: { id?: ThriftStoreId } };
@@ -153,6 +155,21 @@ export function ThriftDetailScreen({ route }: ThriftDetailScreenProps) {
     if (!store?.latitude || !store?.longitude) return;
     const url = `https://www.google.com/maps/search/?api=1&query=${store.latitude},${store.longitude}`;
     Linking.openURL(url);
+  };
+
+  const handleShare = async () => {
+    if (!store) return;
+    const url = buildThriftStoreShareUrl(store.id);
+
+    try {
+      await Share.share({
+        title: store.name,
+        message: `${store.name}\n${url}`,
+        url
+      });
+    } catch {
+      showToast("Não foi possível compartilhar esse brechó.");
+    }
   };
 
   useEffect(() => {
@@ -350,9 +367,22 @@ export function ThriftDetailScreen({ route }: ThriftDetailScreenProps) {
               <Ionicons name={favorite ? "heart" : "heart-outline"} size={22} color={theme.colors.accent} />
             </Pressable>
           </View>
-          <View className="absolute bottom-4 left-4">
-            <Text className="text-2xl font-bold text-white">{store.name}</Text>
-            <Text className="text-sm text-white/90" style={{ marginTop: 4, marginBottom: 16 }}>
+          <View className="absolute bottom-2 left-4 right-4">
+            <View className="flex-row items-center">
+              <Text className="text-2xl font-bold text-white flex-1" numberOfLines={2}>
+                {store.name}
+              </Text>
+              <Pressable
+                className="p-2 rounded-full bg-white/20"
+                onPress={handleShare}
+                hitSlop={8}
+                accessibilityRole="button"
+                accessibilityLabel="Compartilhar brechó"
+              >
+                <Ionicons name="share-outline" size={20} color="#FFFFFF" />
+              </Pressable>
+            </View>
+            <Text className="text-sm text-white/90" style={{ marginTop: 4, marginBottom: 6 }}>
               {store.description}
             </Text>
           </View>

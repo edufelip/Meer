@@ -42,6 +42,7 @@ EXPO_PUBLIC_API_BASE_URL=<your api base url>
 EXPO_PUBLIC_GOOGLE_WEB_ID=<your web client id>
 EXPO_PUBLIC_GOOGLE_ANDROID_ID=<android client id>
 EXPO_PUBLIC_GOOGLE_IOS_ID=<ios client id>
+EXPO_PUBLIC_WEB_BASE_URL=https://<your-domain>   # optional (enables universal share links + app links)
 ```
 (Keys stay local; production IDs go in your own env).
 
@@ -69,6 +70,13 @@ The web admin calls the backend through the `/api` proxy (see `next.config.js`),
   ```
 - Start bundler: `npm start`
 - Lint: `npm run lint`
+
+## Deep links
+
+- Route: `/store/:id` opens the Store Detail screen.
+- Store Detail has a Share button that shares `https://<your-domain>/store/<id>` when `EXPO_PUBLIC_WEB_BASE_URL` is set (otherwise it shares a dev URL).
+
+Setup details (iOS Associated Domains, Android App Links, and web fallback hosting): `docs/deep-links.md`.
 
 ## API contracts (current)
 - Auth

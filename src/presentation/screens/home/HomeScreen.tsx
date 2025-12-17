@@ -42,6 +42,7 @@ import {
 
 const DEFAULT_COORDS = { lat: -23.5561782, lng: -46.6375468 };
 const HOME_TTL = 24 * 60 * 60 * 1000; // 24h strict
+const HOME_GUIDES_PAGE_SIZE = 20;
 
 const AnimatedPressable = createAnimatedComponent(Pressable);
 const AnimatedText = createAnimatedComponent(Text);
@@ -68,6 +69,7 @@ export function HomeScreen() {
   const [nearby, setNearby] = useState<ThriftStore[]>([]);
   const [allStores, setAllStores] = useState<ThriftStore[]>([]);
   const [guides, setGuides] = useState<GuideContent[]>([]);
+  const [guidesHasNext, setGuidesHasNext] = useState(false);
   const [featuredLoading, setFeaturedLoading] = useState(true);
   const [nearbyLoading, setNearbyLoading] = useState(true);
   const [guidesLoading, setGuidesLoading] = useState(true);
@@ -184,6 +186,8 @@ export function HomeScreen() {
     setFeatured(f);
     setNearby(n);
     setGuides(c);
+    // Cache doesn't store pagination metadata; assume there's more when we have at least some items.
+    setGuidesHasNext(c.length > 0);
     updateCombined(f, n);
     lastFetchRef.current = cache.fetchedAt;
     setFeaturedLoading(false);
@@ -273,13 +277,17 @@ export function HomeScreen() {
         });
 
       const guidesPromise = getGuideContentUseCase
-        .execute({ page: 0, pageSize: 10 })
+        .execute({ page: 0, pageSize: HOME_GUIDES_PAGE_SIZE })
         .then((res) => {
           guidesData = res?.items ?? [];
           guidesOk = true;
           setGuides(guidesData);
+          setGuidesHasNext(!!res?.hasNext);
         })
-        .catch(() => setGuides([]))
+        .catch(() => {
+          setGuides([]);
+          setGuidesHasNext(false);
+        })
         .finally(() => setGuidesLoading(false));
 
       const categoriesPromise = getCategoriesUseCase
@@ -671,7 +679,14 @@ export function HomeScreen() {
               <View className="flex-row justify-between items-center mb-4">
                 <Text className="text-xl font-bold text-[#374151]">Conteúdos e Dicas</Text>
                 <Pressable
-                  onPress={() => navigation.navigate("contents")}
+                  onPress={() =>
+                    navigation.navigate("contents", {
+                      initialItems: guides,
+                      initialPage: 0,
+                      initialHasNext: guidesHasNext,
+                      initialPageSize: guides.length || HOME_GUIDES_PAGE_SIZE
+                    })
+                  }
                   accessibilityRole="button"
                   accessibilityLabel="Ver todos os conteúdos"
                 >
