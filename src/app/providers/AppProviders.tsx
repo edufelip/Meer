@@ -4,10 +4,9 @@ import { DependenciesProvider, useDependencies } from "./AppProvidersWithDI";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "../../hooks/reactQueryClient";
 import { getTokens } from "../../storage/authStorage";
-import { clearAuthSession } from "../../api/client";
+import { clearAuthSession, primeApiToken } from "../../api/client";
 import { useValidateToken } from "../../hooks/useValidateToken";
 import { navigationRef } from "../navigation/navigationRef";
-import { primeApiToken } from "../../api/client";
 
 // Add cross-cutting providers (theme, auth, localization, etc.) here.
 export function AppProviders(props: PropsWithChildren) {

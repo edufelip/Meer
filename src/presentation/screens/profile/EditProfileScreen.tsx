@@ -169,7 +169,7 @@ export function EditProfileScreen() {
 
       await updateProfileUseCase.execute(payload);
       goBackSafe();
-    } catch (err) {
+    } catch {
       Alert.alert("Erro", "Não foi possível salvar as alterações. Tente novamente.");
     } finally {
       setIsSaving(false);
