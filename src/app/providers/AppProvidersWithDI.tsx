@@ -40,6 +40,7 @@ import { FeedbackRepositoryImpl } from "../../data/repositories/FeedbackReposito
 import { GetMyFeedbackUseCase } from "../../domain/usecases/GetMyFeedbackUseCase";
 import { UpsertFeedbackUseCase } from "../../domain/usecases/UpsertFeedbackUseCase";
 import { DeleteMyFeedbackUseCase } from "../../domain/usecases/DeleteMyFeedbackUseCase";
+import { GetStoreRatingsUseCase } from "../../domain/usecases/GetStoreRatingsUseCase";
 import { DeleteAccountUseCase } from "../../domain/usecases/DeleteAccountUseCase";
 import { CreateOrUpdateStoreUseCase } from "../../domain/usecases/CreateOrUpdateStoreUseCase";
 import { HttpSupportRemoteDataSource } from "../../data/datasources/impl/HttpSupportRemoteDataSource";
@@ -79,6 +80,7 @@ interface Dependencies {
   getMyFeedbackUseCase: GetMyFeedbackUseCase;
   upsertFeedbackUseCase: UpsertFeedbackUseCase;
   deleteMyFeedbackUseCase: DeleteMyFeedbackUseCase;
+  getStoreRatingsUseCase: GetStoreRatingsUseCase;
   sendSupportMessageUseCase: SendSupportMessageUseCase;
 }
 
@@ -145,6 +147,7 @@ export function DependenciesProvider(props: PropsWithChildren) {
     const getMyFeedbackUseCase = new GetMyFeedbackUseCase(feedbackRepository);
     const upsertFeedbackUseCase = new UpsertFeedbackUseCase(feedbackRepository);
     const deleteMyFeedbackUseCase = new DeleteMyFeedbackUseCase(feedbackRepository);
+    const getStoreRatingsUseCase = new GetStoreRatingsUseCase(feedbackRepository);
     const sendSupportMessageUseCase = new SendSupportMessageUseCase(supportRepository);
 
     return {
@@ -177,6 +180,7 @@ export function DependenciesProvider(props: PropsWithChildren) {
       getMyFeedbackUseCase,
       upsertFeedbackUseCase,
       deleteMyFeedbackUseCase,
+      getStoreRatingsUseCase,
       sendSupportMessageUseCase
     };
   }, []);

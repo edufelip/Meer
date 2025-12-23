@@ -16,6 +16,7 @@ import { GetMyFeedbackUseCase } from "../GetMyFeedbackUseCase";
 import { GetNearbyPaginatedUseCase } from "../GetNearbyPaginatedUseCase";
 import { GetNearbyThriftStoresUseCase } from "../GetNearbyThriftStoresUseCase";
 import { GetProfileUseCase } from "../GetProfileUseCase";
+import { GetStoreRatingsUseCase } from "../GetStoreRatingsUseCase";
 import { GetStoresByCategoryUseCase } from "../GetStoresByCategoryUseCase";
 import { GetThriftStoreByIdUseCase } from "../GetThriftStoreByIdUseCase";
 import { IsFavoriteThriftStoreUseCase } from "../IsFavoriteThriftStoreUseCase";
@@ -197,6 +198,17 @@ describe("domain use cases", () => {
 
     expect(getMine).toHaveBeenCalledWith("store-1");
     expect(result).toEqual({ id: "feedback-1" });
+  });
+
+  it("GetStoreRatingsUseCase delegates to repository", async () => {
+    const listStoreRatings = jest.fn().mockResolvedValue({ items: [], page: 1, hasNext: false });
+    const useCase = new GetStoreRatingsUseCase({ listStoreRatings } as any);
+
+    const params = { storeId: "store-1", page: 2, pageSize: 5 };
+    const result = await useCase.execute(params);
+
+    expect(listStoreRatings).toHaveBeenCalledWith(params);
+    expect(result).toEqual({ items: [], page: 1, hasNext: false });
   });
 
   it("GetNearbyPaginatedUseCase delegates to repository", async () => {

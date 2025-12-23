@@ -81,7 +81,8 @@ export function ThriftDetailScreen({ route }: ThriftDetailScreenProps) {
     toggleFavoriteThriftStoreUseCase,
     isFavoriteThriftStoreUseCase,
     getMyFeedbackUseCase,
-    upsertFeedbackUseCase
+    upsertFeedbackUseCase,
+    deleteMyFeedbackUseCase
   } = useDependencies();
   const navigation = useNavigation();
   const [store, setStore] = useState<ThriftStore | null>(null);
@@ -92,12 +93,14 @@ export function ThriftDetailScreen({ route }: ThriftDetailScreenProps) {
   const [userRating, setUserRating] = useState(0);
   const [userComment, setUserComment] = useState("");
   const [showCommentBox, setShowCommentBox] = useState(false);
+  const [hasExistingFeedback, setHasExistingFeedback] = useState(false);
   const [submittingFeedback, setSubmittingFeedback] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const toastOpacity = useSharedValue(0);
   const toastTranslateY = useSharedValue(12);
   const toastHideTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const toastClearTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const existingFeedbackRef = useRef<{ score: number; body: string } | null>(null);
   const shimmer = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -197,12 +200,16 @@ export function ThriftDetailScreen({ route }: ThriftDetailScreenProps) {
           try {
             const mine = await getMyFeedbackUseCase.execute(resolved.id);
             if (isMounted && mine) {
+              const resolvedScore = mine.score ?? 0;
+              const resolvedBody = mine.body?.trim() ?? "";
               if (mine.score != null) {
-                setUserRating(mine.score);
+                setUserRating(resolvedScore);
               }
               if (mine.body != null) {
-                setUserComment(mine.body);
+                setUserComment(resolvedBody);
               }
+              existingFeedbackRef.current = { score: resolvedScore, body: resolvedBody };
+              setHasExistingFeedback(true);
             }
           } catch {
             // ignore feedback load errors
@@ -295,22 +302,33 @@ export function ThriftDetailScreen({ route }: ThriftDetailScreenProps) {
       Alert.alert("Escolha uma nota", "Selecione de 1 a 5 estrelas antes de enviar.");
       return;
     }
-    if (userComment.trim().length < 20) {
+    const trimmedComment = userComment.trim();
+    if (trimmedComment.length < 20) {
       Alert.alert("Comentário muito curto", "Escreva pelo menos 20 caracteres para enviar.");
       return;
     }
     if (!store?.id) return;
+
+    const existingFeedback = existingFeedbackRef.current;
+    if (existingFeedback && existingFeedback.score === userRating && existingFeedback.body === trimmedComment) {
+      showToast("Sucesso! Obrigado por avaliar 🧡");
+      Keyboard.dismiss();
+      setShowCommentBox(false);
+      return;
+    }
 
     try {
       setSubmittingFeedback(true);
       await upsertFeedbackUseCase.execute({
         storeId: store.id,
         score: userRating,
-        body: userComment.trim()
+        body: trimmedComment
       });
-      showToast("Successo! Obrigado por avaliar!");
+      showToast("Sucesso! Obrigado por avaliar 🧡");
       Keyboard.dismiss();
       setShowCommentBox(false);
+      existingFeedbackRef.current = { score: userRating, body: trimmedComment };
+      setHasExistingFeedback(true);
     } catch (e: any) {
       const status = e?.response?.status;
       if (status === 401) {
@@ -323,6 +341,34 @@ export function ThriftDetailScreen({ route }: ThriftDetailScreenProps) {
     } finally {
       setSubmittingFeedback(false);
     }
+  };
+
+  const handleDeleteFeedback = () => {
+    if (!store?.id) return;
+    Alert.alert(
+      "Excluir avaliação",
+      "Tem certeza que deseja apagar sua avaliação?",
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Apagar",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await deleteMyFeedbackUseCase.execute(store.id);
+              existingFeedbackRef.current = null;
+              setHasExistingFeedback(false);
+              setUserRating(0);
+              setUserComment("");
+              setShowCommentBox(false);
+              showToast("Avaliação removida.");
+            } catch {
+              Alert.alert("Erro ao excluir", "Não foi possível excluir sua avaliação. Tente novamente.");
+            }
+          }
+        }
+      ]
+    );
   };
 
 	  return (
@@ -407,13 +453,41 @@ export function ThriftDetailScreen({ route }: ThriftDetailScreenProps) {
                   </Text>
                   {renderStars(store.rating ?? 0, 20)}
                 </View>
-                <Text className="text-sm text-[#6B7280]">
-                  {store.reviewCount ? `${store.reviewCount} avaliações` : "Sem avaliações ainda"}
-                </Text>
+                {store.reviewCount && store.reviewCount > 0 ? (
+                  <Pressable
+                    onPress={() => {
+                      navigation.navigate(
+                        "tabs" as never,
+                        {
+                          screen: "ratings",
+                          params: {
+                            storeId: store.id,
+                            storeName: store.name,
+                            reviewCount: Math.floor(store.reviewCount ?? 0)
+                          }
+                        } as never
+                      );
+                    }}
+                    accessibilityRole="button"
+                    accessibilityLabel="Ver avaliações"
+                  >
+                    <Text className="text-sm text-[#6B7280]">{`${Math.floor(
+                      store.reviewCount
+                    )} avaliações`}</Text>
+                  </Pressable>
+                ) : null}
               </View>
 
               <View style={{ marginTop: 16 }} className="space-y-3">
                 <Text className="font-semibold text-md text-[#374151]">Deixe sua avaliação</Text>
+                {hasExistingFeedback ? (
+                  <View className="items-center">
+                    <Text className="text-xs text-[#6B7280]" style={{ marginBottom: 6 }}>
+                      Sua avaliação atual
+                    </Text>
+                    {renderStars(userRating, 18)}
+                  </View>
+                ) : null}
                 <View className="flex-row justify-center gap-2" style={{ paddingVertical: 16 }}>
                   {[1, 2, 3, 4, 5].map((score) => {
                     const active = userRating >= score;
@@ -431,6 +505,11 @@ export function ThriftDetailScreen({ route }: ThriftDetailScreenProps) {
                     );
                   })}
                 </View>
+                {hasExistingFeedback ? (
+                  <Pressable onPress={handleDeleteFeedback} accessibilityRole="button">
+                    <Text className="text-xs text-[#DC2626] text-center">Apagar minha avaliação</Text>
+                  </Pressable>
+                ) : null}
                 {showCommentBox ? (
                   <Reanimated.View
                     entering={FadeIn.duration(220)}

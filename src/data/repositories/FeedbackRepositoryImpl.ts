@@ -1,5 +1,6 @@
 import type { FeedbackRepository } from "../../domain/repositories/FeedbackRepository";
 import type { Feedback } from "../../domain/entities/Feedback";
+import type { StoreRating } from "../../domain/entities/StoreRating";
 import type { FeedbackRemoteDataSource } from "../datasources/FeedbackRemoteDataSource";
 
 export class FeedbackRepositoryImpl implements FeedbackRepository {
@@ -15,5 +16,13 @@ export class FeedbackRepositoryImpl implements FeedbackRepository {
 
   delete(storeId: string): Promise<void> {
     return this.remote.delete(storeId);
+  }
+
+  listStoreRatings(params: {
+    storeId: string;
+    page?: number;
+    pageSize?: number;
+  }): Promise<{ items: StoreRating[]; page: number; hasNext: boolean }> {
+    return this.remote.listStoreRatings(params);
   }
 }

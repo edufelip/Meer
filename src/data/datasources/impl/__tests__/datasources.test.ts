@@ -340,6 +340,18 @@ describe("HttpFeedbackRemoteDataSource", () => {
     expect(apiMock.post).toHaveBeenCalledWith("/stores/store-1/feedback", { score: 4, body: "ok" });
     expect(apiMock.delete).toHaveBeenCalledWith("/stores/store-1/feedback");
   });
+
+  it("lists store ratings with pagination", async () => {
+    apiMock.get.mockResolvedValue({ data: { items: [], page: 1, hasNext: false } });
+    const ds = new HttpFeedbackRemoteDataSource();
+
+    const result = await ds.listStoreRatings({ storeId: "store-1", page: 2, pageSize: 5 });
+
+    expect(apiMock.get).toHaveBeenCalledWith("/stores/store-1/ratings", {
+      params: { page: 2, pageSize: 5 }
+    });
+    expect(result).toEqual({ items: [], page: 1, hasNext: false });
+  });
 });
 
 describe("HttpThriftStoreRemoteDataSource", () => {

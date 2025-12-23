@@ -22,7 +22,8 @@ jest.mock("../../../../app/providers/AppProvidersWithDI", () => ({
     toggleFavoriteThriftStoreUseCase: { execute: jest.fn().mockResolvedValue(undefined) },
     isFavoriteThriftStoreUseCase: { execute: jest.fn().mockResolvedValue(false) },
     getMyFeedbackUseCase: { execute: jest.fn().mockResolvedValue(null) },
-    upsertFeedbackUseCase: { execute: jest.fn().mockResolvedValue(undefined) }
+    upsertFeedbackUseCase: { execute: jest.fn().mockResolvedValue(undefined) },
+    deleteMyFeedbackUseCase: { execute: jest.fn().mockResolvedValue(undefined) }
   })
 }));
 

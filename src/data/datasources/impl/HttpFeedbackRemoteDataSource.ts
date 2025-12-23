@@ -1,5 +1,6 @@
 import { api } from "../../../api/client";
 import type { Feedback } from "../../../domain/entities/Feedback";
+import type { StoreRating } from "../../../domain/entities/StoreRating";
 import type { FeedbackRemoteDataSource } from "../FeedbackRemoteDataSource";
 
 export class HttpFeedbackRemoteDataSource implements FeedbackRemoteDataSource {
@@ -22,5 +23,22 @@ export class HttpFeedbackRemoteDataSource implements FeedbackRemoteDataSource {
 
   async delete(storeId: string): Promise<void> {
     await api.delete(`/stores/${storeId}/feedback`);
+  }
+
+  async listStoreRatings(params: {
+    storeId: string;
+    page?: number;
+    pageSize?: number;
+  }): Promise<{ items: StoreRating[]; page: number; hasNext: boolean }> {
+    const res = await api.get<{ items: StoreRating[]; page: number; hasNext: boolean }>(
+      `/stores/${params.storeId}/ratings`,
+      {
+        params: {
+          page: params.page ?? 1,
+          pageSize: params.pageSize ?? 10
+        }
+      }
+    );
+    return res.data;
   }
 }

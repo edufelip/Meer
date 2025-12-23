@@ -159,17 +159,21 @@ describe("FeedbackRepositoryImpl", () => {
     const remote = {
       getMine: jest.fn().mockResolvedValue({ id: "feedback-1" }),
       upsert: jest.fn().mockResolvedValue(undefined),
-      delete: jest.fn().mockResolvedValue(undefined)
+      delete: jest.fn().mockResolvedValue(undefined),
+      listStoreRatings: jest.fn().mockResolvedValue({ items: [], page: 1, hasNext: false })
     };
     const repo = new FeedbackRepositoryImpl(remote as any);
 
     expect(await repo.getMine("store-1")).toEqual({ id: "feedback-1" });
     await repo.upsert({ storeId: "store-1", score: 5 } as any);
     await repo.delete("store-1");
+    const ratings = await repo.listStoreRatings({ storeId: "store-1", page: 2, pageSize: 5 });
 
     expect(remote.getMine).toHaveBeenCalledWith("store-1");
     expect(remote.upsert).toHaveBeenCalledWith({ storeId: "store-1", score: 5 });
     expect(remote.delete).toHaveBeenCalledWith("store-1");
+    expect(remote.listStoreRatings).toHaveBeenCalledWith({ storeId: "store-1", page: 2, pageSize: 5 });
+    expect(ratings).toEqual({ items: [], page: 1, hasNext: false });
   });
 });
 
