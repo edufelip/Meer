@@ -1,0 +1,3 @@
+# Use Case Tests
+
+- usecases.test.ts — UseCases: ConfirmStorePhotos/CreateContent/CreateOrUpdateStore/DeleteAccount/DeleteContent/DeleteMyFeedback/GetCachedCategories/GetCachedProfile/GetCategories/GetCurrentUser/GetFavoriteThriftStores/GetFeaturedThriftStores/GetGuideContent/GetHome/GetMyFeedback/GetNearbyPaginated/GetNearbyThriftStores/GetProfile/GetStoresByCategory/GetThriftStoreById/IsFavoriteThriftStore/RequestAvatarUploadSlot/RequestContentImageUpload/RequestStorePhotoUploads/SearchThriftStores/SendSupportMessage/ToggleFavoriteThriftStore/UpdateContent/UpdateProfile/UpsertFeedback; Flows: delegation + payload mapping; GetHome defaults to empty arrays.

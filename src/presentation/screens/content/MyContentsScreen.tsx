@@ -62,6 +62,7 @@ export function MyContentsScreen() {
                   { articleId: item.id, storeId: route.params.storeId, article: item } as never
                 )
               }
+              testID={`my-contents-item-${item.id}`}
             >
               <View style={{ width: 96, height: 96 }}>
                 <Image source={{ uri: item.imageUrl }} className="w-full h-full" resizeMode="cover" />
@@ -109,6 +110,7 @@ export function MyContentsScreen() {
             <Pressable
               className="w-full bg-[#B55D05] rounded-lg py-3 px-4 items-center shadow mb-3"
               onPress={() => navigation.navigate("editContent" as never, { storeId: route.params.storeId } as never)}
+              testID="my-contents-create-button"
             >
               <Text className="text-white font-bold">Criar Conteúdo</Text>
             </Pressable>

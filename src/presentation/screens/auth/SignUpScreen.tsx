@@ -55,6 +55,7 @@ export function SignUpScreen() {
                 onPress={() => navigation.goBack()}
                 accessibilityRole="button"
                 accessibilityLabel="Voltar"
+                testID="signup-back-button"
               >
                 <Ionicons name="arrow-back" size={22} color={theme.colors.highlight} />
               </Pressable>
@@ -84,6 +85,7 @@ export function SignUpScreen() {
                   placeholder="Seu nome completo"
                   placeholderTextColor="#9CA3AF"
                   className="h-14 rounded-lg border border-[#E5E7EB] bg-[#F3F4F6] px-4 text-base text-[#374151]"
+                  testID="signup-name-input"
                 />
               </View>
 
@@ -97,6 +99,7 @@ export function SignUpScreen() {
                   keyboardType="email-address"
                   autoCapitalize="none"
                   className="h-14 rounded-lg border border-[#E5E7EB] bg-[#F3F4F6] px-4 text-base text-[#374151]"
+                  testID="signup-email-input"
                 />
               </View>
 
@@ -110,6 +113,7 @@ export function SignUpScreen() {
                     placeholderTextColor="#9CA3AF"
                     secureTextEntry={!passwordVisible}
                     className="h-14 rounded-lg border border-[#E5E7EB] bg-[#F3F4F6] px-4 pr-12 text-base text-[#374151]"
+                    testID="signup-password-input"
                   />
                   <Pressable
                     className="absolute inset-y-0 right-0 px-4 flex-row items-center"
@@ -134,6 +138,7 @@ export function SignUpScreen() {
                     placeholderTextColor="#9CA3AF"
                     secureTextEntry={!confirmVisible}
                     className="h-14 rounded-lg border border-[#E5E7EB] bg-[#F3F4F6] px-4 pr-12 text-base text-[#374151]"
+                    testID="signup-confirm-input"
                   />
                   <Pressable
                     className="absolute inset-y-0 right-0 px-4 flex-row items-center"
@@ -211,6 +216,7 @@ export function SignUpScreen() {
                     setLoading(false);
                   }
                 }}
+                testID="signup-submit-button"
               >
                 <Text className="text-base font-bold text-white">{loading ? "Cadastrando..." : "Cadastrar"}</Text>
               </Pressable>

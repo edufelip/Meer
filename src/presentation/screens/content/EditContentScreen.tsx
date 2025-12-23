@@ -277,6 +277,7 @@ export function EditContentScreen() {
             className="w-full rounded-lg border border-gray-300 px-4 py-3 bg-white"
             placeholder="Título do conteúdo"
             placeholderTextColor="#9CA3AF"
+            testID="edit-content-title-input"
           />
         </View>
 
@@ -293,6 +294,7 @@ export function EditContentScreen() {
             placeholder="Descreva seu conteúdo..."
             placeholderTextColor="#9CA3AF"
             maxLength={1000}
+            testID="edit-content-body-input"
           />
           <Text className="text-xs text-gray-500 mt-1 text-right">{`${body.length}/1000`}</Text>
         </View>
@@ -326,6 +328,7 @@ export function EditContentScreen() {
               <Pressable
                 className="items-center justify-center w-full h-40 border-2 border-dashed border-gray-300 rounded-lg"
                 onPress={pickMedia}
+                testID="edit-content-add-media"
               >
                 <View className="items-center">
                   <Ionicons name="image-outline" size={32} color="#9CA3AF" />
@@ -343,6 +346,7 @@ export function EditContentScreen() {
             }`}
             disabled={saving}
             onPress={handleSave}
+            testID="edit-content-save-button"
           >
             {saving ? (
               <ActivityIndicator color="#FFFFFF" />

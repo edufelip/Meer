@@ -12,10 +12,17 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
+    "mock:server": "node mock-server/server.js",
     "e2e:build:ios": "detox build -c ios.sim.debug",
     "e2e:build:android": "detox build -c android.emu.debug",
     "e2e:ios": "detox test -c ios.sim.debug",
-    "e2e:android": "detox test -c android.emu.debug"
+    "e2e:android": "detox test -c android.emu.debug",
+    "e2e:build:ios:mock": "EXPO_PUBLIC_API_BASE_URL=http://localhost:4010 npm run e2e:build:ios",
+    "e2e:build:android:mock": "EXPO_PUBLIC_API_BASE_URL=http://localhost:4010 npm run e2e:build:android",
+    "e2e:ios:mock": "EXPO_PUBLIC_API_BASE_URL=http://localhost:4010 npm run e2e:ios",
+    "e2e:android:mock": "EXPO_PUBLIC_API_BASE_URL=http://localhost:4010 npm run e2e:android",
+    "e2e:ios:mock:all": "node scripts/run-e2e-mock.js --platform ios",
+    "e2e:android:mock:all": "node scripts/run-e2e-mock.js --platform android"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
@@ -69,6 +76,7 @@
     "@types/react": "~19.1.0",
     "@types/jest": "^30.0.0",
     "detox": "^20.16.0",
+    "express": "^4.21.2",
     "eslint": "^9.25.0",
     "eslint-config-expo": "~10.0.0",
     "jest": "^30.0.5",
@@ -79,12 +87,16 @@
     "typescript": "~5.9.2"
   },
   "detox": {
-    "testRunner": "jest",
-    "runnerConfig": "e2e/jest.config.js",
+    "testRunner": {
+      "args": {
+        "$0": "jest",
+        "config": "e2e/jest.config.js"
+      }
+    },
     "apps": {
       "ios.sim.debug": {
         "type": "ios.app",
-        "binaryPath": "ios/build/Build/Products/Debug-iphonesimulator/Meer.app",
+        "binaryPath": "ios/build/Build/Products/Debug-iphonesimulator/GuiaBrecho.app",
         "build": "xcodebuild -workspace ios/Meer.xcworkspace -scheme Meer -configuration Debug -sdk iphonesimulator -derivedDataPath ios/build"
       },
       "android.emu.debug": {
@@ -98,7 +110,7 @@
       "simulator": {
         "type": "ios.simulator",
         "device": {
-          "type": "iPhone 15"
+          "type": "iPhone 17"
         }
       },
       "emulator": {

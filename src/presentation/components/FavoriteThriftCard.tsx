@@ -8,14 +8,19 @@ import { LinearGradient } from "expo-linear-gradient";
 interface FavoriteThriftCardProps {
   store: ThriftStore;
   onPress?: (store: ThriftStore) => void;
+  testID?: string;
 }
 
-export function FavoriteThriftCard({ store, onPress }: FavoriteThriftCardProps) {
+export function FavoriteThriftCard({ store, onPress, testID }: FavoriteThriftCardProps) {
   const cover =
     store.coverImageUrl ?? store.imageUrl ?? (store.galleryUrls && store.galleryUrls[0]) ?? null;
 
   return (
-    <Pressable className="bg-white rounded-xl shadow-sm overflow-hidden" onPress={() => onPress?.(store)}>
+    <Pressable
+      className="bg-white rounded-xl shadow-sm overflow-hidden"
+      onPress={() => onPress?.(store)}
+      testID={testID}
+    >
       {cover ? (
         <Image source={{ uri: cover }} className="w-full h-40" resizeMode="cover" />
       ) : (

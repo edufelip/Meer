@@ -1,5 +1,5 @@
 import React from "react";
-import { render } from "@testing-library/react-native";
+import { fireEvent, render } from "@testing-library/react-native";
 import { EditProfileScreen } from "../EditProfileScreen";
 
 jest.mock("@react-navigation/native", () => ({
@@ -47,8 +47,26 @@ jest.mock("expo-file-system/legacy", () => ({
 }));
 
 describe("EditProfileScreen", () => {
+  const findDisabledState = (node: any) => {
+    let current = node;
+    while (current) {
+      if (current.props?.accessibilityState?.disabled !== undefined) {
+        return current.props.accessibilityState.disabled;
+      }
+      current = current.parent;
+    }
+    return undefined;
+  };
+
   it("renders edit profile header", () => {
     const { getByText } = render(<EditProfileScreen />);
     expect(getByText("Editar Perfil")).toBeTruthy();
+  });
+
+  it("disables save when name is missing", () => {
+    const { getByText, getByPlaceholderText } = render(<EditProfileScreen />);
+    fireEvent.changeText(getByPlaceholderText("Seu nome"), "");
+    const saveLabel = getByText("Salvar Alterações");
+    expect(findDisabledState(saveLabel)).toBe(true);
   });
 });

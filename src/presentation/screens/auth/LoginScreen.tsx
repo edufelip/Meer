@@ -162,6 +162,7 @@ export function LoginScreen() {
                 className="h-12 rounded-lg bg-[#F3F4F6] flex-row items-center justify-center gap-3 px-5"
                 disabled={loading}
                 onPress={handleGoogleLogin}
+                testID="login-google-button"
               >
                 <AntDesign name="google" size={20} color="#4285F4" />
                 <Text className="text-base font-bold text-[#374151]">Entrar com Google</Text>
@@ -207,6 +208,7 @@ export function LoginScreen() {
                       setLoading(false);
                     }
                   }}
+                  testID="login-apple-button"
                 >
                   <Ionicons name="logo-apple" size={20} color="#111" />
                   <Text className="text-base font-bold text-[#374151]">Entrar com Apple</Text>
@@ -231,6 +233,7 @@ export function LoginScreen() {
                   keyboardType="email-address"
                   autoCapitalize="none"
                   className="h-14 rounded-lg border border-[#E5E7EB] bg-[#F3F4F6] px-4 text-base text-[#374151]"
+                  testID="login-email-input"
                 />
               </View>
 
@@ -246,6 +249,7 @@ export function LoginScreen() {
                     placeholderTextColor="#9CA3AF"
                     secureTextEntry={!passwordVisible}
                     className="h-14 rounded-lg border border-[#E5E7EB] bg-[#F3F4F6] px-4 pr-12 text-base text-[#374151]"
+                    testID="login-password-input"
                   />
                   <Pressable
                     className="absolute inset-y-0 right-0 px-4 flex-row items-center"
@@ -258,7 +262,7 @@ export function LoginScreen() {
                     />
                   </Pressable>
                 </View>
-                <Pressable className="items-end mt-2" onPress={() => setResetVisible(true)}>
+                <Pressable className="items-end mt-2" onPress={() => setResetVisible(true)} testID="login-forgot-button">
                   <Text className="text-sm font-medium text-[#B55D05]">Esqueceu sua senha?</Text>
                 </Pressable>
               </View>
@@ -314,6 +318,7 @@ export function LoginScreen() {
                     setLoading(false);
                   }
                 }}
+                testID="login-submit-button"
               >
                 <Text className="text-base font-bold text-white">{loading ? "Entrando..." : "Entrar"}</Text>
               </Pressable>
@@ -321,7 +326,7 @@ export function LoginScreen() {
 
             <View className="pt-8 flex-row">
               <Text className="text-base text-[#374151]/80">Não tem uma conta? </Text>
-              <Pressable onPress={() => navigation.navigate("signup")}>
+              <Pressable onPress={() => navigation.navigate("signup")} testID="login-signup-cta">
                 <Text className="text-base font-bold text-[#B55D05]">Cadastre-se</Text>
               </Pressable>
             </View>
@@ -423,6 +428,7 @@ export function LoginScreen() {
                   keyboardType="email-address"
                   autoCapitalize="none"
                   className="h-12 rounded-lg border border-[#E5E7EB] bg-[#F3F4F6] px-4 text-base text-[#374151]"
+                  testID="login-reset-email-input"
                 />
                 {resetError ? <Text className="text-sm text-red-500 mt-2">{resetError}</Text> : null}
                 <Pressable
@@ -446,6 +452,7 @@ export function LoginScreen() {
                       setResetLoading(false);
                     }
                   }}
+                  testID="login-reset-submit-button"
                 >
                   {resetLoading ? (
                     <ActivityIndicator color="#fff" />

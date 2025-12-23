@@ -203,6 +203,7 @@ export function FavoritesScreen() {
             <FavoriteThriftCard
               store={item}
               onPress={(store) => navigation.navigate("thriftDetail", { id: store.id })}
+              testID={`favorites-item-${item.id}`}
             />
           )}
           showsVerticalScrollIndicator={false}

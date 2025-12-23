@@ -1,0 +1,139 @@
+{
+  "stores": [
+    {
+      "id": "store-1",
+      "name": "Brechó Aurora",
+      "tagline": "Achadinhos com história",
+      "coverImageUrl": "https://images.unsplash.com/photo-1503341455253-b2e723bb3dbb?auto=format&fit=crop&w=1400&q=70",
+      "galleryUrls": [
+        "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=1400&q=70"
+      ],
+      "addressLine": "Rua das Flores, 123 - Centro",
+      "latitude": -23.556,
+      "longitude": -46.638,
+      "openingHours": "Segunda a Sábado: 10:00 - 19:00",
+      "categories": ["Feminino", "Vintage"],
+      "neighborhood": "Centro",
+      "distanceKm": 1.2,
+      "walkTimeMinutes": 14,
+      "badge_label": "most_loved",
+      "rating": 4.8,
+      "reviewCount": 128,
+      "description": "Peças vintage cuidadosamente selecionadas."
+    },
+    {
+      "id": "store-2",
+      "name": "Brechó Horizonte",
+      "tagline": "Moda circular e sustentável",
+      "coverImageUrl": "https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=1400&q=70",
+      "galleryUrls": [
+        "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=1200&q=70"
+      ],
+      "addressLine": "Av. Paulista, 456 - Bela Vista",
+      "latitude": -23.561,
+      "longitude": -46.655,
+      "openingHours": "Segunda a Sábado: 09:00 - 20:00",
+      "categories": ["Masculino", "Designer"],
+      "neighborhood": "Bela Vista",
+      "distanceKm": 3.6,
+      "walkTimeMinutes": 38,
+      "rating": 4.6,
+      "reviewCount": 74,
+      "description": "Roupas modernas com preço acessível."
+    },
+    {
+      "id": "store-3",
+      "name": "Brechó Casa Clara",
+      "tagline": "Garimpo para casa e estilo",
+      "coverImageUrl": "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=1400&q=70",
+      "galleryUrls": [
+        "https://images.unsplash.com/photo-1503341455253-b2e723bb3dbb?auto=format&fit=crop&w=1400&q=70"
+      ],
+      "addressLine": "Rua Augusta, 900 - Consolação",
+      "latitude": -23.555,
+      "longitude": -46.662,
+      "openingHours": "Terça a Domingo: 11:00 - 18:00",
+      "categories": ["Casa", "Acessórios"],
+      "neighborhood": "Consolação",
+      "distanceKm": 2.4,
+      "walkTimeMinutes": 25,
+      "rating": 4.4,
+      "reviewCount": 41,
+      "description": "Peças únicas e itens de decoração."
+    }
+  ],
+  "contents": [
+    {
+      "id": "content-1",
+      "title": "Como montar looks vintage",
+      "description": "Dicas práticas para combinar peças vintage com o seu guarda-roupa atual.",
+      "categoryLabel": "Estilo",
+      "imageUrl": "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=1200&q=70",
+      "storeId": "store-1",
+      "thriftStoreName": "Brechó Aurora",
+      "thriftStoreCoverImageUrl": "https://images.unsplash.com/photo-1503341455253-b2e723bb3dbb?auto=format&fit=crop&w=1400&q=70",
+      "createdAt": "2025-12-10T12:00:00.000Z"
+    },
+    {
+      "id": "content-2",
+      "title": "Guia rápido de brechós sustentáveis",
+      "description": "O que observar ao escolher brechós alinhados com consumo consciente.",
+      "categoryLabel": "Sustentabilidade",
+      "imageUrl": "https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=1400&q=70",
+      "storeId": "store-2",
+      "thriftStoreName": "Brechó Horizonte",
+      "thriftStoreCoverImageUrl": "https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=1400&q=70",
+      "createdAt": "2025-12-12T08:30:00.000Z"
+    },
+    {
+      "id": "content-3",
+      "title": "Decoração com peças de brechó",
+      "description": "Ideias simples para transformar a casa com itens garimpados.",
+      "categoryLabel": "Casa",
+      "imageUrl": "https://images.unsplash.com/photo-1503341455253-b2e723bb3dbb?auto=format&fit=crop&w=1400&q=70",
+      "storeId": "store-3",
+      "thriftStoreName": "Brechó Casa Clara",
+      "thriftStoreCoverImageUrl": "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=1400&q=70",
+      "createdAt": "2025-12-15T18:20:00.000Z"
+    }
+  ],
+  "categories": [
+    { "id": "cat-1", "nameStringId": "brecho_de_casa", "imageResId": "brecho-categories-house" },
+    { "id": "cat-2", "nameStringId": "brecho_masculino", "imageResId": "categories-masculino" },
+    { "id": "cat-3", "nameStringId": "brecho_feminino", "imageResId": "categories-feminino" },
+    { "id": "cat-4", "nameStringId": "brecho_de_designer", "imageResId": "categories-designer" },
+    { "id": "cat-5", "nameStringId": "brecho_de_desapego", "imageResId": "categories-desapego" }
+  ],
+  "profile": {
+    "id": "user-1",
+    "name": "Maria Silva",
+    "email": "maria@meer.app",
+    "avatarUrl": "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=400&q=70",
+    "bio": "Garimpeira de achados únicos.",
+    "notifyNewStores": true,
+    "notifyPromos": false,
+    "ownedThriftStore": {
+      "id": "store-1",
+      "name": "Brechó Aurora",
+      "tagline": "Achadinhos com história",
+      "coverImageUrl": "https://images.unsplash.com/photo-1503341455253-b2e723bb3dbb?auto=format&fit=crop&w=1400&q=70",
+      "galleryUrls": [
+        "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=1400&q=70"
+      ],
+      "addressLine": "Rua das Flores, 123 - Centro",
+      "latitude": -23.556,
+      "longitude": -46.638,
+      "openingHours": "Segunda a Sábado: 10:00 - 19:00",
+      "categories": ["Feminino", "Vintage"],
+      "neighborhood": "Centro",
+      "distanceKm": 1.2,
+      "walkTimeMinutes": 14,
+      "badge_label": "most_loved",
+      "rating": 4.8,
+      "reviewCount": 128,
+      "description": "Peças vintage cuidadosamente selecionadas."
+    },
+    "articlesCount": 2
+  },
+  "favorites": ["store-1", "store-2"]
+}

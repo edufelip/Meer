@@ -85,6 +85,7 @@ export function CategoriesScreen() {
                   title: getCategoryDisplayName(item.nameStringId)
                 })
               }
+              testID={`category-card-${item.id}`}
             />
           )}
           ListEmptyComponent={() => (

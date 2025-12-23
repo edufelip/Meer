@@ -257,7 +257,11 @@ export function EditProfileScreen() {
         </View>
       </View>
 
-      <ScrollView className="flex-1 bg-[#F3F4F6]" contentContainerStyle={{ paddingBottom: 32 }}>
+      <ScrollView
+        className="flex-1 bg-[#F3F4F6]"
+        contentContainerStyle={{ paddingBottom: 32 }}
+        testID="edit-profile-scroll"
+      >
         <View className="bg-white">
           <View className="flex-col items-center p-6 space-y-4">
             <View className="relative">
@@ -292,6 +296,7 @@ export function EditProfileScreen() {
               className="w-full p-3 bg-white border border-gray-300 rounded-lg"
               placeholder="Seu nome"
               placeholderTextColor="#9CA3AF"
+              testID="edit-profile-name-input"
             />
           </View>
 
@@ -367,6 +372,7 @@ export function EditProfileScreen() {
                 canSave && Object.keys(changes).length > 0 ? "bg-[#B55D05]" : "bg-gray-300"
               }`}
               onPress={handleSave}
+              testID="edit-profile-save-button"
             >
               <Text
                 className={`font-bold ${
@@ -380,6 +386,7 @@ export function EditProfileScreen() {
             <Pressable
               className="items-center justify-center p-3 rounded-lg"
               onPress={handleLogout}
+              testID="edit-profile-logout-button"
             >
               <Text className="font-bold text-red-500">Sair</Text>
             </Pressable>

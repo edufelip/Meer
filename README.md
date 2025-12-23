@@ -71,6 +71,9 @@ The web admin calls the backend through the `/api` proxy (see `next.config.js`),
 - Start bundler: `npm start`
 - Lint: `npm run lint`
 
+## Testing
+- Docs index: `docs/tests-index.md`
+
 ## Deep links
 
 - Route: `/store/:id` opens the Store Detail screen.

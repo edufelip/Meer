@@ -116,6 +116,7 @@ export function SearchScreen() {
               autoFocus
               returnKeyType="search"
               onSubmitEditing={() => runSearch(query)}
+              testID="search-input"
             />
           </View>
         </View>
@@ -163,6 +164,7 @@ export function SearchScreen() {
                       setResults([]);
                       setQuery("");
                     }}
+                    testID="search-clear-history"
                   >
                     <Text className="text-sm font-semibold text-[#B55D05]">Limpar</Text>
                   </Pressable>
@@ -178,6 +180,7 @@ export function SearchScreen() {
             <Pressable
               className="flex-row items-center justify-between p-2 rounded-lg"
               onPress={() => runSearch(item)}
+              testID={`search-recent-${item}`}
             >
               <View className="flex-row items-center gap-3">
                 <Ionicons name="time-outline" size={18} color="#6B7280" />
@@ -190,6 +193,7 @@ export function SearchScreen() {
                   await persistRecents(next);
                 }}
                 hitSlop={8}
+                testID={`search-recent-remove-${item}`}
               >
                 <Ionicons name="close" size={18} color="#6B7280" />
               </Pressable>

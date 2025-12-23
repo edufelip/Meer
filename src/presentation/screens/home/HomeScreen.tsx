@@ -664,6 +664,7 @@ export function HomeScreen() {
                         <NearbyThriftListItem
                           store={store}
                           onPress={() => navigation.navigate("thriftDetail", { id: store.id })}
+                          testID={`home-nearby-${store.id}`}
                         />
                       </View>
                     ))

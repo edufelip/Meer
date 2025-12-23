@@ -15,6 +15,19 @@ function tryGetHostname(rawUrl) {
   }
 }
 
+function isLocalHost(hostname) {
+  if (!hostname) return false;
+  const lower = hostname.toLowerCase();
+  return (
+    lower === "localhost" ||
+    lower.startsWith("localhost:") ||
+    lower === "127.0.0.1" ||
+    lower.startsWith("127.0.0.1:") ||
+    lower === "0.0.0.0" ||
+    lower.startsWith("0.0.0.0:")
+  );
+}
+
 function uniqStrings(items) {
   return Array.from(new Set(items.filter(Boolean)));
 }
@@ -45,6 +58,16 @@ function ensureStoreIntentFilter(intentFilters, hostname) {
 export default ({ config }) => {
   const webBaseUrl = process.env.EXPO_PUBLIC_WEB_BASE_URL;
   const hostname = tryGetHostname(webBaseUrl);
+  const apiBaseUrl = process.env.EXPO_PUBLIC_API_BASE_URL;
+  const apiHost = tryGetHostname(apiBaseUrl);
+  const allowLocalApi = process.env.EXPO_PUBLIC_ALLOW_LOCAL_API === "true";
+  const isProdBuild = process.env.NODE_ENV === "production" || process.env.EAS_BUILD_PROFILE === "production";
+
+  if (isProdBuild && !allowLocalApi && isLocalHost(apiHost)) {
+    throw new Error(
+      "EXPO_PUBLIC_API_BASE_URL points to a local host in a production build. Set a real API host or EXPO_PUBLIC_ALLOW_LOCAL_API=true."
+    );
+  }
 
   const plugins = normalizePlugins(config.plugins);
   const nextPlugins = [...plugins];

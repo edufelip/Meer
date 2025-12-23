@@ -36,9 +36,10 @@ export function getCategoryDisplayName(nameStringId: string): string {
 interface CategoryCardProps {
   category: Category;
   onPress?: (category: Category) => void;
+  testID?: string;
 }
 
-export function CategoryCard({ category, onPress }: CategoryCardProps) {
+export function CategoryCard({ category, onPress, testID }: CategoryCardProps) {
   const imageSource = categoryImages[category.imageResId];
   const displayName = getCategoryDisplayName(category.nameStringId);
 
@@ -47,6 +48,7 @@ export function CategoryCard({ category, onPress }: CategoryCardProps) {
       className="flex-1 items-center gap-3 rounded-lg border p-4"
       style={{ borderColor: `${theme.colors.highlight}33` }}
       onPress={() => onPress?.(category)}
+      testID={testID}
     >
       <View
         className="h-16 w-16 items-center justify-center rounded-lg"

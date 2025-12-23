@@ -136,6 +136,7 @@ export function CategoryStoresScreen() {
     <Pressable
       className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex-row items-stretch relative"
       onPress={() => navigation.navigate("thriftDetail", { id: item.id, store: item })}
+      testID={`category-store-${item.id}`}
     >
       {item.badgeLabel ? (
         <View className="absolute bottom-2 right-2 bg-[#EC4899] px-2 py-1 rounded-full z-10">

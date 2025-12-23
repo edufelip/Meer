@@ -8,9 +8,10 @@ interface NearbyThriftListItemProps {
   store: ThriftStore;
   onPress?: () => void;
   style?: StyleProp<ViewStyle>;
+  testID?: string;
 }
 
-export function NearbyThriftListItem({ store, onPress, style }: NearbyThriftListItemProps) {
+export function NearbyThriftListItem({ store, onPress, style, testID }: NearbyThriftListItemProps) {
   const distanceLabel =
     store.distanceKm !== undefined && store.walkTimeMinutes
       ? `${store.distanceKm.toFixed(1)} km · ${store.walkTimeMinutes} min`
@@ -34,6 +35,7 @@ export function NearbyThriftListItem({ store, onPress, style }: NearbyThriftList
       onPress={onPress}
       accessibilityRole="button"
       style={style}
+      testID={testID}
     >
       {badgeLabel ? (
         <View className="absolute bottom-2 right-2 bg-[#EC4899] px-2 py-1 rounded-full">

@@ -136,6 +136,7 @@ export function ProfileScreen() {
                   }
                 })
               }
+              testID="profile-edit-button"
             >
               <Text className="text-[#374151]">Editar Perfil</Text>
               <Ionicons name="chevron-forward" size={18} color={theme.colors.highlight} />
@@ -168,6 +169,7 @@ export function ProfileScreen() {
               <Pressable
                 className="flex-row items-center justify-between p-4 border-b border-gray-200"
                 onPress={() => navigation.navigate("myContents", { storeId: user.ownedThriftStore.id })}
+                testID="profile-create-content-button"
               >
                 <Text className="text-[#374151]">Criar Conteúdo</Text>
                 <Ionicons name="chevron-forward" size={18} color={theme.colors.highlight} />
