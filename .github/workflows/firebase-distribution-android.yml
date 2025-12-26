@@ -77,6 +77,6 @@ jobs:
         with:
           appId: 1:586821855462:android:8a1997fee294055f8bf327
           serviceCredentialsFile: ${{ runner.temp }}/firebase-service-account.json
-          groups: internal
+          groups: base-group
           file: android/app/build/outputs/apk/debug/app-debug.apk
           releaseNotes: ${{ env.RELEASE_NOTES }}
