@@ -10,7 +10,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useInfiniteQuery, type InfiniteData } from "@tanstack/react-query";
-import { useNavigation, useRoute } from "@react-navigation/native";
+import { useFocusEffect, useNavigation, useRoute } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../../../app/navigation/RootStack";
 import { useDependencies } from "../../../app/providers/AppProvidersWithDI";
@@ -61,6 +61,16 @@ export function StoreRatingsScreen() {
   const isError = query.isError;
   const hasNext = query.hasNextPage;
   const isFetchingNextPage = query.isFetchingNextPage;
+
+  useFocusEffect(
+    useCallback(() => {
+      const parent = navigation.getParent();
+      parent?.setOptions?.({ tabBarStyle: { display: "none" } });
+      return () => {
+        parent?.setOptions?.({ tabBarStyle: undefined });
+      };
+    }, [navigation])
+  );
 
   const handleBack = useCallback(() => {
     if (navigation.canGoBack()) {
