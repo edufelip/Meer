@@ -1,0 +1,166 @@
+name: iOS Firebase Distribution
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "web/**"
+
+jobs:
+  firebase-distribution:
+    runs-on: macos-latest
+
+    env:
+      KEYCHAIN_PASSWORD: ${{ secrets.IOS_DEBUG_KEYCHAIN_PASSWORD }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Write .env
+        run: |
+          cat <<'ENVEOF' > .env
+          ${{ secrets.ENV_FILE }}
+          ENVEOF
+
+      - name: Export env vars
+        run: |
+          set -a
+          source .env
+          set +a
+          env | grep '^EXPO_PUBLIC_' >> "$GITHUB_ENV"
+
+      - name: Bump iOS build number
+        run: |
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $GITHUB_RUN_NUMBER" ios/Meer/Info.plist
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: yarn
+          cache-dependency-path: yarn.lock
+
+      - name: Install JS deps
+        run: yarn install --frozen-lockfile
+        working-directory: .
+
+      - name: Install pods
+        env:
+          COCOAPODS_CACHE_DIR: ${{ runner.temp }}/.cocoapods-cache
+        run: |
+          mkdir -p "$COCOAPODS_CACHE_DIR"
+          cd ios
+          pod install --silent
+
+      - name: Write GoogleService-Info.plist
+        working-directory: ios
+        env:
+          GOOGLE_SERVICE_INFO_PLIST_BASE64: ${{ secrets.GOOGLE_SERVICE_INFO_PLIST_BASE64 }}
+        run: |
+          mkdir -p Meer
+          echo "$GOOGLE_SERVICE_INFO_PLIST_BASE64" | base64 -d > Meer/GoogleService-Info.plist
+
+      - name: Set up keychain and certificates
+        env:
+          CERT_P12_BASE64: ${{ secrets.IOS_DEBUG_CERT_P12_BASE64 }}
+          CERT_PASSWORD: ${{ secrets.IOS_DEBUG_CERT_PASSWORD }}
+          PROFILE_BASE64: ${{ secrets.IOS_DEBUG_PROFILE_BASE64 }}
+        run: |
+          KEYCHAIN_PATH="$RUNNER_TEMP/app-signing.keychain-db"
+          CERTIFICATE_PATH="$RUNNER_TEMP/build_certificate.p12"
+          PROFILE_PATH="$RUNNER_TEMP/build_profile.mobileprovision"
+
+          echo -n "$CERT_P12_BASE64" | base64 --decode -o "$CERTIFICATE_PATH"
+          echo -n "$PROFILE_BASE64" | base64 --decode -o "$PROFILE_PATH"
+
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+          security import "$CERTIFICATE_PATH" \
+            -P "$CERT_PASSWORD" \
+            -A \
+            -t cert \
+            -f pkcs12 \
+            -k "$KEYCHAIN_PATH"
+
+          security set-key-partition-list -S apple-tool:,apple: -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security list-keychain -d user -s "$KEYCHAIN_PATH"
+
+          mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
+          cp "$PROFILE_PATH" "$HOME/Library/MobileDevice/Provisioning Profiles/MeerDebug.mobileprovision"
+
+      - name: Build archive (Debug)
+        env:
+          IOS_PROFILE_NAME: ${{ secrets.IOS_DEBUG_PROFILE_NAME }}
+          KEYCHAIN_PATH: ${{ runner.temp }}/app-signing.keychain-db
+        run: |
+          cd ios
+          xcodebuild \
+            -workspace Meer.xcworkspace \
+            -scheme Meer \
+            -configuration Debug \
+            -archivePath "$PWD/build/MeerDebug.xcarchive" \
+            archive \
+            CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_IDENTITY="Apple Development" \
+            DEVELOPMENT_TEAM=${{ secrets.IOS_TEAM_ID }} \
+            PROVISIONING_PROFILE_SPECIFIER="$IOS_PROFILE_NAME" \
+            OTHER_CODE_SIGN_FLAGS="--keychain $KEYCHAIN_PATH"
+
+      - name: Export IPA (development)
+        env:
+          IOS_PROFILE_NAME: ${{ secrets.IOS_DEBUG_PROFILE_NAME }}
+          KEYCHAIN_PATH: ${{ runner.temp }}/app-signing.keychain-db
+        run: |
+          cat <<EOF > ios/ExportOptionsDebug.plist
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key><string>development</string>
+            <key>signingStyle</key><string>manual</string>
+            <key>compileBitcode</key><false/>
+            <key>stripSwiftSymbols</key><true/>
+            <key>provisioningProfiles</key>
+            <dict>
+              <key>com.edufelip.meer</key><string>${IOS_PROFILE_NAME}</string>
+            </dict>
+          </dict>
+          </plist>
+          EOF
+
+          cd ios
+          xcodebuild -exportArchive \
+            -archivePath "$PWD/build/MeerDebug.xcarchive" \
+            -exportOptionsPlist ExportOptionsDebug.plist \
+            -exportPath "$PWD/build" \
+            OTHER_CODE_SIGN_FLAGS="--keychain $KEYCHAIN_PATH"
+
+      - name: Release notes
+        run: |
+          NOTES=$(git log -1 --pretty=%B)
+          echo "RELEASE_NOTES<<EOF" >> "$GITHUB_ENV"
+          echo "$NOTES" >> "$GITHUB_ENV"
+          echo "EOF" >> "$GITHUB_ENV"
+
+      - name: Write Firebase service account
+        run: |
+          echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}' > "$RUNNER_TEMP/firebase-service-account.json"
+
+      - name: Upload to Firebase App Distribution
+        uses: wzieba/Firebase-Distribution-Github-Action@v1
+        with:
+          appId: 1:586821855462:ios:5a9f9d1e1a8ceea58bf327
+          serviceCredentialsFile: ${{ runner.temp }}/firebase-service-account.json
+          groups: internal
+          file: ios/build/MeerDebug.ipa
+          releaseNotes: ${{ env.RELEASE_NOTES }}
+
+      - name: Clean keychain and profiles
+        if: always()
+        run: |
+          KEYCHAIN_PATH="$RUNNER_TEMP/app-signing.keychain-db"
+          security delete-keychain "$KEYCHAIN_PATH" || true
+          rm -f "$HOME/Library/MobileDevice/Provisioning Profiles/"*.mobileprovision || true
