@@ -91,9 +91,11 @@ jobs:
           mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
           cp "$PROFILE_PATH" "$HOME/Library/MobileDevice/Provisioning Profiles/MeerDebug.mobileprovision"
 
+          PROFILE_UUID=$(/usr/libexec/PlistBuddy -c "Print UUID" /dev/stdin <<< "$(security cms -D -i "$PROFILE_PATH")")
+          echo "IOS_PROFILE_UUID=$PROFILE_UUID" >> "$GITHUB_ENV"
+
       - name: Build archive (Debug)
         env:
-          IOS_PROFILE_NAME: ${{ secrets.IOS_DEBUG_PROFILE_NAME }}
           KEYCHAIN_PATH: ${{ runner.temp }}/app-signing.keychain-db
         run: |
           cd ios
@@ -106,12 +108,11 @@ jobs:
             CODE_SIGN_STYLE=Manual \
             CODE_SIGN_IDENTITY="Apple Development" \
             DEVELOPMENT_TEAM=${{ secrets.IOS_TEAM_ID }} \
-            PROVISIONING_PROFILE_SPECIFIER="$IOS_PROFILE_NAME" \
+            PROVISIONING_PROFILE_SPECIFIER="$IOS_PROFILE_UUID" \
             OTHER_CODE_SIGN_FLAGS="--keychain $KEYCHAIN_PATH"
 
       - name: Export IPA (development)
         env:
-          IOS_PROFILE_NAME: ${{ secrets.IOS_DEBUG_PROFILE_NAME }}
           KEYCHAIN_PATH: ${{ runner.temp }}/app-signing.keychain-db
         run: |
           cat <<EOF > ios/ExportOptionsDebug.plist
@@ -125,7 +126,7 @@ jobs:
             <key>stripSwiftSymbols</key><true/>
             <key>provisioningProfiles</key>
             <dict>
-              <key>com.edufelip.meer</key><string>${IOS_PROFILE_NAME}</string>
+              <key>com.edufelip.meer</key><string>${IOS_PROFILE_UUID}</string>
             </dict>
           </dict>
           </plist>
