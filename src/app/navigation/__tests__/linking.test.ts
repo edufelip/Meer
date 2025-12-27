@@ -1,3 +1,6 @@
+import urls from "../../../../constants/urls.json";
+import { getWwwBaseUrl } from "../../../shared/deepLinks";
+
 const loadLinking = () => jest.requireActual("../linking");
 
 const mockCreateURL = jest.fn((path: string) => `app:///${String(path).replace(/^\/?/, "")}`);
@@ -7,31 +10,17 @@ jest.mock("expo-linking", () => ({
 }));
 
 describe("linking", () => {
-  const originalEnv = process.env.EXPO_PUBLIC_WEB_BASE_URL;
-
   beforeEach(() => {
     jest.resetModules();
     mockCreateURL.mockClear();
   });
 
-  afterEach(() => {
-    if (originalEnv === undefined) {
-      delete process.env.EXPO_PUBLIC_WEB_BASE_URL;
-    } else {
-      process.env.EXPO_PUBLIC_WEB_BASE_URL = originalEnv;
-    }
-  });
-
-  it("includes default prefixes when no web base url", () => {
-    delete process.env.EXPO_PUBLIC_WEB_BASE_URL;
+  it("includes default prefixes and the web base url", () => {
     const { linking } = loadLinking();
-    expect(linking.prefixes).toEqual(["app:///", "meer://", "exp+meer://"]);
+    const expected = ["app:///", "meer://", "exp+meer://", urls.webBaseUrl];
+    const wwwBaseUrl = getWwwBaseUrl();
+    if (wwwBaseUrl && wwwBaseUrl !== urls.webBaseUrl) expected.push(wwwBaseUrl);
+    expect(linking.prefixes).toEqual(expected);
     expect(mockCreateURL).toHaveBeenCalledWith("/");
-  });
-
-  it("adds the web base url prefix when configured", () => {
-    process.env.EXPO_PUBLIC_WEB_BASE_URL = "https://example.com/";
-    const { linking } = loadLinking();
-    expect(linking.prefixes).toContain("https://example.com");
   });
 });

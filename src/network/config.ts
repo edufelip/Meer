@@ -1,19 +1,19 @@
-import { IS_DEBUG_MODE } from "../shared/env";
+import urls from "../../constants/urls.json";
 
-const prodBaseUrl = process.env.EXPO_PUBLIC_API_BASE_URL;
-const devBaseUrl = process.env.EXPO_PUBLIC_API_DEV_BASE_URL;
-const baseUrl = IS_DEBUG_MODE ? devBaseUrl : prodBaseUrl;
-
-if (!baseUrl) {
-  throw new Error(
-    IS_DEBUG_MODE
-      ? "Missing EXPO_PUBLIC_API_DEV_BASE_URL environment variable"
-      : "Missing EXPO_PUBLIC_API_BASE_URL environment variable"
-  );
+function normalizeApiBaseUrl(raw: string): string {
+  return raw.trim().replace(/\/$/, "");
 }
 
+export const PROD_API_BASE_URL = normalizeApiBaseUrl(urls.prodApiBaseUrl);
+
+const rawEnvBaseUrl = process.env.EXPO_PUBLIC_API_BASE_URL;
+const baseUrl = rawEnvBaseUrl && rawEnvBaseUrl.trim()
+  ? normalizeApiBaseUrl(rawEnvBaseUrl)
+  : PROD_API_BASE_URL;
+
 // normalize by stripping trailing slash so callers can safely append paths
-export const API_BASE_URL = baseUrl.replace(/\/$/, "");
+export const API_BASE_URL = baseUrl;
+export const IS_DEBUG_API_BASE_URL = API_BASE_URL !== PROD_API_BASE_URL;
 export const DEFAULT_TIMEOUT_MS = 10_000;
 
 const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "0.0.0.0"]);

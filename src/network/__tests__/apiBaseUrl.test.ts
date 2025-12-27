@@ -1,3 +1,5 @@
+import urls from "../../../constants/urls.json";
+
 jest.mock("@react-native-async-storage/async-storage", () => {
   let store = new Map<string, string>();
   return {
@@ -20,21 +22,18 @@ const getAsyncStorageMock = () =>
 describe("apiBaseUrl", () => {
   beforeEach(() => {
     jest.resetModules();
-    (global as any).__DEV__ = true;
-    process.env.EXPO_PUBLIC_API_BASE_URL = "https://api.example.com";
-    process.env.EXPO_PUBLIC_API_DEV_BASE_URL = "https://api.dev.example.com";
-    delete process.env.EXPO_PUBLIC_ENABLE_DEBUG_TOOLS;
+    process.env.EXPO_PUBLIC_API_BASE_URL = "https://api.dev.guiabrecho.com.br";
     getAsyncStorageMock().__reset();
   });
 
   it("returns default base URL when no override", async () => {
     const { getApiBaseUrlSync, getApiBaseUrl } = jest.requireActual("../apiBaseUrl");
 
-    expect(getApiBaseUrlSync()).toBe("https://api.dev.example.com");
-    await expect(getApiBaseUrl()).resolves.toBe("https://api.dev.example.com");
+    expect(getApiBaseUrlSync()).toBe("https://api.dev.guiabrecho.com.br");
+    await expect(getApiBaseUrl()).resolves.toBe("https://api.dev.guiabrecho.com.br");
   });
 
-  it("loads override in dev and normalizes", async () => {
+  it("loads override when base URL is non-prod and normalizes", async () => {
     const asyncStorageMock = getAsyncStorageMock();
     await asyncStorageMock.setItem("debug_api_base_url_override", "https://api.override.com/");
 
@@ -51,7 +50,7 @@ describe("apiBaseUrl", () => {
     const { ensureDebugApiBaseUrlLoaded, getApiBaseUrlSync } = jest.requireActual("../apiBaseUrl");
 
     await ensureDebugApiBaseUrlLoaded();
-    expect(getApiBaseUrlSync()).toBe("https://api.dev.example.com");
+    expect(getApiBaseUrlSync()).toBe("https://api.dev.guiabrecho.com.br");
   });
 
   it("sets and persists debug override", async () => {
@@ -71,25 +70,14 @@ describe("apiBaseUrl", () => {
     await expect(setDebugApiBaseUrlOverride("not-a-url")).rejects.toThrow("invalid_url");
   });
 
-  it("no-ops when not in dev", async () => {
-    (global as any).__DEV__ = false;
-
-    const { ensureDebugApiBaseUrlLoaded, getApiBaseUrlSync } = jest.requireActual("../apiBaseUrl");
-
-    await ensureDebugApiBaseUrlLoaded();
-    expect(getApiBaseUrlSync()).toBe("https://api.example.com");
-  });
-
-  it("uses debug tools flag outside dev", async () => {
-    (global as any).__DEV__ = false;
-    process.env.EXPO_PUBLIC_ENABLE_DEBUG_TOOLS = "true";
-
+  it("no-ops when base URL is production", async () => {
+    process.env.EXPO_PUBLIC_API_BASE_URL = urls.prodApiBaseUrl;
     const asyncStorageMock = getAsyncStorageMock();
     await asyncStorageMock.setItem("debug_api_base_url_override", "https://api.override.com/");
 
     const { ensureDebugApiBaseUrlLoaded, getApiBaseUrlSync } = jest.requireActual("../apiBaseUrl");
 
     await ensureDebugApiBaseUrlLoaded();
-    expect(getApiBaseUrlSync()).toBe("https://api.override.com");
+    expect(getApiBaseUrlSync()).toBe(urls.prodApiBaseUrl);
   });
 });

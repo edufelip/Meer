@@ -32,33 +32,62 @@ function uniqStrings(items) {
   return Array.from(new Set(items.filter(Boolean)));
 }
 
-function ensureStoreIntentFilter(intentFilters, hostname) {
+function ensureIntentFilter(intentFilters, { hostname, pathPrefix, path }) {
   if (!hostname) return intentFilters;
   const existing = Array.isArray(intentFilters) ? intentFilters : [];
 
   const alreadyHas = existing.some((filter) => {
     if (!filter || filter.action !== "VIEW") return false;
     const data = Array.isArray(filter.data) ? filter.data : [];
-    return data.some((d) => d && d.scheme === "https" && d.host === hostname && d.pathPrefix === "/store");
+    return data.some((d) => {
+      if (!d || d.scheme !== "https" || d.host !== hostname) return false;
+      if (pathPrefix && d.pathPrefix !== pathPrefix) return false;
+      if (path && d.path !== path) return false;
+      return true;
+    });
   });
 
   if (alreadyHas) return existing;
+
+  const dataEntry = {
+    scheme: "https",
+    host: hostname,
+    ...(pathPrefix ? { pathPrefix } : {}),
+    ...(path ? { path } : {})
+  };
 
   return [
     ...existing,
     {
       action: "VIEW",
       autoVerify: true,
-      data: [{ scheme: "https", host: hostname, pathPrefix: "/store" }],
+      data: [dataEntry],
       category: ["BROWSABLE", "DEFAULT"]
     }
   ];
 }
 
-export default ({ config }) => {
-  const webBaseUrl = process.env.EXPO_PUBLIC_WEB_BASE_URL;
+function ensureStoreIntentFilter(intentFilters, hostname) {
+  return ensureIntentFilter(intentFilters, { hostname, pathPrefix: "/store" });
+}
+
+function ensureRootIntentFilter(intentFilters, hostname) {
+  return ensureIntentFilter(intentFilters, { hostname, path: "/" });
+}
+
+function getWwwHostname(hostname) {
+  if (!hostname) return null;
+  const lower = hostname.toLowerCase();
+  if (lower.startsWith("www.") || isLocalHost(lower) || lower.includes(":")) return null;
+  return `www.${hostname}`;
+}
+
+const { webBaseUrl, prodApiBaseUrl } = require("./constants/urls.json");
+
+module.exports = ({ config }) => {
   const hostname = tryGetHostname(webBaseUrl);
-  const apiBaseUrl = process.env.EXPO_PUBLIC_API_BASE_URL;
+  const wwwHostname = getWwwHostname(hostname);
+  const apiBaseUrl = process.env.EXPO_PUBLIC_API_BASE_URL || prodApiBaseUrl;
   const apiHost = tryGetHostname(apiBaseUrl);
   const allowLocalApi = process.env.EXPO_PUBLIC_ALLOW_LOCAL_API === "true";
   const isProdBuild = process.env.NODE_ENV === "production" || process.env.EAS_BUILD_PROFILE === "production";
@@ -96,19 +125,29 @@ export default ({ config }) => {
     ]);
   }
 
+  let intentFilters = config.android?.intentFilters;
+  intentFilters = ensureStoreIntentFilter(intentFilters, hostname);
+  intentFilters = ensureRootIntentFilter(intentFilters, hostname);
+  intentFilters = ensureStoreIntentFilter(intentFilters, wwwHostname);
+  intentFilters = ensureRootIntentFilter(intentFilters, wwwHostname);
+
   return {
     ...config,
     ios: {
       ...config.ios,
       associatedDomains: hostname
-        ? uniqStrings([...(config.ios?.associatedDomains ?? []), `applinks:${hostname}`])
+        ? uniqStrings([
+            ...(config.ios?.associatedDomains ?? []),
+            `applinks:${hostname}`,
+            ...(wwwHostname ? [`applinks:${wwwHostname}`] : [])
+          ])
         : config.ios?.associatedDomains
     },
     android: {
       ...config.android,
       package: "com.edufelip.meer",
       googleServicesFile: "./android/app/google-services.json",
-      intentFilters: ensureStoreIntentFilter(config.android?.intentFilters, hostname)
+      intentFilters
     },
     plugins: nextPlugins
   };
