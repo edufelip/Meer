@@ -12,7 +12,8 @@ import { navigationRef } from "../../app/navigation/navigationRef";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 jest.mock("react", () => ({
-  useCallback: (fn: any) => fn
+  useCallback: (fn: any) => fn,
+  useEffect: (fn: any) => fn()
 }));
 
 jest.mock("@tanstack/react-query", () => ({
@@ -117,14 +118,12 @@ describe("hooks", () => {
   });
 
   it("useValidateToken configures query and caches profile", async () => {
-    const options = useValidateToken(true) as any;
+    const profile = { id: "user-1" } as any;
+    useQueryMock.mockReturnValueOnce({ data: profile });
+    useValidateToken(true);
 
     expect(useQueryMock).toHaveBeenCalled();
-    expect(options.enabled).toBe(true);
-
-    const profile = { id: "user-1" } as any;
-    await options.onSuccess(profile);
-
+    expect(useQueryMock.mock.calls[0][0]).toEqual(expect.objectContaining({ enabled: true }));
     expect(cacheProfileMock).toHaveBeenCalledWith(profile);
   });
 

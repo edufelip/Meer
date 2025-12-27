@@ -22,6 +22,7 @@ jest.mock("../../../presentation/screens/auth/LoginScreen", () => ({ LoginScreen
 jest.mock("../../../presentation/screens/auth/SignUpScreen", () => ({ SignUpScreen: () => null }));
 jest.mock("../RootTabs", () => ({ RootTabs: () => null }));
 jest.mock("../../../presentation/screens/thrift/ThriftDetailScreen", () => ({ ThriftDetailScreen: () => null }));
+jest.mock("../../../presentation/screens/ratings/StoreRatingsScreen", () => ({ StoreRatingsScreen: () => null }));
 jest.mock("../../../presentation/screens/profile/EditProfileScreen", () => ({ EditProfileScreen: () => null }));
 jest.mock("../../../presentation/screens/thrift/BrechoFormScreen", () => ({ BrechoFormScreen: () => null }));
 jest.mock("../../../presentation/screens/content/MyContentsScreen", () => ({ MyContentsScreen: () => null }));
@@ -49,6 +50,7 @@ describe("RootStack", () => {
       "signup",
       "tabs",
       "thriftDetail",
+      "storeRatings",
       "editProfile",
       "brechoForm",
       "myContents",
