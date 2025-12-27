@@ -38,12 +38,16 @@ npm install   # fix ~/.npm permissions first if needed
 
 Create `.env` (not committed) with:
 ```
-EXPO_PUBLIC_API_BASE_URL=<your api base url>
 EXPO_PUBLIC_GOOGLE_WEB_ID=<your web client id>
 EXPO_PUBLIC_GOOGLE_ANDROID_ID=<android client id>
 EXPO_PUBLIC_GOOGLE_IOS_ID=<ios client id>
 ```
 (Keys stay local; production IDs go in your own env).
+
+Update API/web URLs in `constants/urls.json`:
+- `devApiBaseUrl`: dev/local backend base URL used in debug builds.
+- `prodApiBaseUrl`: production backend base URL used in production builds.
+- `webBaseUrl`: public site used for share links/deep links.
 
 ### Web Admin (Next.js)
 
