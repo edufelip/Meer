@@ -2,7 +2,7 @@ import { initializeApp, getApps, getApp } from "firebase/app";
 import { getRemoteConfig, fetchAndActivate, getValue } from "firebase/remote-config";
 import { firebaseConfig } from "./firebaseConfig";
 
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 const rc = getRemoteConfig(app);
 
 rc.defaultConfig = {
