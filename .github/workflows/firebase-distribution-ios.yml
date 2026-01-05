@@ -67,6 +67,14 @@ jobs:
           mkdir -p Meer
           echo "$GOOGLE_SERVICE_INFO_PLIST_BASE64" | base64 -d > Meer/GoogleService-Info.plist
 
+      - name: Validate Google Sign-In scheme
+        run: |
+          PLIST_REVERSED=$(/usr/libexec/PlistBuddy -c "Print :REVERSED_CLIENT_ID" ios/Meer/GoogleService-Info.plist)
+          if ! /usr/libexec/PlistBuddy -c "Print :CFBundleURLTypes" ios/Meer/Info.plist | grep -Fq "$PLIST_REVERSED"; then
+            echo "Google Sign-In mismatch: Info.plist missing REVERSED_CLIENT_ID scheme ($PLIST_REVERSED)" >&2
+            exit 1
+          fi
+
       - name: Set up keychain and certificates
         env:
           CERT_P12_BASE64: ${{ secrets.IOS_ADHOC_CERT_P12_BASE64 }}
