@@ -47,12 +47,14 @@ function RatingStarButton({
   score,
   active,
   onSelect,
-  disabled
+  disabled,
+  size = 28
 }: {
   score: number;
   active: boolean;
   onSelect: (score: number) => void;
   disabled?: boolean;
+  size?: number;
 }) {
   const scale = useSharedValue(1);
   const animatedStyle = useAnimatedStyle(() => ({
@@ -71,7 +73,7 @@ function RatingStarButton({
       disabled={disabled}
     >
       <Reanimated.View style={animatedStyle} collapsable={false}>
-        <Ionicons name={active ? "star" : "star-outline"} size={28} color={active ? "#E6A800" : "#D1D5DB"} />
+        <Ionicons name={active ? "star" : "star-outline"} size={size} color={active ? "#E6A800" : "#D1D5DB"} />
       </Reanimated.View>
     </Pressable>
   );
@@ -367,6 +369,17 @@ export function ThriftDetailScreen({ route }: ThriftDetailScreenProps) {
     }
   };
 
+  const handleSelectRating = (selected: number) => {
+    setUserRating(selected);
+    if (!showCommentBox) {
+      const existingFeedback = existingFeedbackRef.current;
+      if (existingFeedback?.body && !userComment.trim()) {
+        setUserComment(existingFeedback.body);
+      }
+      setShowCommentBox(true);
+    }
+  };
+
   const handleDeleteFeedback = () => {
     if (!store?.id) return;
     Alert.alert(
@@ -510,7 +523,21 @@ export function ThriftDetailScreen({ route }: ThriftDetailScreenProps) {
                     <Text className="text-xs text-[#6B7280]" style={{ marginBottom: 6 }}>
                       Sua avaliação atual
                     </Text>
-                    {renderStars(userRating, 18)}
+                    <View className="flex-row justify-center gap-2" style={{ paddingVertical: 8 }}>
+                      {[1, 2, 3, 4, 5].map((score) => {
+                        const active = userRating >= score;
+                        return (
+                          <RatingStarButton
+                            key={score}
+                            score={score}
+                            active={active}
+                            size={22}
+                            disabled={submittingFeedback}
+                            onSelect={handleSelectRating}
+                          />
+                        );
+                      })}
+                    </View>
                   </View>
                 ) : null}
                 {!hasExistingFeedback ? (
@@ -523,16 +550,13 @@ export function ThriftDetailScreen({ route }: ThriftDetailScreenProps) {
                           score={score}
                           active={active}
                           disabled={submittingFeedback}
-                          onSelect={(selected) => {
-                            setUserRating(selected);
-                            if (!showCommentBox) setShowCommentBox(true);
-                          }}
+                          onSelect={handleSelectRating}
                         />
                       );
                     })}
                   </View>
                 ) : null}
-                {hasExistingFeedback ? (
+                {hasExistingFeedback && !showCommentBox ? (
                   <Pressable
                     onPress={handleDeleteFeedback}
                     accessibilityRole="button"
