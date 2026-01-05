@@ -330,43 +330,8 @@ export function EditProfileScreen() {
                   thumbColor="white"
                 />
               </View>
-              <View className="flex-row items-center justify-between p-4">
-                <Text className="text-[#374151]">Promoções</Text>
-                <Switch
-                  value={notifyPromos}
-                  onValueChange={setNotifyPromos}
-                  trackColor={{ true: theme.colors.highlight, false: "#E5E7EB" }}
-                  thumbColor="white"
-                />
-              </View>
             </View>
           </View>
-
-          <View className="mt-4">
-            <Text className="text-lg font-bold mb-2 text-[#1F2937]">Contas Vinculadas</Text>
-            <View className="bg-white rounded-lg shadow-sm">
-              <Pressable className="flex-row items-center justify-between p-4 border-b border-gray-200">
-                <View className="flex-row items-center gap-3">
-                  <Image
-                    source={{ uri: "https://lh3.googleusercontent.com/aida-public/AB6AXuCs4ofAICgKzRatz2-6yuNmujIw2mCUhw9GNrmVY4_Uju1JCgXYzC1C9ECxGssQJxlurPdEjwnaEeMr4Nda4c8zkamodwW6uTao5eQDiUvsr30Es780Z7ZdG0ohZWSsrIE8yPI4rRKy4ByWVmx-W1P4KNgPRb--SXVjRD3y0VFwYjrgKbr_cCyQxBhDryMiRLtvZPJOPZL7z1Im_u0zAZte144oNCoqYZqDmJbwY_vX_meKUTqbNnd-feOo1HZt2JiTvc4ui2bENGY" }}
-                    className="w-6 h-6"
-                  />
-                  <Text className="text-[#374151]">Instagram</Text>
-                </View>
-                <Text className="text-sm text-[#B55D05]">Conectar</Text>
-              </Pressable>
-              <Pressable className="flex-row items-center justify-between p-4">
-                <View className="flex-row items-center gap-3">
-                  <Image
-                    source={{ uri: "https://lh3.googleusercontent.com/aida-public/AB6AXuAGed5Z4pxAPJlUqOVgX5iAMqujCDvqIzPUy1SpYm-7DVhvOb5NnNcF9Uoa7RphRC-Bpim_kWKIwtxKchRqV4qWV7hCH0AcCkEfXyATgADCIOjk-rCov53EFb447NdQpBYhDieKRbztjFPf35COQA3Gs8YC2XW7vDzXpKacf4KbhRPboKJ6jIrnn3-3OJYXJB0BtkZwoGtGyhi2xlKYpPI_GJwRY-dwGdhml95o1C7CyqagNEqv6HQDtGRzZtuKvdCjWXybSWEifzc" }}
-                    className="w-6 h-6"
-                  />
-              <Text className="text-[#374151]">Facebook</Text>
-            </View>
-            <Text className="text-sm text-[#B55D05]">Conectar</Text>
-          </Pressable>
-        </View>
-      </View>
 
           <View className="flex flex-col gap-3 pt-6">
             <Pressable

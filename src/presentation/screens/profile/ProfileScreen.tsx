@@ -115,6 +115,9 @@ export function ProfileScreen() {
             <View className="items-center mt-2">
               <Text className="text-2xl font-bold text-[#1F2937]">{displayUser?.name ?? ""}</Text>
               <Text className="text-gray-500">{displayUser?.email ?? ""}</Text>
+              {displayUser?.bio?.trim() ? (
+                <Text className="text-sm text-gray-500 mt-1 text-center">{displayUser.bio.trim()}</Text>
+              ) : null}
             </View>
           </View>
         </View>
