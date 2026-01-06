@@ -146,6 +146,7 @@ export function BrechoFormScreen() {
   const [instagram, setInstagram] = useState(
     initial.social?.instagram?.replace(/^@+/, "") ?? ""
   );
+  const [website, setWebsite] = useState(initial.social?.website ?? "");
   const [categoryOptions, setCategoryOptions] = useState<Category[]>([]);
   const [categoriesLoading, setCategoriesLoading] = useState(false);
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
@@ -502,7 +503,28 @@ export function BrechoFormScreen() {
     textChanges.phone = phone.trim();
     if (email.trim()) textChanges.email = email.trim();
     const instagramHandle = instagram.trim().replace(/^@+/, "");
-    if (instagramHandle) textChanges.social = { instagram: `@${instagramHandle}` };
+    const websiteValue = website.trim();
+    const hadInstagram = Boolean(initial.social?.instagram?.trim());
+    const hadWebsite = Boolean(initial.social?.website?.trim());
+    const social: {
+      instagram?: string | null;
+      website?: string | null;
+      facebook?: string;
+      whatsapp?: string;
+    } = {
+      ...(initial.social ?? {})
+    };
+    if (instagramHandle) {
+      social.instagram = `@${instagramHandle}`;
+    } else if (hadInstagram) {
+      social.instagram = null;
+    }
+    if (websiteValue) {
+      social.website = websiteValue;
+    } else if (hadWebsite) {
+      social.website = null;
+    }
+    if (Object.keys(social).length) textChanges.social = social;
     if (selectedCategoryIds.length) textChanges.categories = selectedCategoryIds.map((c) => c.toLowerCase());
 
     // Geocode address to get lat/lng when provided
@@ -552,6 +574,11 @@ export function BrechoFormScreen() {
     const instagramHandle = instagram.trim().replace(/^@+/, "");
     if (instagramHandle && !isSingleWord(instagramHandle)) {
       Alert.alert("Instagram inválido", "Digite apenas um nome de usuário (uma única palavra, sem espaços).");
+      return;
+    }
+    const websiteValue = website.trim();
+    if (websiteValue && !websiteValue.toLowerCase().includes(".com")) {
+      Alert.alert("Website inválido", "Digite um site válido contendo .com.");
       return;
     }
     if (photos.length === 0) {
@@ -662,7 +689,11 @@ export function BrechoFormScreen() {
         console.log("[BrechoForm] refresh profile failed", err);
       }
 
-      navigation.goBack();
+      const successMessage = thriftStore?.id ? "Brechó atualizado com sucesso." : "Brechó criado com sucesso.";
+      navigation.navigate("tabs", {
+        screen: "profile",
+        params: { toast: { message: successMessage } }
+      });
     } catch (err: any) {
       console.log("[BrechoForm] erro ao salvar", err?.response ?? err?.message ?? err);
       const msg =
@@ -882,6 +913,22 @@ export function BrechoFormScreen() {
                   autoCorrect={false}
                 />
               </View>
+            </View>
+            <View>
+              <Text className="text-sm font-medium text-gray-700 mb-2">Website (opcional)</Text>
+              <TextInput
+                value={website}
+                onChangeText={(t) => {
+                  setWebsite(t);
+                  markDirty();
+                }}
+                placeholder="www.seu-brecho.com"
+                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-3 mb-2"
+                autoCapitalize="none"
+                autoCorrect={false}
+                keyboardType="url"
+                inputMode="url"
+              />
             </View>
           </View>
         </View>

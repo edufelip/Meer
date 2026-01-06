@@ -10,7 +10,7 @@ export type CreateStorePayload = {
   openingHours?: string;
   neighborhood?: string;
   email?: string;
-  social?: { instagram?: string };
+  social?: { instagram?: string | null; website?: string | null; facebook?: string | null; whatsapp?: string | null };
   categories?: string[];
   coverImageUrl?: string;
   galleryUrls?: string[];

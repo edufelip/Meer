@@ -1,22 +1,37 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useFocusEffect, useNavigation } from "@react-navigation/native";
+import { useFocusEffect, useNavigation, useRoute } from "@react-navigation/native";
+import type { CompositeNavigationProp, RouteProp } from "@react-navigation/native";
+import type { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import React, { useCallback, useEffect, useState } from "react";
-import { Image, Pressable, ScrollView, StatusBar, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { Animated, Image, Pressable, ScrollView, StatusBar, Text, View } from "react-native";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import type { RootStackParamList } from "../../../app/navigation/RootStack";
+import type { RootTabParamList } from "../../../app/navigation/RootTabs";
 import { useDependencies } from "../../../app/providers/AppProvidersWithDI";
 import { theme } from "../../../shared/theme";
 import { getTokens } from "../../../storage/authStorage";
 import { Buffer } from "buffer";
 import { useProfileSummaryStore } from "../../state/profileSummaryStore";
 
+type ProfileNavigationProp = CompositeNavigationProp<
+  BottomTabNavigationProp<RootTabParamList, "profile">,
+  NativeStackNavigationProp<RootStackParamList>
+>;
+
 export function ProfileScreen() {
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const navigation = useNavigation<ProfileNavigationProp>();
+  const route = useRoute<RouteProp<RootTabParamList, "profile">>();
+  const insets = useSafeAreaInsets();
   const { getCachedProfileUseCase, getProfileUseCase } = useDependencies();
   const profile = useProfileSummaryStore((state) => state.profile);
   const setProfile = useProfileSummaryStore((state) => state.setProfile);
   const [hasArticles, setHasArticles] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const toastOpacity = useRef(new Animated.Value(0)).current;
+  const toastTranslateY = useRef(new Animated.Value(12)).current;
+  const toastHideTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const toastClearTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const decodeJwtPayload = (token: string | null | undefined) => {
     if (!token) return null;
@@ -82,11 +97,88 @@ export function ProfileScreen() {
     }, [loadCachedProfile])
   );
 
+  useEffect(() => {
+    return () => {
+      if (toastHideTimeoutRef.current) {
+        clearTimeout(toastHideTimeoutRef.current);
+        toastHideTimeoutRef.current = null;
+      }
+      if (toastClearTimeoutRef.current) {
+        clearTimeout(toastClearTimeoutRef.current);
+        toastClearTimeoutRef.current = null;
+      }
+    };
+  }, []);
+
+  const showToast = useCallback(
+    (message: string) => {
+      setToastMessage(message);
+      Animated.timing(toastOpacity, {
+        toValue: 1,
+        duration: 180,
+        useNativeDriver: true
+      }).start();
+      Animated.timing(toastTranslateY, {
+        toValue: 0,
+        duration: 180,
+        useNativeDriver: true
+      }).start();
+
+      if (toastHideTimeoutRef.current) {
+        clearTimeout(toastHideTimeoutRef.current);
+      }
+      if (toastClearTimeoutRef.current) {
+        clearTimeout(toastClearTimeoutRef.current);
+      }
+      toastHideTimeoutRef.current = setTimeout(() => {
+        Animated.timing(toastOpacity, {
+          toValue: 0,
+          duration: 180,
+          useNativeDriver: true
+        }).start();
+        Animated.timing(toastTranslateY, {
+          toValue: 12,
+          duration: 180,
+          useNativeDriver: true
+        }).start();
+        toastClearTimeoutRef.current = setTimeout(() => setToastMessage(null), 220);
+      }, 2200);
+    },
+    [toastOpacity, toastTranslateY]
+  );
+
+  useEffect(() => {
+    const message = route.params?.toast?.message;
+    if (!message) return;
+    showToast(message);
+    navigation.setParams({ toast: undefined });
+  }, [navigation, route.params?.toast?.message, showToast]);
+
   const displayUser = profile;
 
   return (
     <SafeAreaView className="flex-1 bg-white" edges={["top", "left", "right"]}>
       <StatusBar barStyle="dark-content" />
+      {toastMessage ? (
+        <Animated.View
+          pointerEvents="none"
+          className="bg-[#111827] px-4 py-3 rounded-xl shadow-lg"
+          style={[
+            {
+              position: "absolute",
+              top: insets.top + 12,
+              left: 16,
+              right: 16,
+              zIndex: 50,
+              elevation: 6,
+              opacity: toastOpacity,
+              transform: [{ translateY: toastTranslateY }]
+            }
+          ]}
+        >
+          <Text className="text-white font-semibold text-center">{toastMessage}</Text>
+        </Animated.View>
+      ) : null}
       <View className="bg-white px-4 py-4 border-b border-gray-100">
         <Text className="text-center text-lg font-bold text-[#1F2937]">Perfil</Text>
       </View>

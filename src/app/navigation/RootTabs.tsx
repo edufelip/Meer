@@ -11,7 +11,13 @@ export type RootTabParamList = {
   home: undefined;
   favorites: undefined;
   categories: undefined;
-  profile: undefined;
+  profile:
+    | {
+        toast?: {
+          message: string;
+        };
+      }
+    | undefined;
 };
 
 const Tab = createBottomTabNavigator<RootTabParamList>();

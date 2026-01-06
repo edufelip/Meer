@@ -669,30 +669,51 @@ export function ThriftDetailScreen({ route }: ThriftDetailScreenProps) {
                 const igRaw = (store.social?.instagram ?? store.socialHandle ?? "").trim();
                 const igHandle = igRaw.replace(/^@/, "");
                 const hasInstagram = igHandle.length > 0;
+                const websiteRaw = (store.social?.website ?? "").trim();
+                const hasWebsite = websiteRaw.length > 0;
+                const websiteLabel = websiteRaw.replace(/^https?:\/\//, "");
+                const websiteUrl = websiteRaw
+                  ? websiteRaw.startsWith("http")
+                    ? websiteRaw
+                    : `https://${websiteRaw}`
+                  : "";
                 const hasAnySocial =
-                  hasInstagram || Boolean(store.social?.facebook || store.social?.whatsapp || store.social?.website);
+                  hasInstagram || hasWebsite || Boolean(store.social?.facebook || store.social?.whatsapp);
                 if (!hasAnySocial) return null;
 
                 return (
                   <View style={{ marginTop: 16, borderTopWidth: 1, borderColor: "#E5E7EB", paddingTop: 16 }}>
                     <Text className="font-bold text-[#374151] mb-2">Redes Sociais</Text>
-                    {hasInstagram ? (
-                      <Pressable
-                        className="flex-row items-center gap-2"
-                        onPress={() => {
-                          const appUrl = `instagram://user?username=${igHandle}`;
-                          const webUrl = `https://www.instagram.com/${igHandle}`;
-                          Linking.canOpenURL(appUrl)
-                            .then((canOpen) => (canOpen ? Linking.openURL(appUrl) : Linking.openURL(webUrl)))
-                            .catch(() => Linking.openURL(webUrl));
-                        }}
-                        accessibilityRole="link"
-                        accessibilityLabel="Abrir Instagram"
-                      >
-                        <Ionicons name="logo-instagram" size={18} color={theme.colors.highlight} />
-                        <Text className="text-sm text-gray-500 underline">@{igHandle}</Text>
-                      </Pressable>
-                    ) : null}
+                    <View className="space-y-2">
+                      {hasInstagram ? (
+                        <Pressable
+                          className="flex-row items-center gap-2"
+                          onPress={() => {
+                            const appUrl = `instagram://user?username=${igHandle}`;
+                            const webUrl = `https://www.instagram.com/${igHandle}`;
+                            Linking.canOpenURL(appUrl)
+                              .then((canOpen) => (canOpen ? Linking.openURL(appUrl) : Linking.openURL(webUrl)))
+                              .catch(() => Linking.openURL(webUrl));
+                          }}
+                          accessibilityRole="link"
+                          accessibilityLabel="Abrir Instagram"
+                        >
+                          <Ionicons name="logo-instagram" size={18} color={theme.colors.highlight} />
+                          <Text className="text-sm text-gray-500 underline">@{igHandle}</Text>
+                        </Pressable>
+                      ) : null}
+                      {hasWebsite ? (
+                        <Pressable
+                          className="flex-row items-center gap-2"
+                          onPress={() => Linking.openURL(websiteUrl)}
+                          accessibilityRole="link"
+                          accessibilityLabel="Abrir Website"
+                        >
+                          <Ionicons name="globe-outline" size={18} color={theme.colors.highlight} />
+                          <Text className="text-sm text-gray-500 underline">{websiteLabel}</Text>
+                        </Pressable>
+                      ) : null}
+                    </View>
                   </View>
                 );
               })()}
