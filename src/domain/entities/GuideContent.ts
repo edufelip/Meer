@@ -10,4 +10,7 @@ export interface GuideContent {
   thriftStoreName?: string;
   thriftStoreCoverImageUrl?: string | null;
   createdAt?: string;
+  likeCount?: number;
+  commentCount?: number;
+  likedByMe?: boolean;
 }

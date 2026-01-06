@@ -3,6 +3,8 @@ import { AsyncStorageUserLocalDataSource } from "../../data/datasources/impl/Asy
 import { UserRepositoryImpl } from "../../data/repositories/UserRepositoryImpl";
 import { HttpThriftStoreRemoteDataSource } from "../../data/datasources/impl/HttpThriftStoreRemoteDataSource";
 import { HttpGuideContentRemoteDataSource } from "../../data/datasources/impl/HttpGuideContentRemoteDataSource";
+import { HttpContentCommentRemoteDataSource } from "../../data/datasources/impl/HttpContentCommentRemoteDataSource";
+import { HttpContentLikeRemoteDataSource } from "../../data/datasources/impl/HttpContentLikeRemoteDataSource";
 import { HttpCategoryRemoteDataSource } from "../../data/datasources/impl/HttpCategoryRemoteDataSource";
 import { AsyncStorageCategoryLocalDataSource } from "../../data/datasources/impl/AsyncStorageCategoryLocalDataSource";
 import { HttpProfileRemoteDataSource } from "../../data/datasources/impl/HttpProfileRemoteDataSource";
@@ -10,6 +12,8 @@ import { AsyncStorageProfileLocalDataSource } from "../../data/datasources/impl/
 import { AsyncStorageFeaturedLocalDataSource } from "../../data/datasources/impl/AsyncStorageFeaturedLocalDataSource";
 import { ThriftStoreRepositoryJson } from "../../data/repositories/ThriftStoreRepositoryJson";
 import { GuideContentRepositoryJson } from "../../data/repositories/GuideContentRepositoryJson";
+import { ContentCommentRepositoryImpl } from "../../data/repositories/ContentCommentRepositoryImpl";
+import { ContentLikeRepositoryImpl } from "../../data/repositories/ContentLikeRepositoryImpl";
 import { CategoryRepositoryJson } from "../../data/repositories/CategoryRepositoryJson";
 import { ProfileRepositoryJson } from "../../data/repositories/ProfileRepositoryJson";
 import { GetCurrentUserUseCase } from "../../domain/usecases/GetCurrentUserUseCase";
@@ -17,6 +21,12 @@ import { GetFeaturedThriftStoresUseCase } from "../../domain/usecases/GetFeature
 import { GetNearbyThriftStoresUseCase } from "../../domain/usecases/GetNearbyThriftStoresUseCase";
 import { GetGuideContentUseCase } from "../../domain/usecases/GetGuideContentUseCase";
 import { GetGuideContentByIdUseCase } from "../../domain/usecases/GetGuideContentByIdUseCase";
+import { GetContentCommentsUseCase } from "../../domain/usecases/GetContentCommentsUseCase";
+import { CreateContentCommentUseCase } from "../../domain/usecases/CreateContentCommentUseCase";
+import { UpdateContentCommentUseCase } from "../../domain/usecases/UpdateContentCommentUseCase";
+import { DeleteContentCommentUseCase } from "../../domain/usecases/DeleteContentCommentUseCase";
+import { LikeContentUseCase } from "../../domain/usecases/LikeContentUseCase";
+import { UnlikeContentUseCase } from "../../domain/usecases/UnlikeContentUseCase";
 import { CreateContentUseCase } from "../../domain/usecases/CreateContentUseCase";
 import { UpdateContentUseCase } from "../../domain/usecases/UpdateContentUseCase";
 import { RequestContentImageUploadUseCase } from "../../domain/usecases/RequestContentImageUploadUseCase";
@@ -57,6 +67,12 @@ interface Dependencies {
   getNearbyThriftStoresUseCase: GetNearbyThriftStoresUseCase;
   getGuideContentUseCase: GetGuideContentUseCase;
   getGuideContentByIdUseCase: GetGuideContentByIdUseCase;
+  getContentCommentsUseCase: GetContentCommentsUseCase;
+  createContentCommentUseCase: CreateContentCommentUseCase;
+  updateContentCommentUseCase: UpdateContentCommentUseCase;
+  deleteContentCommentUseCase: DeleteContentCommentUseCase;
+  likeContentUseCase: LikeContentUseCase;
+  unlikeContentUseCase: UnlikeContentUseCase;
   createContentUseCase: CreateContentUseCase;
   updateContentUseCase: UpdateContentUseCase;
   requestContentImageUploadUseCase: RequestContentImageUploadUseCase;
@@ -107,6 +123,8 @@ export function DependenciesProvider(props: PropsWithChildren) {
     const feedbackRemote = new HttpFeedbackRemoteDataSource();
     const supportRemote = new HttpSupportRemoteDataSource();
     const guideContentRemote = new HttpGuideContentRemoteDataSource();
+    const contentCommentRemote = new HttpContentCommentRemoteDataSource();
+    const contentLikeRemote = new HttpContentLikeRemoteDataSource();
     const categoryRemote = new HttpCategoryRemoteDataSource();
     const categoryLocal = new AsyncStorageCategoryLocalDataSource();
     const featuredLocal = new AsyncStorageFeaturedLocalDataSource();
@@ -118,6 +136,8 @@ export function DependenciesProvider(props: PropsWithChildren) {
 
     const thriftStoreRepository = new ThriftStoreRepositoryJson(thriftStoreRemote, featuredLocal);
     const guideContentRepository = new GuideContentRepositoryJson(guideContentRemote);
+    const contentCommentRepository = new ContentCommentRepositoryImpl(contentCommentRemote);
+    const contentLikeRepository = new ContentLikeRepositoryImpl(contentLikeRemote);
     const categoryRepository = new CategoryRepositoryJson(categoryRemote, categoryLocal);
     const profileRepository = new ProfileRepositoryJson(profileRemote, profileLocal);
 
@@ -126,6 +146,12 @@ export function DependenciesProvider(props: PropsWithChildren) {
     const getNearbyThriftStoresUseCase = new GetNearbyThriftStoresUseCase(thriftStoreRepository);
     const getGuideContentUseCase = new GetGuideContentUseCase(guideContentRepository);
     const getGuideContentByIdUseCase = new GetGuideContentByIdUseCase(guideContentRepository);
+    const getContentCommentsUseCase = new GetContentCommentsUseCase(contentCommentRepository);
+    const createContentCommentUseCase = new CreateContentCommentUseCase(contentCommentRepository);
+    const updateContentCommentUseCase = new UpdateContentCommentUseCase(contentCommentRepository);
+    const deleteContentCommentUseCase = new DeleteContentCommentUseCase(contentCommentRepository);
+    const likeContentUseCase = new LikeContentUseCase(contentLikeRepository);
+    const unlikeContentUseCase = new UnlikeContentUseCase(contentLikeRepository);
     const createContentUseCase = new CreateContentUseCase(guideContentRepository);
     const updateContentUseCase = new UpdateContentUseCase(guideContentRepository);
     const requestContentImageUploadUseCase = new RequestContentImageUploadUseCase(guideContentRepository);
@@ -159,6 +185,12 @@ export function DependenciesProvider(props: PropsWithChildren) {
       getNearbyThriftStoresUseCase,
       getGuideContentUseCase,
       getGuideContentByIdUseCase,
+      getContentCommentsUseCase,
+      createContentCommentUseCase,
+      updateContentCommentUseCase,
+      deleteContentCommentUseCase,
+      likeContentUseCase,
+      unlikeContentUseCase,
       createContentUseCase,
       updateContentUseCase,
       requestContentImageUploadUseCase,
