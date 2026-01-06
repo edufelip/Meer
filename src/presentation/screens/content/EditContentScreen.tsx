@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Image, Pressable, ScrollView, StatusBar, Text, TextInput, View, ActivityIndicator, Alert } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -35,6 +35,7 @@ export function EditContentScreen() {
     body: "",
     media: []
   });
+  const skipDiscardRef = useRef(false);
   const isEditing = Boolean(route.params.articleId);
   const passedArticle = route.params.article as GuideContent | undefined;
 
@@ -108,6 +109,7 @@ export function EditContentScreen() {
 
   useEffect(() => {
     const unsub = navigation.addListener("beforeRemove", (e) => {
+      if (skipDiscardRef.current) return;
       if (!isDirty || saving) return;
       e.preventDefault();
       Alert.alert("Descartar alterações?", "Se voltar, você perderá as mudanças feitas.", [
@@ -212,7 +214,13 @@ export function EditContentScreen() {
       });
 
       Alert.alert("Sucesso", "Conteúdo salvo com sucesso.", [
-        { text: "OK", onPress: () => navigation.goBack() }
+        {
+          text: "OK",
+          onPress: () => {
+            skipDiscardRef.current = true;
+            navigation.goBack();
+          }
+        }
       ]);
     } catch {
       Alert.alert("Erro", "Não foi possível salvar o conteúdo. Tente novamente.");
