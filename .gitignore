@@ -45,8 +45,8 @@ app-example
 # generated native folders
 # iOS/Android Firebase configs
 GoogleService-Info.plist
-android/app/google-services.json
-google-services.json
+GoogleService-Info-Dev.plist
+**/google-services.json
 
 .env.local
 .env
