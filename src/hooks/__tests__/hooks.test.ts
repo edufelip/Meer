@@ -10,6 +10,8 @@ import { cacheProfile } from "../../storage/profileCache";
 import { api, clearAuthSession } from "../../api/client";
 import { navigationRef } from "../../app/navigation/navigationRef";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { triggerPushRegistration } from "../../services/pushRegistration";
+import { useDependencies } from "../../app/providers/AppProvidersWithDI";
 
 jest.mock("react", () => ({
   useCallback: (fn: any) => fn,
@@ -48,6 +50,14 @@ jest.mock("../../app/navigation/navigationRef", () => ({
   }
 }));
 
+jest.mock("../../app/providers/AppProvidersWithDI", () => ({
+  useDependencies: jest.fn()
+}));
+
+jest.mock("../../services/pushRegistration", () => ({
+  triggerPushRegistration: jest.fn()
+}));
+
 const apiMock = {
   login: login as jest.Mock,
   signup: signup as jest.Mock,
@@ -58,16 +68,22 @@ const apiMock = {
 
 const cacheProfileMock = cacheProfile as jest.Mock;
 const clearAuthSessionMock = clearAuthSession as jest.Mock;
+const triggerPushRegistrationMock = triggerPushRegistration as jest.Mock;
 const apiClientMock = api as unknown as { post: jest.Mock };
 const navMock = navigationRef as unknown as { isReady: jest.Mock; reset: jest.Mock };
 
 const useMutationMock = useMutation as jest.Mock;
 const useQueryMock = useQuery as jest.Mock;
 const useQueryClientMock = useQueryClient as jest.Mock;
+const useDependenciesMock = useDependencies as jest.Mock;
+const unregisterPushTokenUseCaseMock = jest.fn();
 
 describe("hooks", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    useDependenciesMock.mockReturnValue({
+      unregisterPushTokenUseCase: { execute: (...args: any[]) => unregisterPushTokenUseCaseMock(...args) }
+    });
   });
 
   it("useLogin delegates to login", async () => {
@@ -135,6 +151,8 @@ describe("hooks", () => {
     await logout();
 
     expect(clearAuthSessionMock).toHaveBeenCalledTimes(1);
+    expect(unregisterPushTokenUseCaseMock).toHaveBeenCalledTimes(1);
+    expect(triggerPushRegistrationMock).toHaveBeenCalledTimes(1);
     expect(navMock.reset).toHaveBeenCalledWith({ index: 0, routes: [{ name: "login" }] });
   });
 

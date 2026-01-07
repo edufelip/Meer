@@ -14,6 +14,7 @@ const mockForgotPassword = jest.fn();
 const mockSaveTokens = jest.fn();
 const mockCacheProfile = jest.fn();
 const mockPrimeApiToken = jest.fn();
+const mockTriggerPushRegistration = jest.fn();
 const mockHasPlayServices = jest.fn();
 const mockGoogleSignIn = jest.fn();
 const mockAppleSignIn = jest.fn();
@@ -74,6 +75,10 @@ jest.mock("../../../../storage/authStorage", () => ({
 
 jest.mock("../../../../storage/profileCache", () => ({
   cacheProfile: (...args: any[]) => mockCacheProfile(...args)
+}));
+
+jest.mock("../../../../services/pushRegistration", () => ({
+  triggerPushRegistration: (...args: any[]) => mockTriggerPushRegistration(...args)
 }));
 
 describe("LoginScreen", () => {

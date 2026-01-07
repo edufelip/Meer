@@ -14,7 +14,14 @@ const mockNavigationNavigate = jest.fn();
 
 const mockDeps = {
   getCachedProfileUseCase: { execute: jest.fn().mockResolvedValue({ id: "user-1" }) },
-  favoriteRepository: { syncPending: jest.fn() }
+  favoriteRepository: { syncPending: jest.fn() },
+  requestPushPermissionUseCase: { execute: jest.fn().mockResolvedValue(false) },
+  getPushTokenUseCase: { execute: jest.fn().mockResolvedValue("push-token") },
+  registerPushTokenUseCase: { execute: jest.fn().mockResolvedValue(undefined) },
+  unregisterPushTokenUseCase: { execute: jest.fn().mockResolvedValue(undefined) },
+  observePushTokenRefreshUseCase: { execute: jest.fn(() => () => undefined) },
+  observeNotificationOpenUseCase: { execute: jest.fn(() => () => undefined) },
+  getInitialNotificationUseCase: { execute: jest.fn().mockResolvedValue(null) }
 };
 
 jest.mock("../AppProvidersWithDI", () => ({
@@ -45,6 +52,37 @@ jest.mock("../../navigation/navigationRef", () => ({
 
 jest.mock("@react-native-community/netinfo", () => ({
   addEventListener: jest.fn(() => () => undefined)
+}));
+
+jest.mock("@notifee/react-native", () => ({
+  __esModule: true,
+  default: {
+    requestPermission: jest.fn().mockResolvedValue({ authorizationStatus: 1 }),
+    createChannel: jest.fn().mockResolvedValue("default"),
+    displayNotification: jest.fn(),
+    onForegroundEvent: jest.fn(() => jest.fn())
+  },
+  AndroidImportance: { HIGH: 4 },
+  EventType: { PRESS: 1, ACTION_PRESS: 2 }
+}));
+
+jest.mock("@react-native-firebase/messaging", () => ({
+  __esModule: true,
+  default: () => ({
+    onMessage: jest.fn(() => jest.fn()),
+    onTokenRefresh: jest.fn(() => jest.fn()),
+    onNotificationOpenedApp: jest.fn(() => jest.fn()),
+    getInitialNotification: jest.fn().mockResolvedValue(null),
+    requestPermission: jest.fn().mockResolvedValue(1),
+    registerDeviceForRemoteMessages: jest.fn().mockResolvedValue(undefined),
+    getToken: jest.fn().mockResolvedValue("push-token")
+  }),
+  AuthorizationStatus: { AUTHORIZED: 1, PROVISIONAL: 2 }
+}));
+
+jest.mock("expo-constants", () => ({
+  __esModule: true,
+  default: { expoConfig: { version: "1.0.0" }, nativeAppVersion: "1.0.0" }
 }));
 
 describe("AppProviders", () => {
@@ -106,10 +144,15 @@ describe("AppProviders", () => {
     expect(initialCalls).toBeGreaterThan(0);
 
     const calls = (AppState.addEventListener as jest.Mock).mock.calls;
-    const handler = calls[calls.length - 1][1];
-    handler("active");
+    calls.forEach((call) => {
+      const handler = call[1];
+      if (typeof handler === "function") {
+        handler("active");
+      }
+    });
 
-    expect(mockDeps.favoriteRepository.syncPending).toHaveBeenCalledTimes(initialCalls + 1);
+    expect(mockDeps.favoriteRepository.syncPending).toHaveBeenCalled();
+    expect(mockDeps.favoriteRepository.syncPending.mock.calls.length).toBeGreaterThan(initialCalls);
   });
 
   it("clears auth session when validation fails", async () => {

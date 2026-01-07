@@ -9,6 +9,7 @@ const mockSaveTokens = jest.fn();
 const mockCacheProfile = jest.fn();
 const mockPrimeApiToken = jest.fn();
 const mockGetProfile = jest.fn();
+const mockTriggerPushRegistration = jest.fn();
 
 jest.mock("@react-navigation/native", () => ({
   useNavigation: () => ({ goBack: mockGoBack, reset: mockReset })
@@ -36,6 +37,10 @@ jest.mock("../../../../api/client", () => ({
 
 jest.mock("../../../../storage/profileCache", () => ({
   cacheProfile: (...args: any[]) => mockCacheProfile(...args)
+}));
+
+jest.mock("../../../../services/pushRegistration", () => ({
+  triggerPushRegistration: (...args: any[]) => mockTriggerPushRegistration(...args)
 }));
 
 jest.mock("../../../../app/providers/AppProvidersWithDI", () => ({
