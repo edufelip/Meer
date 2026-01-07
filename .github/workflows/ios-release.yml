@@ -126,6 +126,27 @@ jobs:
           mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
           cp "$PROFILE_PATH" "$HOME/Library/MobileDevice/Provisioning Profiles/MeerProfile.mobileprovision"
 
+      - name: Validate provisioning profile entitlements (push)
+        run: |
+          PROFILE_PATH="$HOME/Library/MobileDevice/Provisioning Profiles/MeerProfile.mobileprovision"
+          if [ ! -f "$PROFILE_PATH" ]; then
+            echo "Provisioning profile not found at $PROFILE_PATH" >&2
+            exit 1
+          fi
+
+          security cms -D -i "$PROFILE_PATH" > "$RUNNER_TEMP/profile.plist"
+          APS_ENV=$(/usr/libexec/PlistBuddy -c "Print :Entitlements:aps-environment" "$RUNNER_TEMP/profile.plist" 2>/dev/null || true)
+
+          if [ -z "$APS_ENV" ]; then
+            echo "Provisioning profile missing Push Notifications entitlement (aps-environment)." >&2
+            exit 1
+          fi
+
+          if [ "$APS_ENV" != "production" ]; then
+            echo "Provisioning profile aps-environment is '$APS_ENV' but Release builds require 'production'." >&2
+            exit 1
+          fi
+
       - name: Build archive
         env:
           IOS_PROFILE_NAME: ${{ secrets.IOS_PROFILE_NAME }}

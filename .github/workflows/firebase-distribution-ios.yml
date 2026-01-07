@@ -13,7 +13,7 @@ jobs:
 
     env:
       KEYCHAIN_PASSWORD: ${{ secrets.IOS_ADHOC_KEYCHAIN_PASSWORD }}
-      IOS_PROFILE_NAME: meer-ad-hoc
+      IOS_PROFILE_NAME: ${{ secrets.IOS_ADHOC_PROFILE_NAME }}
 
     steps:
       - name: Checkout
@@ -98,6 +98,46 @@ jobs:
           mkdir -p Meer
           echo "$GOOGLE_SERVICE_INFO_PLIST_BASE64" | base64 -d > Meer/GoogleService-Info.plist
 
+      - name: Sync Google Sign-In scheme (dev)
+        run: |
+          python3 - <<'PY'
+          import plistlib
+          import sys
+
+          info_path = "ios/Meer/Info.plist"
+          gservice_path = "ios/Meer/GoogleService-Info.plist"
+
+          with open(gservice_path, "rb") as f:
+            gservice = plistlib.load(f)
+          scheme = gservice.get("REVERSED_CLIENT_ID")
+          if not scheme:
+            print("REVERSED_CLIENT_ID missing in GoogleService-Info.plist", file=sys.stderr)
+            sys.exit(1)
+
+          with open(info_path, "rb") as f:
+            info = plistlib.load(f)
+
+          url_types = info.get("CFBundleURLTypes", [])
+          google_entry = None
+          for entry in url_types:
+            schemes = entry.get("CFBundleURLSchemes", [])
+            if any(s.startswith("com.googleusercontent.apps.") for s in schemes):
+              google_entry = entry
+              break
+
+          if google_entry is None:
+            url_types.append({"CFBundleURLSchemes": [scheme]})
+          else:
+            google_entry["CFBundleURLSchemes"] = [scheme]
+
+          info["CFBundleURLTypes"] = url_types
+
+          with open(info_path, "wb") as f:
+            plistlib.dump(info, f)
+
+          print(f"Updated Google Sign-In scheme to {scheme}")
+          PY
+
       - name: Validate Google Sign-In scheme
         run: |
           PLIST_REVERSED=$(/usr/libexec/PlistBuddy -c "Print :REVERSED_CLIENT_ID" ios/Meer/GoogleService-Info.plist)
@@ -115,6 +155,7 @@ jobs:
           KEYCHAIN_PATH="$RUNNER_TEMP/app-signing.keychain-db"
           CERTIFICATE_PATH="$RUNNER_TEMP/build_certificate.p12"
           PROFILE_PATH="$RUNNER_TEMP/build_profile.mobileprovision"
+          PROFILE_DEST="$HOME/Library/MobileDevice/Provisioning Profiles/meer-dev.mobileprovision"
 
           echo -n "$CERT_P12_BASE64" | base64 --decode -o "$CERTIFICATE_PATH"
           echo -n "$PROFILE_BASE64" | base64 --decode -o "$PROFILE_PATH"
@@ -134,9 +175,30 @@ jobs:
           security list-keychain -d user -s "$KEYCHAIN_PATH"
 
           mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
-          cp "$PROFILE_PATH" "$HOME/Library/MobileDevice/Provisioning Profiles/meer-ad-hoc.mobileprovision"
+          cp "$PROFILE_PATH" "$PROFILE_DEST"
 
-      - name: Build archive (Ad Hoc)
+      - name: Validate provisioning profile entitlements (push)
+        run: |
+          PROFILE_PATH="$HOME/Library/MobileDevice/Provisioning Profiles/meer-dev.mobileprovision"
+          if [ ! -f "$PROFILE_PATH" ]; then
+            echo "Provisioning profile not found at $PROFILE_PATH" >&2
+            exit 1
+          fi
+
+          security cms -D -i "$PROFILE_PATH" > "$RUNNER_TEMP/profile.plist"
+          APS_ENV=$(/usr/libexec/PlistBuddy -c "Print :Entitlements:aps-environment" "$RUNNER_TEMP/profile.plist" 2>/dev/null || true)
+
+          if [ -z "$APS_ENV" ]; then
+            echo "Provisioning profile missing Push Notifications entitlement (aps-environment)." >&2
+            exit 1
+          fi
+
+          if [ "$APS_ENV" != "development" ]; then
+            echo "Provisioning profile aps-environment is '$APS_ENV' but Debug builds require 'development'." >&2
+            exit 1
+          fi
+
+      - name: Build archive (Debug)
         env:
           KEYCHAIN_PATH: ${{ runner.temp }}/app-signing.keychain-db
         run: |
@@ -144,32 +206,32 @@ jobs:
           xcodebuild \
             -workspace Meer.xcworkspace \
             -scheme Meer \
-            -configuration Release \
+            -configuration Debug \
             -destination "generic/platform=iOS" \
-            -archivePath "$PWD/build/MeerAdHoc.xcarchive" \
+            -archivePath "$PWD/build/MeerDev.xcarchive" \
             archive \
             CODE_SIGN_STYLE=Manual \
-            CODE_SIGN_IDENTITY="Apple Distribution" \
+            CODE_SIGN_IDENTITY="Apple Development" \
             DEVELOPMENT_TEAM=${{ secrets.IOS_TEAM_ID }} \
             PROVISIONING_PROFILE_SPECIFIER="$IOS_PROFILE_NAME" \
             OTHER_CODE_SIGN_FLAGS="--keychain $KEYCHAIN_PATH"
 
-      - name: Export IPA (ad-hoc)
+      - name: Export IPA (development)
         env:
           KEYCHAIN_PATH: ${{ runner.temp }}/app-signing.keychain-db
         run: |
-          cat <<EOF > ios/ExportOptionsAdHoc.plist
+          cat <<EOF > ios/ExportOptionsDevelopment.plist
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
           <plist version="1.0">
           <dict>
-            <key>method</key><string>ad-hoc</string>
+            <key>method</key><string>development</string>
             <key>signingStyle</key><string>manual</string>
             <key>compileBitcode</key><false/>
             <key>stripSwiftSymbols</key><true/>
               <key>provisioningProfiles</key>
               <dict>
-              <key>com.edufelip.meer</key><string>${IOS_PROFILE_NAME}</string>
+              <key>com.edufelip.meer.dev</key><string>${IOS_PROFILE_NAME}</string>
               </dict>
           </dict>
           </plist>
@@ -177,8 +239,8 @@ jobs:
 
           cd ios
           xcodebuild -exportArchive \
-            -archivePath "$PWD/build/MeerAdHoc.xcarchive" \
-            -exportOptionsPlist ExportOptionsAdHoc.plist \
+            -archivePath "$PWD/build/MeerDev.xcarchive" \
+            -exportOptionsPlist ExportOptionsDevelopment.plist \
             -exportPath "$PWD/build" \
             OTHER_CODE_SIGN_FLAGS="--keychain $KEYCHAIN_PATH"
 
