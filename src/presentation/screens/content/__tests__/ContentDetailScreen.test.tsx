@@ -1,6 +1,8 @@
 import React from "react";
+import { Alert } from "react-native";
 import { fireEvent, render, waitFor } from "@testing-library/react-native";
 import { ContentDetailScreen } from "../ContentDetailScreen";
+import { useAuthModeStore } from "../../../state/authModeStore";
 
 jest.mock("@expo/vector-icons", () => ({
   Ionicons: () => null
@@ -18,11 +20,10 @@ const mockGetContentComments = jest.fn();
 const mockCreateContentComment = jest.fn();
 const mockLikeContent = jest.fn();
 const mockUnlikeContent = jest.fn();
-const mockGetTokens = jest.fn();
-const mockGetAccessTokenSync = jest.fn();
+const mockAlert = jest.spyOn(Alert, "alert").mockImplementation(() => {});
 
 jest.mock("@react-navigation/native", () => ({
-  useNavigation: () => ({ goBack: mockGoBack }),
+  useNavigation: () => ({ goBack: mockGoBack, navigate: jest.fn() }),
   useRoute: () => mockUseRoute()
 }));
 
@@ -36,11 +37,6 @@ const dependencies = {
 
 jest.mock("../../../../app/providers/AppProvidersWithDI", () => ({
   useDependencies: () => dependencies
-}));
-
-jest.mock("../../../../storage/authStorage", () => ({
-  getTokens: () => mockGetTokens(),
-  getAccessTokenSync: () => mockGetAccessTokenSync()
 }));
 
 describe("ContentDetailScreen", () => {
@@ -59,6 +55,7 @@ describe("ContentDetailScreen", () => {
 
   afterAll(() => {
     consoleSpy.mockRestore();
+    mockAlert.mockRestore();
   });
 
   beforeEach(() => {
@@ -68,8 +65,8 @@ describe("ContentDetailScreen", () => {
     mockCreateContentComment.mockReset();
     mockLikeContent.mockReset();
     mockUnlikeContent.mockReset();
-    mockGetTokens.mockReset();
-    mockGetAccessTokenSync.mockReset();
+    mockAlert.mockClear();
+    useAuthModeStore.getState().setMode("authenticated");
     mockUseRoute.mockReturnValue({
       params: {
         content: {
@@ -83,8 +80,6 @@ describe("ContentDetailScreen", () => {
       }
     });
     mockGetContentComments.mockResolvedValue({ items: [], page: 0, hasNext: false });
-    mockGetTokens.mockResolvedValue({ token: "token" });
-    mockGetAccessTokenSync.mockReturnValue("token");
   });
 
   it("renders content and handles back", () => {
@@ -137,9 +132,8 @@ describe("ContentDetailScreen", () => {
     await waitFor(() => expect(view.getByText("Novo comentário")).toBeTruthy());
   });
 
-  it("shows auth notice when trying to comment anonymously", async () => {
-    mockGetTokens.mockResolvedValue({ token: undefined });
-    mockGetAccessTokenSync.mockReturnValue(null);
+  it("shows login alert when trying to comment anonymously", async () => {
+    useAuthModeStore.getState().setMode("guest");
 
     const view = render(<ContentDetailScreen />);
     const input = await waitFor(() => view.getByTestId("comment-input"));
@@ -147,7 +141,13 @@ describe("ContentDetailScreen", () => {
     fireEvent.changeText(input, "Oi");
     fireEvent.press(view.getByTestId("comment-send"));
 
-    await waitFor(() => expect(view.getByText("Faça login para comentar.")).toBeTruthy());
+    await waitFor(() =>
+      expect(mockAlert).toHaveBeenCalledWith(
+        "Faça login",
+        "Faça login para comentar.",
+        expect.any(Array)
+      )
+    );
     expect(mockCreateContentComment).not.toHaveBeenCalled();
   });
 
@@ -169,5 +169,22 @@ describe("ContentDetailScreen", () => {
     expect(mockLikeContent).toHaveBeenCalledWith("content-1");
 
     resolveLike!();
+  });
+
+  it("shows login alert when guest tries to like", async () => {
+    useAuthModeStore.getState().setMode("guest");
+    const view = render(<ContentDetailScreen />);
+    const likeButton = await waitFor(() => view.getByTestId("content-like-button"));
+
+    fireEvent.press(likeButton);
+
+    await waitFor(() =>
+      expect(mockAlert).toHaveBeenCalledWith(
+        "Faça login",
+        "Faça login para curtir.",
+        expect.any(Array)
+      )
+    );
+    expect(mockLikeContent).not.toHaveBeenCalled();
   });
 });

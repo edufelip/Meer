@@ -6,6 +6,7 @@ const mockGoBack = jest.fn();
 const mockReset = jest.fn();
 const mockSignup = jest.fn();
 const mockSaveTokens = jest.fn();
+const mockSetGuestMode = jest.fn();
 const mockCacheProfile = jest.fn();
 const mockPrimeApiToken = jest.fn();
 const mockGetProfile = jest.fn();
@@ -28,7 +29,8 @@ jest.mock("../../../../hooks/useSignup", () => ({
 }));
 
 jest.mock("../../../../storage/authStorage", () => ({
-  saveTokens: (...args: any[]) => mockSaveTokens(...args)
+  saveTokens: (...args: any[]) => mockSaveTokens(...args),
+  setGuestMode: (...args: any[]) => mockSetGuestMode(...args)
 }));
 
 jest.mock("../../../../api/client", () => ({

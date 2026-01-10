@@ -7,6 +7,7 @@ const flushPromises = () => new Promise<void>((resolve) => setImmediate(() => re
 
 const mockRefetch = jest.fn().mockResolvedValue(undefined);
 const mockGetTokens = jest.fn();
+const mockGetGuestMode = jest.fn();
 const mockClearAuthSession = jest.fn();
 const mockPrimeApiToken = jest.fn();
 const mockNavigationReset = jest.fn();
@@ -35,7 +36,8 @@ jest.mock("../../../hooks/useValidateToken", () => ({
 }));
 
 jest.mock("../../../storage/authStorage", () => ({
-  getTokens: () => mockGetTokens()
+  getTokens: () => mockGetTokens(),
+  getGuestMode: () => mockGetGuestMode()
 }));
 
 jest.mock("../../../api/client", () => ({
@@ -95,6 +97,7 @@ describe("AppProviders", () => {
   it("renders children when no token is stored", async () => {
     (useValidateToken as jest.Mock).mockReturnValue({ status: "idle", refetch: mockRefetch });
     mockGetTokens.mockResolvedValue({ token: null });
+    mockGetGuestMode.mockResolvedValue(false);
 
     const { getByText } = render(
       <AppProviders>
@@ -112,6 +115,7 @@ describe("AppProviders", () => {
   it("boots with token and triggers validation", async () => {
     (useValidateToken as jest.Mock).mockReturnValue({ status: "success", refetch: mockRefetch });
     mockGetTokens.mockResolvedValue({ token: "token-1" });
+    mockGetGuestMode.mockResolvedValue(false);
 
     render(
       <AppProviders>
@@ -130,6 +134,7 @@ describe("AppProviders", () => {
   it("syncs favorites on mount and app state change", async () => {
     (useValidateToken as jest.Mock).mockReturnValue({ status: "idle", refetch: mockRefetch });
     mockGetTokens.mockResolvedValue({ token: null });
+    mockGetGuestMode.mockResolvedValue(false);
 
     render(
       <AppProviders>
@@ -159,6 +164,7 @@ describe("AppProviders", () => {
   it("clears auth session when validation fails", async () => {
     (useValidateToken as jest.Mock).mockReturnValue({ status: "error", refetch: mockRefetch });
     mockGetTokens.mockResolvedValue({ token: "token-1" });
+    mockGetGuestMode.mockResolvedValue(false);
 
     render(
       <AppProviders>

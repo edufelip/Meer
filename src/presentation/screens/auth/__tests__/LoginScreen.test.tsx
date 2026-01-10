@@ -12,9 +12,11 @@ const mockGoogleLogin = jest.fn();
 const mockAppleLogin = jest.fn();
 const mockForgotPassword = jest.fn();
 const mockSaveTokens = jest.fn();
+const mockSetGuestMode = jest.fn();
 const mockCacheProfile = jest.fn();
 const mockPrimeApiToken = jest.fn();
 const mockTriggerPushRegistration = jest.fn();
+const mockClearAuthSession = jest.fn();
 const mockHasPlayServices = jest.fn();
 const mockGoogleSignIn = jest.fn();
 const mockAppleSignIn = jest.fn();
@@ -66,11 +68,13 @@ jest.mock("../../../../hooks/useForgotPassword", () => ({
 jest.mock("../../../../api/client", () => ({
   getApiBaseUrl: jest.fn().mockResolvedValue("https://api"),
   primeApiToken: (...args: any[]) => mockPrimeApiToken(...args),
-  setDebugApiBaseUrlOverride: jest.fn()
+  setDebugApiBaseUrlOverride: jest.fn(),
+  clearAuthSession: (...args: any[]) => mockClearAuthSession(...args)
 }));
 
 jest.mock("../../../../storage/authStorage", () => ({
-  saveTokens: (...args: any[]) => mockSaveTokens(...args)
+  saveTokens: (...args: any[]) => mockSaveTokens(...args),
+  setGuestMode: (...args: any[]) => mockSetGuestMode(...args)
 }));
 
 jest.mock("../../../../storage/profileCache", () => ({
