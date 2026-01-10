@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef } from "react";
-import { Animated, FlatList, RefreshControl, StatusBar, Text, View } from "react-native";
+import { Animated, FlatList, Pressable, RefreshControl, StatusBar, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -11,6 +11,7 @@ import { useDependencies } from "../../../app/providers/AppProvidersWithDI";
 import { FavoriteThriftCard } from "../../components/FavoriteThriftCard";
 import type { RootStackParamList } from "../../../app/navigation/RootStack";
 import { useFavoritesStore } from "../../state/favoritesStore";
+import { useAuthModeStore } from "../../state/authModeStore";
 
 const STORAGE_KEY = "favorites";
 const STORAGE_META_KEY = "favorites_meta";
@@ -63,6 +64,8 @@ export function FavoritesScreen() {
   const setFavorites = useFavoritesStore((state) => state.setFavorites);
   const setLoading = useFavoritesStore((state) => state.setLoading);
   const setRefreshing = useFavoritesStore((state) => state.setRefreshing);
+  const authMode = useAuthModeStore((state) => state.mode);
+  const isGuest = authMode === "guest";
 
   const shimmer = useRef(new Animated.Value(0)).current;
   const favoritesRef = useRef<ThriftStore[]>(favorites);
@@ -97,6 +100,11 @@ export function FavoritesScreen() {
 
   const fetchRemote = useCallback(
     async (force = false) => {
+      if (isGuest) {
+        setLoading(false);
+        setRefreshing(false);
+        return;
+      }
       if (fetchingRef.current) return;
       fetchingRef.current = true;
       if (force) setRefreshing(true);
@@ -118,7 +126,7 @@ export function FavoritesScreen() {
         setRefreshing(false);
       }
     },
-    [getFavoriteThriftStoresUseCase, setLoading, setRefreshing, updateFavorites]
+    [getFavoriteThriftStoresUseCase, isGuest, setLoading, setRefreshing, updateFavorites]
   );
 
   const onRefresh = useCallback(() => {
@@ -128,6 +136,12 @@ export function FavoritesScreen() {
   useEffect(() => {
     let active = true;
     (async () => {
+      if (isGuest) {
+        updateFavorites([], null);
+        setLoading(false);
+        setRefreshing(false);
+        return;
+      }
       setLoading(true);
       const cached = await readCachedFavorites();
       if (!active) return;
@@ -151,11 +165,12 @@ export function FavoritesScreen() {
     return () => {
       active = false;
     };
-  }, [fetchRemote, setLoading, updateFavorites]);
+  }, [fetchRemote, isGuest, setLoading, setRefreshing, updateFavorites]);
 
   // Refresh view from cache whenever the tab regains focus (no network call).
   useFocusEffect(
     useCallback(() => {
+      if (isGuest) return () => {};
       let active = true;
       (async () => {
         const cached = await readCachedFavorites();
@@ -168,7 +183,7 @@ export function FavoritesScreen() {
       return () => {
         active = false;
       };
-    }, [updateFavorites])
+    }, [isGuest, updateFavorites])
   );
 
   return (
@@ -178,7 +193,26 @@ export function FavoritesScreen() {
         <Text className="text-center text-lg font-bold text-[#1F2937]">Favoritos</Text>
       </View>
 
-      {loading && favorites.length === 0 ? (
+      {isGuest ? (
+        <View className="flex-1 items-center justify-center bg-[#F3F4F6] px-6">
+          <View className="items-center">
+            <View className="h-24 w-24 rounded-full bg-gray-200 items-center justify-center">
+              <Ionicons name="heart-outline" size={48} color="#9CA3AF" />
+            </View>
+            <Text className="text-xl font-bold text-[#374151] mt-4">Entre para salvar favoritos</Text>
+            <Text className="text-base text-[#6B7280] text-center max-w-xs mt-2">
+              Faça login para favoritar brechós e acessá-los aqui.
+            </Text>
+            <Pressable
+              className="mt-5 bg-[#B55D05] px-6 py-3 rounded-lg"
+              onPress={() => navigation.navigate("login")}
+              testID="favorites-login-cta"
+            >
+              <Text className="text-white font-bold">Entrar</Text>
+            </Pressable>
+          </View>
+        </View>
+      ) : loading && favorites.length === 0 ? (
         <View className="flex-1 bg-[#F3F4F6] px-4 py-6">
           {[...Array(4)].map((_, idx) => (
             <View key={idx} className="bg-white rounded-2xl mb-4 overflow-hidden">

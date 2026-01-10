@@ -22,6 +22,7 @@ import type { RootStackParamList } from "../../../app/navigation/RootStack";
 import { theme } from "../../../shared/theme";
 import { useFavoritesStore } from "../../state/favoritesStore";
 import { useStoreSummaryStore } from "../../state/storeSummaryStore";
+import { useAuthGuard } from "../../hooks/useAuthGuard";
 
 const PAGE_SIZE = 10;
 const scrollOffsets = new Map<string, number>();
@@ -44,6 +45,7 @@ export function CategoryStoresScreen() {
   const favoriteIds = useFavoritesStore((state) => state.ids);
   const setFavoriteItem = useFavoritesStore((state) => state.setFavoriteItem);
   const storeSummaries = useStoreSummaryStore((state) => state.summaries);
+  const authGuard = useAuthGuard();
   const listRef = useRef<FlatList<any>>(null);
   const cacheKey = useMemo(() => ["category-stores", categoryId ?? "nearby"], [categoryId]);
   const scrollKey = useMemo(() => `${type ?? "nearby"}-${categoryId ?? "nearby"}`, [type, categoryId]);
@@ -116,6 +118,7 @@ export function CategoryStoresScreen() {
 
   const handleToggleFavorite = useCallback(
     async (store: ThriftStore) => {
+      if (!authGuard("Faça login para favoritar este brechó.")) return;
       // optimistic update
       const queryKey = ["category-stores", categoryId ?? "nearby"];
       const prevData = queryClient.getQueryData(queryKey);
@@ -146,7 +149,14 @@ export function CategoryStoresScreen() {
         setFavoriteItem(store, prevFavorite);
       }
     },
-    [toggleFavoriteThriftStoreUseCase, queryClient, categoryId, favoriteIds, setFavoriteItem]
+    [
+      authGuard,
+      toggleFavoriteThriftStoreUseCase,
+      queryClient,
+      categoryId,
+      favoriteIds,
+      setFavoriteItem
+    ]
   );
 
   const renderItem = ({ item }: { item: ThriftStore }) => {
@@ -187,7 +197,11 @@ export function CategoryStoresScreen() {
             <Text className="font-bold text-[#374151] text-lg" numberOfLines={1}>
               {item.name}
             </Text>
-            <Pressable onPress={() => handleToggleFavorite(item)}>
+            <Pressable
+              onPress={() => handleToggleFavorite(item)}
+              testID={`category-store-favorite-${item.id}`}
+              accessibilityLabel="Favoritar"
+            >
               <Ionicons
                 name={isFavorite ? "heart" : "heart-outline"}
                 size={20}

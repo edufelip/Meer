@@ -38,6 +38,8 @@ import { buildThriftStoreShareUrl } from "../../../shared/deepLinks";
 import type { RootStackParamList } from "../../../app/navigation/RootStack";
 import { useFavoritesStore } from "../../state/favoritesStore";
 import { useStoreSummaryStore } from "../../state/storeSummaryStore";
+import { useAuthModeStore } from "../../state/authModeStore";
+import { useAuthGuard } from "../../hooks/useAuthGuard";
 
 interface ThriftDetailScreenProps {
   route?: { params?: { id?: ThriftStoreId } };
@@ -97,6 +99,9 @@ export function ThriftDetailScreen({ route }: ThriftDetailScreenProps) {
   const ensureSummary = useStoreSummaryStore((state) => state.ensureSummary);
   const applyRatingChange = useStoreSummaryStore((state) => state.applyRatingChange);
   const applyRatingDeletion = useStoreSummaryStore((state) => state.applyRatingDeletion);
+  const authMode = useAuthModeStore((state) => state.mode);
+  const isAuthenticated = authMode === "authenticated";
+  const authGuard = useAuthGuard();
   const [store, setStore] = useState<ThriftStore | null>(null);
   const [loading, setLoading] = useState(true);
   const [viewerVisible, setViewerVisible] = useState(false);
@@ -210,7 +215,7 @@ export function ThriftDetailScreen({ route }: ThriftDetailScreenProps) {
           setStore(null);
         }
 
-        if (resolved) {
+        if (resolved && isAuthenticated) {
           const fav = await isFavoriteThriftStoreUseCase.execute(resolved.id);
           if (isMounted) setFavoriteItem(resolved, fav);
 
@@ -245,7 +250,8 @@ export function ThriftDetailScreen({ route }: ThriftDetailScreenProps) {
     getMyFeedbackUseCase,
     ensureSummary,
     setFavoriteItem,
-    route?.params?.id
+    route?.params?.id,
+    isAuthenticated
   ]);
 
   if (loading || !store) {
@@ -317,6 +323,7 @@ export function ThriftDetailScreen({ route }: ThriftDetailScreenProps) {
   };
 
   const handleSubmitRating = async () => {
+    if (!authGuard("Faça login para enviar sua avaliação.")) return;
     if (!userRating) {
       Alert.alert("Escolha uma nota", "Selecione de 1 a 5 estrelas antes de enviar.");
       return;
@@ -370,6 +377,7 @@ export function ThriftDetailScreen({ route }: ThriftDetailScreenProps) {
   };
 
   const handleSelectRating = (selected: number) => {
+    if (!authGuard("Faça login para avaliar este brechó.")) return;
     setUserRating(selected);
     if (!showCommentBox) {
       const existingFeedback = existingFeedbackRef.current;
@@ -381,6 +389,7 @@ export function ThriftDetailScreen({ route }: ThriftDetailScreenProps) {
   };
 
   const handleDeleteFeedback = () => {
+    if (!authGuard("Faça login para gerenciar sua avaliação.")) return;
     if (!store?.id) return;
     Alert.alert(
       "Excluir avaliação",
@@ -448,6 +457,7 @@ export function ThriftDetailScreen({ route }: ThriftDetailScreenProps) {
               className="p-2 rounded-full bg-white/80"
               onPress={async () => {
                 if (!store) return;
+                if (!authGuard("Faça login para favoritar este brechó.")) return;
                 const next = await toggleFavoriteThriftStoreUseCase.execute(store);
                 setFavoriteItem(store, next);
               }}

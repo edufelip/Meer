@@ -33,11 +33,10 @@ import type { ContentComment } from "../../../domain/entities/ContentComment";
 import { COMMENT_MAX_LENGTH } from "../../../domain/validation/comments";
 import { buildContentShareUrl } from "../../../shared/deepLinks";
 import { theme } from "../../../shared/theme";
-import { getAccessTokenSync, getTokens } from "../../../storage/authStorage";
 import { useProfileSummaryStore } from "../../state/profileSummaryStore";
+import { useAuthGuard } from "../../hooks/useAuthGuard";
 
 const COMMENT_PAGE_SIZE = 20;
-const AUTH_NOTICE_DURATION_MS = 2400;
 const HEADER_BG = "#FFFFFF";
 const SHARE_SHIMMER_DURATION = 420;
 const LIKE_POP_DURATION = 120;
@@ -95,15 +94,13 @@ export function ContentDetailScreen() {
   const [likeCount, setLikeCount] = useState(initialContent?.likeCount ?? 0);
   const [commentCount, setCommentCount] = useState(initialContent?.commentCount ?? 0);
   const [shareWidth, setShareWidth] = useState(0);
-
-  const [authNotice, setAuthNotice] = useState<string | null>(null);
-  const authTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inputRef = useRef<TextInput>(null);
   const listRef = useRef<FlatList<ContentComment>>(null);
   const [composerHeight, setComposerHeight] = useState(0);
   const hasServerCommentCountRef = useRef(false);
   const likeScale = useSharedValue(1);
   const shareShimmer = useSharedValue(0);
+  const authGuard = useAuthGuard();
 
   const contentId = content?.id ?? routeContentId;
 
@@ -117,31 +114,9 @@ export function ContentDetailScreen() {
     }
   }, [content]);
 
-  useEffect(() => {
-    return () => {
-      if (authTimeoutRef.current) {
-        clearTimeout(authTimeoutRef.current);
-      }
-    };
-  }, []);
-
-  const showAuthNotice = useCallback((message: string) => {
-    setAuthNotice(message);
-    if (authTimeoutRef.current) {
-      clearTimeout(authTimeoutRef.current);
-    }
-    authTimeoutRef.current = setTimeout(() => setAuthNotice(null), AUTH_NOTICE_DURATION_MS);
-  }, []);
-
   const ensureAuthenticated = useCallback(
-    async (message: string) => {
-      if (getAccessTokenSync()) return true;
-      const { token } = await getTokens();
-      if (token) return true;
-      showAuthNotice(message);
-      return false;
-    },
-    [showAuthNotice]
+    (message: string) => authGuard(message),
+    [authGuard]
   );
 
   useEffect(() => {
@@ -255,11 +230,8 @@ export function ContentDetailScreen() {
 
   const handleToggleLike = useCallback(async () => {
     if (!content || !contentId || likeSubmitting) return;
-    const hasToken = !!getAccessTokenSync();
-    if (!hasToken) {
-      const canProceed = await ensureAuthenticated("Faça login para curtir.");
-      if (!canProceed) return;
-    }
+    const canProceed = ensureAuthenticated("Faça login para curtir.");
+    if (!canProceed) return;
 
     const previousLiked = likedByMe;
     const previousCount = likeCount;
@@ -300,11 +272,8 @@ export function ContentDetailScreen() {
 
   const handleSubmitComment = useCallback(async () => {
     if (!contentId || commentSubmitting) return;
-    const hasToken = !!getAccessTokenSync();
-    if (!hasToken) {
-      const canProceed = await ensureAuthenticated("Faça login para comentar.");
-      if (!canProceed) return;
-    }
+    const canProceed = ensureAuthenticated("Faça login para comentar.");
+    if (!canProceed) return;
 
     setCommentSubmitting(true);
     try {
@@ -325,9 +294,8 @@ export function ContentDetailScreen() {
   }, [commentSubmitting, commentText, contentId, createContentCommentUseCase, ensureAuthenticated]);
 
   const handleCommentFocus = useCallback(() => {
-    void ensureAuthenticated("Faça login para comentar.").then((ok) => {
-      if (!ok) inputRef.current?.blur();
-    });
+    const ok = ensureAuthenticated("Faça login para comentar.");
+    if (!ok) inputRef.current?.blur();
   }, [ensureAuthenticated]);
 
   const onRefresh = useCallback(() => {
@@ -622,14 +590,6 @@ export function ContentDetailScreen() {
           <View style={{ width: 32, height: 32 }} />
         </View>
       </View>
-
-      {authNotice ? (
-        <View className="absolute" style={{ top: 16, left: 16, right: 16, zIndex: 50 }}>
-          <View className="bg-[#111827] px-4 py-3 rounded-xl shadow-lg">
-            <Text className="text-white font-semibold text-center">{authNotice}</Text>
-          </View>
-        </View>
-      ) : null}
 
       <KeyboardAvoidingView
         style={{ flex: 1 }}

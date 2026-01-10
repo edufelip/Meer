@@ -3,7 +3,7 @@ import { AppState, Platform } from "react-native";
 import { DependenciesProvider, useDependencies } from "./AppProvidersWithDI";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "../../hooks/reactQueryClient";
-import { getTokens } from "../../storage/authStorage";
+import { getGuestMode, getTokens } from "../../storage/authStorage";
 import { clearAuthSession, primeApiToken } from "../../api/client";
 import { useValidateToken } from "../../hooks/useValidateToken";
 import { navigationRef } from "../navigation/navigationRef";
@@ -16,6 +16,7 @@ import { parsePushNotificationData } from "../../shared/pushNotifications";
 import type { PushNotificationData } from "../../domain/entities/PushNotification";
 import { setPushRegistrationHandler } from "../../services/pushRegistration";
 import { resolvePushEnvironment } from "../../shared/pushEnvironment";
+import { useAuthModeStore } from "../../presentation/state/authModeStore";
 
 const PUSH_CHANNEL_ID = "default";
 
@@ -342,16 +343,21 @@ function AuthBootstrap({ children }: PropsWithChildren) {
   const hasRerouted = useRef(false);
   const validateTokenQuery = useValidateToken(false);
   const { refetch } = validateTokenQuery;
+  const authMode = useAuthModeStore((state) => state.mode);
+  const setAuthMode = useAuthModeStore((state) => state.setMode);
 
   useEffect(() => {
     if (hasBootstrapped.current) return;
     hasBootstrapped.current = true;
     (async () => {
       const { token } = await getTokens();
+      const isGuest = await getGuestMode();
       if (!token) {
+        setAuthMode(isGuest ? "guest" : "none");
         setBooting(false);
         return;
       }
+      setAuthMode("authenticated");
       primeApiToken(token);
       await refetch({ throwOnError: false });
       setBooting(false);
@@ -363,6 +369,7 @@ function AuthBootstrap({ children }: PropsWithChildren) {
   useEffect(() => {
     if (validateTokenQuery.status === "error") {
       clearAuthSession();
+      setAuthMode("none");
       // fallback navigation to login when navigation is ready
       if (navigationRef.isReady()) {
         navigationRef.navigate("login");
@@ -372,7 +379,7 @@ function AuthBootstrap({ children }: PropsWithChildren) {
 
   useEffect(() => {
     if (booting) return;
-    if (validateTokenQuery.status === "success" && !hasRerouted.current) {
+    if ((validateTokenQuery.status === "success" || authMode === "guest") && !hasRerouted.current) {
       let cancelled = false;
       const tryReset = () => {
         if (cancelled || hasRerouted.current) return;

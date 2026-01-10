@@ -19,7 +19,7 @@ import {
   Alert
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { getApiBaseUrl, primeApiToken, setDebugApiBaseUrlOverride } from "../../../api/client";
+import { clearAuthSession, getApiBaseUrl, primeApiToken, setDebugApiBaseUrlOverride } from "../../../api/client";
 import type { RootStackParamList } from "../../../app/navigation/RootStack";
 import { useDependencies } from "../../../app/providers/AppProvidersWithDI";
 import { isValidEmail } from "../../../domain/validation/auth";
@@ -28,9 +28,11 @@ import { useLogin } from "../../../hooks/useLogin";
 import { useLoginWithApple } from "../../../hooks/useLoginWithApple";
 import { useLoginWithGoogle } from "../../../hooks/useLoginWithGoogle";
 import { IS_DEBUG_API_BASE_URL } from "../../../network/config";
-import { saveTokens } from "../../../storage/authStorage";
+import { saveTokens, setGuestMode } from "../../../storage/authStorage";
 import { cacheProfile } from "../../../storage/profileCache";
 import { triggerPushRegistration } from "../../../services/pushRegistration";
+import { useAuthModeStore } from "../../state/authModeStore";
+import { resetAllStores } from "../../state/resetAllStores";
 
 export function LoginScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -39,6 +41,7 @@ export function LoginScreen() {
   const googleMutation = useLoginWithGoogle();
   const appleMutation = useLoginWithApple();
   const forgotPasswordMutation = useForgotPassword();
+  const setAuthMode = useAuthModeStore((state) => state.setMode);
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -51,6 +54,22 @@ export function LoginScreen() {
   const [resetSuccess, setResetSuccess] = useState(false);
   const [debugBaseUrlVisible, setDebugBaseUrlVisible] = useState(false);
   const [debugBaseUrlValue, setDebugBaseUrlValue] = useState("");
+
+  const handleContinueAsGuest = async () => {
+    try {
+      setError(null);
+      setLoading(true);
+      await clearAuthSession();
+      await setGuestMode(true);
+      resetAllStores();
+      setAuthMode("guest");
+      navigation.reset({ index: 0, routes: [{ name: "tabs" }] });
+    } catch {
+      Alert.alert("Erro", "Não foi possível entrar como visitante. Tente novamente.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (!resetVisible) {
@@ -99,12 +118,14 @@ export function LoginScreen() {
         client: platformClient
       });
       await saveTokens(authResult.token, authResult.refreshToken);
+      await setGuestMode(false);
       await cacheProfile({
         id: authResult.user.id,
         name: authResult.user.name,
         email: authResult.user.email
       });
       primeApiToken(authResult.token);
+      setAuthMode("authenticated");
       triggerPushRegistration();
       try {
         const fullProfile = await getProfileUseCase.execute();
@@ -190,12 +211,14 @@ export function LoginScreen() {
                         client: "ios"
                       });
                       await saveTokens(auth.token, auth.refreshToken);
+                      await setGuestMode(false);
                       await cacheProfile({
                         id: auth.user.id,
                         name: auth.user.name,
                         email: auth.user.email
                       });
                       primeApiToken(auth.token);
+                      setAuthMode("authenticated");
                       triggerPushRegistration();
                       try {
                         const fullProfile = await getProfileUseCase.execute();
@@ -290,12 +313,14 @@ export function LoginScreen() {
                     setLoading(true);
                     const auth = await loginMutation.mutateAsync({ email: email.trim(), password });
                     await saveTokens(auth.token, auth.refreshToken);
+                    await setGuestMode(false);
                     await cacheProfile({
                       id: auth.user.id,
                       name: auth.user.name,
                       email: auth.user.email
                     });
                     primeApiToken(auth.token);
+                    setAuthMode("authenticated");
                     triggerPushRegistration();
                     try {
                       const fullProfile = await getProfileUseCase.execute();
@@ -330,6 +355,14 @@ export function LoginScreen() {
                 <Text className="text-base font-bold text-[#B55D05]">Cadastre-se</Text>
               </Pressable>
             </View>
+            <Pressable
+              className="pt-4"
+              onPress={handleContinueAsGuest}
+              disabled={loading}
+              testID="login-guest-cta"
+            >
+              <Text className="text-sm font-semibold text-[#6B7280]">Continuar como visitante</Text>
+            </Pressable>
 
           </View>
         </ScrollView>

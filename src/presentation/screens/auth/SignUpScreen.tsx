@@ -19,16 +19,18 @@ import type { RootStackParamList } from "../../../app/navigation/RootStack";
 import { theme } from "../../../shared/theme";
 import { isValidEmail, validatePassword, passwordsMatch } from "../../../domain/validation/auth";
 import { useSignup } from "../../../hooks/useSignup";
-import { saveTokens } from "../../../storage/authStorage";
+import { saveTokens, setGuestMode } from "../../../storage/authStorage";
 import { primeApiToken } from "../../../api/client";
 import { cacheProfile } from "../../../storage/profileCache";
 import { useDependencies } from "../../../app/providers/AppProvidersWithDI";
 import { triggerPushRegistration } from "../../../services/pushRegistration";
+import { useAuthModeStore } from "../../state/authModeStore";
 
 export function SignUpScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { getProfileUseCase } = useDependencies();
   const signupMutation = useSignup();
+  const setAuthMode = useAuthModeStore((state) => state.setMode);
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [confirmVisible, setConfirmVisible] = useState(false);
   const [fullName, setFullName] = useState("");
@@ -190,12 +192,14 @@ export function SignUpScreen() {
                       password
                     });
                     await saveTokens(auth.token, auth.refreshToken);
+                    await setGuestMode(false);
                     await cacheProfile({
                       id: auth.user.id,
                       name: auth.user.name,
                       email: auth.user.email
                     });
                     primeApiToken(auth.token);
+                    setAuthMode("authenticated");
                     triggerPushRegistration();
                     try {
                       const fullProfile = await getProfileUseCase.execute();

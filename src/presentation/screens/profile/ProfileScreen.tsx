@@ -13,6 +13,8 @@ import { theme } from "../../../shared/theme";
 import { getTokens } from "../../../storage/authStorage";
 import { Buffer } from "buffer";
 import { useProfileSummaryStore } from "../../state/profileSummaryStore";
+import { useAuthModeStore } from "../../state/authModeStore";
+import { useAuthGuard } from "../../hooks/useAuthGuard";
 
 type ProfileNavigationProp = CompositeNavigationProp<
   BottomTabNavigationProp<RootTabParamList, "profile">,
@@ -26,6 +28,9 @@ export function ProfileScreen() {
   const { getCachedProfileUseCase, getProfileUseCase } = useDependencies();
   const profile = useProfileSummaryStore((state) => state.profile);
   const setProfile = useProfileSummaryStore((state) => state.setProfile);
+  const authMode = useAuthModeStore((state) => state.mode);
+  const isGuest = authMode === "guest";
+  const authGuard = useAuthGuard();
   const [hasArticles, setHasArticles] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const toastOpacity = useRef(new Animated.Value(0)).current;
@@ -46,6 +51,11 @@ export function ProfileScreen() {
   };
 
   const loadCachedProfile = useCallback(async () => {
+    if (isGuest) {
+      setProfile(null);
+      setHasArticles(false);
+      return;
+    }
     const cached = await getCachedProfileUseCase.execute();
     if (cached) {
       setProfile(cached);
@@ -82,7 +92,7 @@ export function ProfileScreen() {
       setProfile(null);
       setHasArticles(false);
     }
-  }, [getCachedProfileUseCase, getProfileUseCase, setProfile]);
+  }, [getCachedProfileUseCase, getProfileUseCase, isGuest, setProfile]);
 
   // Load once on mount
   useEffect(() => {
@@ -155,7 +165,6 @@ export function ProfileScreen() {
   }, [navigation, route.params?.toast?.message, showToast]);
 
   const displayUser = profile;
-
   return (
     <SafeAreaView className="flex-1 bg-white" edges={["top", "left", "right"]}>
       <StatusBar barStyle="dark-content" />
@@ -204,22 +213,58 @@ export function ProfileScreen() {
                 />
               )}
             </View>
-            <View className="items-center mt-2">
-              <Text className="text-2xl font-bold text-[#1F2937]">{displayUser?.name ?? ""}</Text>
-              <Text className="text-gray-500">{displayUser?.email ?? ""}</Text>
-              {displayUser?.bio?.trim() ? (
-                <Text className="text-sm text-gray-500 mt-1 text-center">{displayUser.bio.trim()}</Text>
-              ) : null}
-            </View>
+            {isGuest ? (
+              <View className="items-center mt-2">
+                <Text className="text-2xl font-bold text-[#1F2937]">Visitante</Text>
+                <Text className="text-gray-500 text-center">
+                  Faça login para personalizar seu perfil.
+                </Text>
+                <View className="flex-row gap-3 mt-4">
+                  <Pressable
+                    className="px-4 py-2 rounded-lg bg-[#B55D05]"
+                    onPress={() => navigation.navigate("login")}
+                    testID="profile-guest-login-cta"
+                  >
+                    <Text className="text-white font-bold">Entrar</Text>
+                  </Pressable>
+                  <Pressable
+                    className="px-4 py-2 rounded-lg bg-[#F3F4F6]"
+                    onPress={() => navigation.navigate("signup")}
+                    testID="profile-guest-signup-cta"
+                  >
+                    <Text className="text-[#374151] font-bold">Criar conta</Text>
+                  </Pressable>
+                </View>
+              </View>
+            ) : (
+              <View className="items-center mt-2">
+                <Text className="text-2xl font-bold text-[#1F2937]">{displayUser?.name ?? ""}</Text>
+                <Text className="text-gray-500">{displayUser?.email ?? ""}</Text>
+                {displayUser?.bio?.trim() ? (
+                  <Text className="text-sm text-gray-500 mt-1 text-center">{displayUser.bio.trim()}</Text>
+                ) : null}
+              </View>
+            )}
           </View>
         </View>
 
         <View className="px-4 py-4">
           <Text className="text-lg font-bold mb-2 text-[#1F2937]">Conta</Text>
+          {isGuest ? (
+            <View className="mb-3 rounded-lg border border-[#F59E0B]/30 bg-[#FEF3C7] px-3 py-2">
+              <View className="flex-row items-center gap-2">
+                <Ionicons name="lock-closed" size={16} color="#B45309" />
+                <Text className="text-sm text-[#92400E]">
+                  Faça login para editar seu perfil e acessar recursos da conta.
+                </Text>
+              </View>
+            </View>
+          ) : null}
           <View className="bg-white rounded-lg shadow-sm">
             <Pressable
               className="flex-row items-center justify-between p-4 border-b border-gray-200"
               onPress={() => {
+                if (!authGuard("Faça login para editar seu perfil.")) return;
                 if (!displayUser) return;
                 navigation.navigate("editProfile", {
                   profile: {
@@ -233,8 +278,15 @@ export function ProfileScreen() {
               }}
               testID="profile-edit-button"
             >
-              <Text className="text-[#374151]">Editar Perfil</Text>
-              <Ionicons name="chevron-forward" size={18} color={theme.colors.highlight} />
+              <View className="flex-row items-center gap-2">
+                <Text className="text-[#374151]">Editar Perfil</Text>
+                {isGuest ? (
+                  <View className="px-2 py-0.5 rounded-full bg-[#E5E7EB]">
+                    <Text className="text-xs text-[#6B7280] font-semibold">Bloqueado</Text>
+                  </View>
+                ) : null}
+              </View>
+              <Ionicons name={isGuest ? "lock-closed" : "chevron-forward"} size={18} color={theme.colors.highlight} />
             </Pressable>
             <Pressable
               className="flex-row items-center justify-between p-4 border-t border-gray-200"
@@ -248,60 +300,63 @@ export function ProfileScreen() {
 
         {(() => {
           const ownedStore = profile?.ownedThriftStore ?? null;
-          if (!ownedStore) return null;
+          if (ownedStore) {
+            return (
+              <View className="px-4 pt-0 pb-4">
+                <Text className="text-lg font-bold mb-2 text-[#1F2937]">Brechó</Text>
+                <View className="bg-white rounded-lg shadow-sm">
+                  <Pressable
+                    className="flex-row items-center justify-between p-4 border-b border-gray-200"
+                    onPress={() =>
+                      navigation.navigate("brechoForm", {
+                        thriftStore: ownedStore
+                      })
+                    }
+                  >
+                    <Text className="text-[#374151]">Meu brechó</Text>
+                    <Ionicons name="chevron-forward" size={18} color={theme.colors.highlight} />
+                  </Pressable>
+                  <Pressable
+                    className="flex-row items-center justify-between p-4 border-b border-gray-200"
+                    onPress={() => navigation.navigate("myContents", { storeId: ownedStore.id })}
+                    testID="profile-create-content-button"
+                  >
+                    <Text className="text-[#374151]">Criar Conteúdo</Text>
+                    <Ionicons name="chevron-forward" size={18} color={theme.colors.highlight} />
+                  </Pressable>
+                  {hasArticles ? (
+                    <Pressable
+                      className="flex-row items-center justify-between p-4"
+                      onPress={() => navigation.navigate("myContents", { storeId: ownedStore.id })}
+                    >
+                      <Text className="text-[#374151]">Meus Conteúdos</Text>
+                      <Ionicons name="chevron-forward" size={18} color={theme.colors.highlight} />
+                    </Pressable>
+                  ) : null}
+                </View>
+              </View>
+            );
+          }
+          if (isGuest) return null;
           return (
-          <View className="px-4 pt-0 pb-4">
-            <Text className="text-lg font-bold mb-2 text-[#1F2937]">Brechó</Text>
-            <View className="bg-white rounded-lg shadow-sm">
-              <Pressable
-                className="flex-row items-center justify-between p-4 border-b border-gray-200"
-                onPress={() =>
-                  navigation.navigate("brechoForm", {
-                    thriftStore: ownedStore
-                  })
-                }
-              >
-                <Text className="text-[#374151]">Meu brechó</Text>
-                <Ionicons name="chevron-forward" size={18} color={theme.colors.highlight} />
-              </Pressable>
-              <Pressable
-                className="flex-row items-center justify-between p-4 border-b border-gray-200"
-                onPress={() => navigation.navigate("myContents", { storeId: ownedStore.id })}
-                testID="profile-create-content-button"
-              >
-                <Text className="text-[#374151]">Criar Conteúdo</Text>
-                <Ionicons name="chevron-forward" size={18} color={theme.colors.highlight} />
-              </Pressable>
-              {hasArticles ? (
+            <View className="px-4 pt-0 pb-4">
+              <Text className="text-lg font-bold mb-2 text-[#1F2937]">Brechó</Text>
+              <View className="bg-white rounded-lg shadow-sm">
                 <Pressable
                   className="flex-row items-center justify-between p-4"
-                  onPress={() => navigation.navigate("myContents", { storeId: ownedStore.id })}
+                  onPress={() =>
+                    navigation.navigate("brechoForm", {
+                      thriftStore: null
+                    })
+                  }
                 >
-                  <Text className="text-[#374151]">Meus Conteúdos</Text>
+                  <Text className="text-[#374151]">Criar brechó</Text>
                   <Ionicons name="chevron-forward" size={18} color={theme.colors.highlight} />
                 </Pressable>
-              ) : null}
+              </View>
             </View>
-          </View>
-        );
-        })() ?? (
-          <View className="px-4 pt-0 pb-4">
-            <Text className="text-lg font-bold mb-2 text-[#1F2937]">Brechó</Text>
-            <View className="bg-white rounded-lg shadow-sm">
-              <Pressable
-                className="flex-row items-center justify-between p-4"
-                onPress={() =>
-                  navigation.navigate("brechoForm", {
-                    thriftStore: null
-                  })
-                }
-              >
-                <Text className="text-[#374151]">Criar brechó</Text>
-                <Ionicons name="chevron-forward" size={18} color={theme.colors.highlight} />
-              </Pressable>
-            </View>
-          </View>
-        )}
+          );
+        })()}
 
       </ScrollView>
     </SafeAreaView>

@@ -2,10 +2,12 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const TOKEN_KEY = "auth.token";
 const REFRESH_KEY = "auth.refreshToken";
+const GUEST_KEY = "auth.guest";
 
 // Simple in-memory cache to avoid hitting AsyncStorage on every request
 let accessTokenCache: string | null = null;
 let refreshTokenCache: string | null = null;
+let guestModeCache: boolean | null = null;
 
 export function setTokenCache(token?: string | null, refreshToken?: string | null) {
   if (token !== undefined) accessTokenCache = token;
@@ -18,6 +20,10 @@ export function getAccessTokenSync() {
 
 export function getRefreshTokenSync() {
   return refreshTokenCache;
+}
+
+export function getGuestModeSync() {
+  return guestModeCache;
 }
 
 export async function saveTokens(token: string, refreshToken?: string) {
@@ -39,6 +45,23 @@ export async function getTokens() {
 
   setTokenCache(token, refreshToken);
   return { token: token ?? undefined, refreshToken: refreshToken ?? undefined };
+}
+
+export async function getGuestMode() {
+  if (guestModeCache !== null) return guestModeCache;
+  const raw = await AsyncStorage.getItem(GUEST_KEY);
+  const enabled = raw === "1";
+  guestModeCache = enabled;
+  return enabled;
+}
+
+export async function setGuestMode(enabled: boolean) {
+  guestModeCache = enabled;
+  if (enabled) {
+    await AsyncStorage.setItem(GUEST_KEY, "1");
+  } else {
+    await AsyncStorage.removeItem(GUEST_KEY);
+  }
 }
 
 export async function clearTokens() {
