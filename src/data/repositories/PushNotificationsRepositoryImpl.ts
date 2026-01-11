@@ -1,4 +1,15 @@
-import messaging from "@react-native-firebase/messaging";
+import {
+  AuthorizationStatus,
+  getInitialNotification,
+  getMessaging,
+  getToken,
+  onNotificationOpenedApp,
+  onTokenRefresh,
+  registerDeviceForRemoteMessages,
+  requestPermission,
+  subscribeToTopic,
+  unsubscribeFromTopic
+} from "@react-native-firebase/messaging";
 import notifee, { AuthorizationStatus as NotifeeAuthorizationStatus } from "@notifee/react-native";
 import { Platform } from "react-native";
 import { randomUUID } from "expo-crypto";
@@ -9,6 +20,8 @@ import type { PushNotificationsRemoteDataSource } from "../datasources/PushNotif
 import { parsePushNotificationData } from "../../shared/pushNotifications";
 import type { PushEnvironment, PushPlatform } from "../../shared/pushEnvironment";
 import { buildTopicName } from "../../shared/pushEnvironment";
+
+const messaging = getMessaging();
 
 export class PushNotificationsRepositoryImpl implements PushNotificationsRepository {
   constructor(
@@ -26,17 +39,17 @@ export class PushNotificationsRepositoryImpl implements PushNotificationsReposit
       return notifeeEnabled;
     }
 
-    const fcmStatus = await messaging().requestPermission();
+    const fcmStatus = await requestPermission(messaging);
     const fcmEnabled =
-      fcmStatus === messaging.AuthorizationStatus.AUTHORIZED ||
-      fcmStatus === messaging.AuthorizationStatus.PROVISIONAL;
+      fcmStatus === AuthorizationStatus.AUTHORIZED ||
+      fcmStatus === AuthorizationStatus.PROVISIONAL;
 
     return notifeeEnabled && fcmEnabled;
   }
 
   async getToken(): Promise<string> {
-    await messaging().registerDeviceForRemoteMessages();
-    return messaging().getToken();
+    await registerDeviceForRemoteMessages(messaging);
+    return getToken(messaging);
   }
 
   async registerToken(payload: {
@@ -70,7 +83,7 @@ export class PushNotificationsRepositoryImpl implements PushNotificationsReposit
   }
 
   onTokenRefresh(handler: (token: string) => void): () => void {
-    return messaging().onTokenRefresh(handler);
+    return onTokenRefresh(messaging, handler);
   }
 
   async syncTopicSubscriptions(payload: {
@@ -82,11 +95,11 @@ export class PushNotificationsRepositoryImpl implements PushNotificationsReposit
     const newStoresTopic = buildTopicName("new_stores", payload.environment);
 
     const promoOp = payload.notifyPromos
-      ? messaging().subscribeToTopic(promosTopic)
-      : messaging().unsubscribeFromTopic(promosTopic);
+      ? subscribeToTopic(messaging, promosTopic)
+      : unsubscribeFromTopic(messaging, promosTopic);
     const newStoresOp = payload.notifyNewStores
-      ? messaging().subscribeToTopic(newStoresTopic)
-      : messaging().unsubscribeFromTopic(newStoresTopic);
+      ? subscribeToTopic(messaging, newStoresTopic)
+      : unsubscribeFromTopic(messaging, newStoresTopic);
 
     const results = await Promise.allSettled([promoOp, newStoresOp]);
     results.forEach((result) => {
@@ -97,14 +110,14 @@ export class PushNotificationsRepositoryImpl implements PushNotificationsReposit
   }
 
   onNotificationOpen(handler: (data: PushNotificationData) => void): () => void {
-    return messaging().onNotificationOpenedApp((message) => {
+    return onNotificationOpenedApp(messaging, (message) => {
       const parsed = parsePushNotificationData(message?.data);
       if (parsed) handler(parsed);
     });
   }
 
   async getInitialNotification(): Promise<PushNotificationData | null> {
-    const message = await messaging().getInitialNotification();
+    const message = await getInitialNotification(messaging);
     return parsePushNotificationData(message?.data);
   }
 

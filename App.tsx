@@ -1,10 +1,15 @@
 import "react-native-gesture-handler";
 import "./global.css";
 import React from "react";
-import messaging from "@react-native-firebase/messaging";
+import { LogBox } from "react-native";
+import { getMessaging, setBackgroundMessageHandler } from "@react-native-firebase/messaging";
 import { AppRoot } from "./src/app";
 
-messaging().setBackgroundMessageHandler(async (remoteMessage) => {
+LogBox.ignoreLogs(["SafeAreaView has been deprecated"]);
+
+const messaging = getMessaging();
+
+setBackgroundMessageHandler(messaging, async (remoteMessage) => {
   console.log("FCM background message:", remoteMessage);
 });
 

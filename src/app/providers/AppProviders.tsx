@@ -10,7 +10,7 @@ import { navigationRef } from "../navigation/navigationRef";
 import NetInfo from "@react-native-community/netinfo";
 import { useNetworkStatusStore } from "../../presentation/state/networkStatusStore";
 import notifee, { AndroidImportance, EventType } from "@notifee/react-native";
-import messaging from "@react-native-firebase/messaging";
+import { getMessaging, onMessage } from "@react-native-firebase/messaging";
 import Constants from "expo-constants";
 import { parsePushNotificationData } from "../../shared/pushNotifications";
 import type { PushNotificationData } from "../../domain/entities/PushNotification";
@@ -19,6 +19,7 @@ import { resolvePushEnvironment } from "../../shared/pushEnvironment";
 import { useAuthModeStore } from "../../presentation/state/authModeStore";
 
 const PUSH_CHANNEL_ID = "default";
+const messaging = getMessaging();
 
 const getAppVersion = (): string => {
   return (
@@ -253,7 +254,7 @@ function PushNotificationsBootstrap() {
       }
 
       if (!listenersRef.current.message) {
-        listenersRef.current.message = messaging().onMessage(async (message) => {
+        listenersRef.current.message = onMessage(messaging, async (message) => {
           try {
             await displayForegroundNotification(message as { notification?: { title?: string; body?: string }; data?: Record<string, string> });
           } catch (error) {
