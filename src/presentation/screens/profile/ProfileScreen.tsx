@@ -15,11 +15,28 @@ import { Buffer } from "buffer";
 import { useProfileSummaryStore } from "../../state/profileSummaryStore";
 import { useAuthModeStore } from "../../state/authModeStore";
 import { useAuthGuard } from "../../hooks/useAuthGuard";
+import { LinearGradient } from "expo-linear-gradient";
 
 type ProfileNavigationProp = CompositeNavigationProp<
   BottomTabNavigationProp<RootTabParamList, "profile">,
   NativeStackNavigationProp<RootStackParamList>
 >;
+
+const AVATAR_SIZE = 128;
+const AVATAR_BORDER_COLOR = "#EC4899";
+const AVATAR_GRADIENT_COLORS = ["#FDE68A", "#F59E0B"];
+
+const getInitials = (name: string | null | undefined, fallback: string) => {
+  const trimmed = name?.trim();
+  if (!trimmed) return fallback;
+  const parts = trimmed.split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return fallback;
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  const first = parts[0]?.[0] ?? "";
+  const last = parts[parts.length - 1]?.[0] ?? "";
+  const initials = `${first}${last}`.trim();
+  return initials ? initials.toUpperCase() : fallback;
+};
 
 export function ProfileScreen() {
   const navigation = useNavigation<ProfileNavigationProp>();
@@ -165,6 +182,8 @@ export function ProfileScreen() {
   }, [navigation, route.params?.toast?.message, showToast]);
 
   const displayUser = profile;
+  const shouldShowAvatarPlaceholder = isGuest || !displayUser?.avatarUrl;
+  const avatarInitials = getInitials(displayUser?.name, isGuest ? "V" : "GB");
   return (
     <SafeAreaView className="flex-1 bg-white" edges={["top", "left", "right"]}>
       <StatusBar barStyle="dark-content" />
@@ -200,17 +219,31 @@ export function ProfileScreen() {
         <View className="bg-white">
           <View className="flex-col items-center p-6 space-y-4">
             <View className="relative">
-              {displayUser?.avatarUrl ? (
+              {!shouldShowAvatarPlaceholder ? (
                 <Image
                   source={{ uri: displayUser.avatarUrl }}
                   className="w-32 h-32 rounded-full"
-                  style={{ borderWidth: 4, borderColor: "#EC4899" }}
+                  style={{ borderWidth: 4, borderColor: AVATAR_BORDER_COLOR }}
                 />
               ) : (
-                <View
-                  className="w-32 h-32 rounded-full bg-gray-200"
-                  style={{ borderWidth: 4, borderColor: "#EC4899" }}
-                />
+                <LinearGradient
+                  colors={AVATAR_GRADIENT_COLORS}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={{
+                    width: AVATAR_SIZE,
+                    height: AVATAR_SIZE,
+                    borderRadius: AVATAR_SIZE / 2,
+                    borderWidth: 4,
+                    borderColor: AVATAR_BORDER_COLOR,
+                    alignItems: "center",
+                    justifyContent: "center"
+                  }}
+                >
+                  <Text className="text-3xl font-bold" style={{ color: "#92400E", letterSpacing: 1 }}>
+                    {avatarInitials}
+                  </Text>
+                </LinearGradient>
               )}
             </View>
             {isGuest ? (
@@ -252,9 +285,9 @@ export function ProfileScreen() {
           <Text className="text-lg font-bold mb-2 text-[#1F2937]">Conta</Text>
           {isGuest ? (
             <View className="mb-3 rounded-lg border border-[#F59E0B]/30 bg-[#FEF3C7] px-3 py-2">
-              <View className="flex-row items-center gap-2">
+              <View className="flex-row items-start gap-2">
                 <Ionicons name="lock-closed" size={16} color="#B45309" />
-                <Text className="text-sm text-[#92400E]">
+                <Text className="text-sm text-[#92400E] flex-1" style={{ flexShrink: 1 }}>
                   Faça login para editar seu perfil e acessar recursos da conta.
                 </Text>
               </View>
