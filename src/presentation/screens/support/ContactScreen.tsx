@@ -1,10 +1,12 @@
 import React, { useEffect, useRef, useState } from "react";
-import { ScrollView, StatusBar, Text, TextInput, View, Pressable, Alert, ActivityIndicator } from "react-native";
+import { ScrollView, StatusBar, Text, TextInput, View, Pressable, Alert, ActivityIndicator, Linking } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { theme } from "../../../shared/theme";
 import { useDependencies } from "../../../app/providers/AppProvidersWithDI";
+import { isValidEmail } from "../../../domain/validation/auth";
+import { SUPPORT_EMAIL } from "../../../../constants/support";
 
 export function ContactScreen() {
   const navigation = useNavigation();
@@ -15,6 +17,20 @@ export function ContactScreen() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const hasPrefilled = useRef(false);
+
+  const handleOpenEmail = async () => {
+    const mailUrl = `mailto:${SUPPORT_EMAIL}`;
+    try {
+      const canOpen = await Linking.canOpenURL(mailUrl);
+      if (!canOpen) {
+        Alert.alert("Não disponível", "Não foi possível abrir o app de e-mail.");
+        return;
+      }
+      await Linking.openURL(mailUrl);
+    } catch {
+      Alert.alert("Não disponível", "Não foi possível abrir o app de e-mail.");
+    }
+  };
 
   useEffect(() => {
     if (hasPrefilled.current) return;
@@ -34,9 +50,7 @@ export function ContactScreen() {
 
   const validate = () => {
     if (!name.trim()) return "Informe seu nome.";
-    const emailTrimmed = email.trim();
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(emailTrimmed)) return "Digite um e-mail válido.";
+    if (!isValidEmail(email)) return "Digite um e-mail válido.";
     if (message.trim().length < 10) return "Mensagem precisa ter pelo menos 10 caracteres.";
     return null;
   };
@@ -92,30 +106,21 @@ export function ContactScreen() {
           </View>
 
           <View className="space-y-4 mb-6">
-            {[
-              { icon: "mail", title: "E-mail", desc: "Envie sua dúvida para nosso time de suporte." },
-              { icon: "chatbubble-ellipses", title: "Chat ao vivo", desc: "Converse com um de nossos atendentes." },
-              { icon: "help-circle", title: "FAQ", desc: "Encontre respostas para as perguntas mais comuns." }
-            ].map((item, index) => (
-              <Pressable
-                key={item.title}
-                className={`flex-row items-center gap-4 p-4 bg-white rounded-xl shadow-sm ${index < 2 ? "mb-4" : ""}`}
-                disabled
-              >
-                <View className="bg-[#B55D05]1a p-3 rounded-full" style={{ backgroundColor: `${theme.colors.highlight}1a` }}>
-                  <Ionicons name={item.icon as any} size={20} color={theme.colors.highlight} />
-                </View>
-                <View className="flex-1 relative">
-                  <Text className="font-bold text-[#1F2937]">{item.title}</Text>
-                  <Text className="text-sm text-gray-500">{item.desc}</Text>
-                  <View className="absolute inset-0 bg-white/60 rounded-lg" pointerEvents="none" />
-                  <View className="absolute top-1 right-1 bg-[#111827] rounded-full px-2 py-0.5" pointerEvents="none">
-                    <Text className="text-[11px] font-semibold text-white">em breve</Text>
-                  </View>
-                </View>
-                <Ionicons name="chevron-forward" size={18} color="#9CA3AF" />
-              </Pressable>
-            ))}
+            <Pressable
+              className="flex-row items-center gap-4 p-4 bg-white rounded-xl shadow-sm"
+              onPress={handleOpenEmail}
+              accessibilityRole="button"
+              accessibilityLabel="Enviar e-mail para suporte"
+            >
+              <View className="bg-[#B55D05]1a p-3 rounded-full" style={{ backgroundColor: `${theme.colors.highlight}1a` }}>
+                <Ionicons name="mail" size={20} color={theme.colors.highlight} />
+              </View>
+              <View className="flex-1">
+                <Text className="font-bold text-[#1F2937]">E-mail</Text>
+                <Text className="text-sm text-gray-500">Envie sua dúvida para nosso time de suporte.</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color="#9CA3AF" />
+            </Pressable>
           </View>
 
           <View className="bg-white rounded-xl shadow-sm p-6">
