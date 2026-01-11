@@ -165,7 +165,7 @@ describe("LoginScreen", () => {
     });
 
     await waitFor(() => expect(mockForgotPassword).toHaveBeenCalledWith({ email: "reset@example.com" }));
-    expect(getByText("Você receberá um e-mail em breve, verifique sua caixa de entrada.")).toBeTruthy();
+    expect(getByText("Se o e-mail estiver cadastrado, enviaremos um link de redefinição em alguns minutos.")).toBeTruthy();
   });
 
   it("shows reset email validation error", () => {
