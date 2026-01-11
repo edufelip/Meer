@@ -1,20 +1,26 @@
 import { PushNotificationsRepositoryImpl } from "../PushNotificationsRepositoryImpl";
 
+const mockMessagingInstance = {};
 const mockSubscribeToTopic = jest.fn();
 const mockUnsubscribeFromTopic = jest.fn();
+const mockRequestPermission = jest.fn();
+const mockRegisterDeviceForRemoteMessages = jest.fn();
+const mockGetToken = jest.fn();
+const mockOnTokenRefresh = jest.fn();
+const mockOnNotificationOpenedApp = jest.fn();
+const mockGetInitialNotification = jest.fn();
 
 jest.mock("@react-native-firebase/messaging", () => ({
   __esModule: true,
-  default: () => ({
-    subscribeToTopic: mockSubscribeToTopic,
-    unsubscribeFromTopic: mockUnsubscribeFromTopic,
-    requestPermission: jest.fn(),
-    registerDeviceForRemoteMessages: jest.fn(),
-    getToken: jest.fn(),
-    onTokenRefresh: jest.fn(),
-    onNotificationOpenedApp: jest.fn(),
-    getInitialNotification: jest.fn()
-  }),
+  getMessaging: jest.fn(() => mockMessagingInstance),
+  subscribeToTopic: mockSubscribeToTopic,
+  unsubscribeFromTopic: mockUnsubscribeFromTopic,
+  requestPermission: mockRequestPermission,
+  registerDeviceForRemoteMessages: mockRegisterDeviceForRemoteMessages,
+  getToken: mockGetToken,
+  onTokenRefresh: mockOnTokenRefresh,
+  onNotificationOpenedApp: mockOnNotificationOpenedApp,
+  getInitialNotification: mockGetInitialNotification,
   AuthorizationStatus: { AUTHORIZED: 1, PROVISIONAL: 2 }
 }));
 

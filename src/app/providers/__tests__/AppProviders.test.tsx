@@ -12,6 +12,8 @@ const mockClearAuthSession = jest.fn();
 const mockPrimeApiToken = jest.fn();
 const mockNavigationReset = jest.fn();
 const mockNavigationNavigate = jest.fn();
+const mockMessagingInstance = {};
+const mockOnMessage = jest.fn(() => jest.fn());
 
 const mockDeps = {
   getCachedProfileUseCase: { execute: jest.fn().mockResolvedValue({ id: "user-1" }) },
@@ -71,15 +73,8 @@ jest.mock("@notifee/react-native", () => ({
 
 jest.mock("@react-native-firebase/messaging", () => ({
   __esModule: true,
-  default: () => ({
-    onMessage: jest.fn(() => jest.fn()),
-    onTokenRefresh: jest.fn(() => jest.fn()),
-    onNotificationOpenedApp: jest.fn(() => jest.fn()),
-    getInitialNotification: jest.fn().mockResolvedValue(null),
-    requestPermission: jest.fn().mockResolvedValue(1),
-    registerDeviceForRemoteMessages: jest.fn().mockResolvedValue(undefined),
-    getToken: jest.fn().mockResolvedValue("push-token")
-  }),
+  getMessaging: jest.fn(() => mockMessagingInstance),
+  onMessage: mockOnMessage,
   AuthorizationStatus: { AUTHORIZED: 1, PROVISIONAL: 2 }
 }));
 
