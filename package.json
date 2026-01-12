@@ -99,7 +99,7 @@
     "apps": {
       "ios.sim.debug": {
         "type": "ios.app",
-        "binaryPath": "ios/build/Build/Products/Debug-iphonesimulator/GuiaBrecho.app",
+        "binaryPath": "ios/build/Build/Products/Debug-iphonesimulator/Meer.app",
         "build": "xcodebuild -workspace ios/Meer.xcworkspace -scheme Meer -configuration Debug -sdk iphonesimulator -derivedDataPath ios/build"
       },
       "android.emu.debug": {
