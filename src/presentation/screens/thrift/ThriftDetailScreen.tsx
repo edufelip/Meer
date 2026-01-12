@@ -28,6 +28,7 @@ import Reanimated, {
 } from "react-native-reanimated";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { strings } from "../../../shared/strings";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useDependencies } from "../../../app/providers/AppProvidersWithDI";
@@ -197,7 +198,7 @@ export function ThriftDetailScreen({ route }: ThriftDetailScreenProps) {
     try {
       await Share.share({
         title: store.name,
-        message: `${store.name}\n${url}`,
+        message: strings.share.thriftStoreMessage(url),
         url
       });
     } catch {

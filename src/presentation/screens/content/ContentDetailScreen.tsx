@@ -15,6 +15,7 @@ import {
 } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { strings } from "../../../shared/strings";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import type { RouteProp } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
@@ -213,7 +214,7 @@ export function ContentDetailScreen() {
     try {
       await Share.share({
         title: content.title,
-        message: url,
+        message: strings.share.contentMessage(url),
         url
       });
     } catch {
