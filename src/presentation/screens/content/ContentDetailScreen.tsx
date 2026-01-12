@@ -214,7 +214,7 @@ export function ContentDetailScreen() {
     try {
       await Share.share({
         title: content.title,
-        message: strings.share.contentMessage(url),
+        message: strings.share.contentMessage(),
         url
       });
     } catch {

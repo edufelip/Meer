@@ -198,7 +198,7 @@ export function ThriftDetailScreen({ route }: ThriftDetailScreenProps) {
     try {
       await Share.share({
         title: store.name,
-        message: strings.share.thriftStoreMessage(url),
+        message: strings.share.thriftStoreMessage(),
         url
       });
     } catch {
