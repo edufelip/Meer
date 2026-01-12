@@ -87,26 +87,14 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace 'com.edufelip.meer'
+    namespace "com.guiabrech"
     defaultConfig {
-        applicationId 'com.edufelip.meer'
+        applicationId "com.guiabrech"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        def major = 1
-        def minor = 0
-        def patch = 0
-        def envVersionCode = System.getenv("CI_VERSION_CODE") ?: System.getenv("LOCAL_VERSION_CODE")
-        if (!envVersionCode) {
-            def isCi = System.getenv("CI") == "true"
-            if (isCi) {
-                throw new GradleException("CI_VERSION_CODE not set. Provide it in CI (e.g., GITHUB_RUN_NUMBER).")
-            } else {
-                // Local builds: fall back to 1 to keep `expo run:android` working without env vars
-                envVersionCode = "1"
-            }
-        }
-        versionCode envVersionCode.toInteger()
-        versionName "${major}.${minor}.${patch}"
+        versionCode 1
+        versionName "1.0"
+
         buildConfigField "String", "REACT_NATIVE_RELEASE_LEVEL", "\"${findProperty('reactNativeReleaseLevel') ?: 'stable'}\""
     }
     signingConfigs {
@@ -120,21 +108,15 @@ android {
     buildTypes {
         debug {
             signingConfig signingConfigs.debug
-            applicationIdSuffix ".dev"
-            versionNameSuffix "-dev"
-        }
-        staging {
-            initWith release
-            matchingFallbacks = ['release', 'debug']
-            signingConfig signingConfigs.debug
-            applicationIdSuffix ".dev"
-            versionNameSuffix "-dev"
         }
         release {
+            // Caution! In production, you need to generate your own keystore file.
+            // see https://reactnative.dev/docs/signed-apk-android.
+            signingConfig signingConfigs.debug
             def enableShrinkResources = findProperty('android.enableShrinkResourcesInReleaseBuilds') ?: 'false'
             shrinkResources enableShrinkResources.toBoolean()
             minifyEnabled enableMinifyInReleaseBuilds
-            proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
+            proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
             def enablePngCrunchInRelease = findProperty('android.enablePngCrunchInReleaseBuilds') ?: 'true'
             crunchPngs enablePngCrunchInRelease.toBoolean()
         }
@@ -198,6 +180,3 @@ dependencies {
         implementation jscFlavor
     }
 }
-
-apply plugin: 'com.google.gms.google-services'
-apply plugin: 'com.google.firebase.crashlytics'

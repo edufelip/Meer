@@ -5,7 +5,10 @@ require 'json'
 podfile_properties = JSON.parse(File.read(File.join(__dir__, 'Podfile.properties.json'))) rescue {}
 
 def ccache_enabled?(podfile_properties)
+  # Environment variable takes precedence
   return ENV['USE_CCACHE'] == '1' if ENV['USE_CCACHE']
+  
+  # Fall back to Podfile properties
   podfile_properties['apple.ccacheEnabled'] == 'true'
 end
 
@@ -13,24 +16,15 @@ ENV['RCT_NEW_ARCH_ENABLED'] ||= '0' if podfile_properties['newArchEnabled'] == '
 ENV['EX_DEV_CLIENT_NETWORK_INSPECTOR'] ||= podfile_properties['EX_DEV_CLIENT_NETWORK_INSPECTOR']
 ENV['RCT_USE_RN_DEP'] ||= '1' if podfile_properties['ios.buildReactNativeFromSource'] != 'true' && podfile_properties['newArchEnabled'] != 'false'
 ENV['RCT_USE_PREBUILT_RNCORE'] ||= '1' if podfile_properties['ios.buildReactNativeFromSource'] != 'true' && podfile_properties['newArchEnabled'] != 'false'
-
 platform :ios, podfile_properties['ios.deploymentTarget'] || '15.1'
 
 prepare_react_native_project!
 
-pre_install do |installer|
-  installer.pod_targets.each do |pod|
-    if pod.name.start_with?('RNFB') # all react-native-firebase pods
-      def pod.build_type; Pod::BuildType.static_library end
-    end
-  end
-end
-
-target 'Meer' do
+target 'GuiaBrech' do
   use_expo_modules!
 
   if ENV['EXPO_USE_COMMUNITY_AUTOLINKING'] == '1'
-    config_command = ['node', '-e', "process.argv=['', '', 'config'];require('@react-native-community/cli').run()"]
+    config_command = ['node', '-e', "process.argv=['', '', 'config'];require('@react-native-community/cli').run()"];
   else
     config_command = [
       'npx',
@@ -44,37 +38,23 @@ target 'Meer' do
 
   config = use_native_modules!(config_command)
 
-  # Required for Firebase Swift module maps and Hermes usage
-  use_frameworks! linkage: :static
+  use_frameworks! :linkage => podfile_properties['ios.useFrameworks'].to_sym if podfile_properties['ios.useFrameworks']
+  use_frameworks! :linkage => ENV['USE_FRAMEWORKS'].to_sym if ENV['USE_FRAMEWORKS']
 
   use_react_native!(
-    path: config[:reactNativePath],
-    hermes_enabled: (podfile_properties['expo.jsEngine'].nil? || podfile_properties['expo.jsEngine'] == 'hermes'),
-    app_path: "#{Pod::Config.instance.installation_root}/..",
-    privacy_file_aggregation_enabled: podfile_properties['apple.privacyManifestAggregationEnabled'] != 'false'
+    :path => config[:reactNativePath],
+    :hermes_enabled => podfile_properties['expo.jsEngine'] == nil || podfile_properties['expo.jsEngine'] == 'hermes',
+    # An absolute path to your application root.
+    :app_path => "#{Pod::Config.instance.installation_root}/..",
+    :privacy_file_aggregation_enabled => podfile_properties['apple.privacyManifestAggregationEnabled'] != 'false',
   )
 
-  # FINAL POST_INSTALL BLOCK FIXING SIGNING FOR PODS
   post_install do |installer|
-    # Default Expo + RN handling
     react_native_post_install(
       installer,
       config[:reactNativePath],
-      mac_catalyst_enabled: false,
-      ccache_enabled: ccache_enabled?(podfile_properties)
+      :mac_catalyst_enabled => false,
+      :ccache_enabled => ccache_enabled?(podfile_properties),
     )
-
-    # Fix CI signing issues: Pods MUST NOT have provisioning profiles
-    installer.pods_project.targets.each do |target|
-      target.build_configurations.each do |config|
-        # Ensure pods never try to use the main app's provisioning profile
-        config.build_settings['PROVISIONING_PROFILE_SPECIFIER'] = ''
-        config.build_settings['PROVISIONING_PROFILE'] = ''
-        config.build_settings['DEVELOPMENT_TEAM'] = ''
-        config.build_settings['CODE_SIGN_STYLE'] = 'Automatic'
-        config.build_settings['CODE_SIGNING_REQUIRED'] = 'NO'
-        config.build_settings['CODE_SIGNING_ALLOWED'] = 'NO'
-      end
-    end
   end
 end
