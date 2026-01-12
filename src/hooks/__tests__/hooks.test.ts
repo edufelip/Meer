@@ -151,7 +151,7 @@ describe("hooks", () => {
     await logout();
 
     expect(clearAuthSessionMock).toHaveBeenCalledTimes(1);
-    expect(unregisterPushTokenUseCaseMock).toHaveBeenCalledTimes(1);
+    expect(unregisterPushTokenUseCaseMock).not.toHaveBeenCalled();
     expect(triggerPushRegistrationMock).toHaveBeenCalledTimes(1);
     expect(navMock.reset).toHaveBeenCalledWith({ index: 0, routes: [{ name: "login" }] });
   });

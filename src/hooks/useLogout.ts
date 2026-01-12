@@ -14,11 +14,6 @@ export function useLogout() {
   const { unregisterPushTokenUseCase } = useDependencies();
 
   return useCallback(async () => {
-    try {
-      await unregisterPushTokenUseCase.execute(resolvePushEnvironment());
-    } catch {
-      // ignore push token unregister failures
-    }
     await clearAuthSession();
     await setGuestMode(false);
     useAuthModeStore.getState().setMode("none");
