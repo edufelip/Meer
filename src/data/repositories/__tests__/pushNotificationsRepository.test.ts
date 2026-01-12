@@ -1,6 +1,5 @@
 import { PushNotificationsRepositoryImpl } from "../PushNotificationsRepositoryImpl";
 
-const mockMessagingInstance = {};
 const mockSubscribeToTopic = jest.fn();
 const mockUnsubscribeFromTopic = jest.fn();
 const mockRequestPermission = jest.fn();
