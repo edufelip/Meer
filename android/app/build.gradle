@@ -123,6 +123,13 @@ android {
             applicationIdSuffix ".dev"
             versionNameSuffix "-dev"
         }
+        staging {
+            initWith release
+            matchingFallbacks = ['release', 'debug']
+            signingConfig signingConfigs.debug
+            applicationIdSuffix ".dev"
+            versionNameSuffix "-dev"
+        }
         release {
             def enableShrinkResources = findProperty('android.enableShrinkResourcesInReleaseBuilds') ?: 'false'
             shrinkResources enableShrinkResources.toBoolean()

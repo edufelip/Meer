@@ -100,7 +100,7 @@ jobs:
           build-root-directory: android
           arguments: |
             clean
-            assembleDebug
+            assembleStaging
 
       - name: Release notes
         run: |
@@ -121,5 +121,5 @@ jobs:
           appId: ${{ secrets.FIREBASE_APP_ID_ANDROID_DEV }}
           serviceCredentialsFile: ${{ runner.temp }}/firebase-service-account.json
           groups: base-group
-          file: android/app/build/outputs/apk/debug/app-debug.apk
+          file: android/app/build/outputs/apk/staging/app-staging.apk
           releaseNotes: ${{ env.RELEASE_NOTES }}
