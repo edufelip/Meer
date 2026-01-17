@@ -50,6 +50,10 @@ jobs:
         run: |
           echo "EXPO_PUBLIC_ENV=dev" >> "$GITHUB_ENV"
 
+      - name: Set Meer environment
+        run: |
+          echo "MEER_ENV=dev" >> "$GITHUB_ENV"
+
       - name: Validate Expo environment
         run: |
           if [ "$EXPO_PUBLIC_ENV" != "dev" ]; then
@@ -107,6 +111,11 @@ jobs:
         run: |
           mkdir -p Meer
           echo "$GOOGLE_SERVICE_INFO_PLIST_BASE64" | base64 -d > Meer/GoogleService-Info-Dev.plist
+
+      - name: Ensure GoogleService-Info.plist exists
+        working-directory: ios
+        run: |
+          cp -f Meer/GoogleService-Info-Dev.plist Meer/GoogleService-Info.plist
 
       - name: Sync Google Sign-In scheme (dev)
         run: |
