@@ -59,8 +59,5 @@ coverage/
 # Gemini CLI
 GEMINI.md
 
-# Xcode generated scheme files (shared schemes)
-ios/Meer.xcodeproj/xcshareddata/xcschemes/*.xcscheme
-
 # CocoaPods lock file (generated)
 ios/Podfile.lock
