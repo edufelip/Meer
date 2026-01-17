@@ -1,6 +1,7 @@
 name: Android Firebase Distribution
 
 on:
+  workflow_dispatch: {}
   push:
     branches: [develop]
     paths-ignore:
