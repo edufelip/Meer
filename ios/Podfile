@@ -24,7 +24,16 @@ project 'Meer', 'Debug' => :debug, 'Release' => :release, 'Dev' => :debug, 'Prod
 
 target 'Meer' do
   use_modular_headers!
-  use_expo_modules!
+  
+  # Exclude dev-client from CI builds to avoid archiving issues
+  exclude_modules = []
+  if ENV['CI'] || ENV['EXPO_NO_DEV_CLIENT']
+    exclude_modules << 'expo-dev-client'
+    exclude_modules << 'expo-dev-launcher'
+    exclude_modules << 'expo-dev-menu'
+  end
+  
+  use_expo_modules!(exclude: exclude_modules)
 
   if ENV['EXPO_USE_COMMUNITY_AUTOLINKING'] == '1'
     config_command = ['node', '-e', "process.argv=['', '', 'config'];require('@react-native-community/cli').run()"];
