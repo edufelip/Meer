@@ -86,12 +86,16 @@ function getWwwHostname(hostname) {
   return `www.${hostname}`;
 }
 
+// Simple production‑build detection based on the public env variable.
+// If EXPO_PUBLIC_ENV is "prod" (case‑insensitive) we treat this as a production build.
+// Otherwise we assume a non‑production build.
+const isProdBuild = process.env.EXPO_PUBLIC_ENV?.toLowerCase() === "prod";
+
 const { webBaseUrl, prodApiBaseUrl, devApiBaseUrl } = require("./constants/urls.json");
 
 module.exports = ({ config }) => {
   const hostname = tryGetHostname(webBaseUrl);
   const wwwHostname = getWwwHostname(hostname);
-  const isProdBuild = process.env.NODE_ENV === "production" || process.env.EAS_BUILD_PROFILE === "production";
   const shouldUseDevApi = process.env.EXPO_PUBLIC_USE_DEV_API === "true";
   const apiBaseUrl = shouldUseDevApi ? devApiBaseUrl || prodApiBaseUrl : prodApiBaseUrl;
   const apiHost = tryGetHostname(apiBaseUrl);
@@ -153,7 +157,6 @@ module.exports = ({ config }) => {
     android: {
       ...config.android,
       package: "com.edufelip.meer",
-      googleServicesFile: "./android/app/google-services.json",
       intentFilters
     },
     plugins: nextPlugins

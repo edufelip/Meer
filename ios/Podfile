@@ -20,6 +20,8 @@ platform :ios, podfile_properties['ios.deploymentTarget'] || '15.1'
 
 prepare_react_native_project!
 
+project 'Meer', 'Debug' => :debug, 'Release' => :release, 'Dev' => :debug, 'Production' => :release
+
 target 'Meer' do
   use_modular_headers!
   use_expo_modules!
