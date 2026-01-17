@@ -47,6 +47,7 @@ app-example
 GoogleService-Info.plist
 GoogleService-Info-Dev.plist
 **/google-services.json
+google-services-dev.json
 
 .env.local
 .env
@@ -58,3 +59,8 @@ coverage/
 # Gemini CLI
 GEMINI.md
 
+# Xcode generated scheme files (shared schemes)
+ios/Meer.xcodeproj/xcshareddata/xcschemes/*.xcscheme
+
+# CocoaPods lock file (generated)
+ios/Podfile.lock
