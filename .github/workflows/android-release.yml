@@ -2,7 +2,9 @@ name: Android Release
 
 on:
   push:
-    branches: [main]
+    branches:
+      - release/**
+      - hotfix/**
     paths-ignore:
       - "web/**"
       - "site/**"
@@ -81,8 +83,8 @@ jobs:
 
       - name: Write google-services.json
         run: |
-          mkdir -p app
-          echo "${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}" | base64 -d > app/google-services.json
+          mkdir -p app/src/production
+          echo "${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}" | base64 -d > app/src/production/google-services.json
 
       - name: Build release bundle
         uses: gradle/gradle-build-action@v2
@@ -91,7 +93,7 @@ jobs:
           build-root-directory: android
           arguments: |
             clean
-            bundleRelease
+            bundleProductionRelease
 
       - name: Sign bundle with jarsigner
         env:
@@ -102,21 +104,21 @@ jobs:
             -keystore app/meer-release-key.jks \
             -storepass "$STOREPASS" \
             -keypass "$KEYPASS" \
-            app/build/outputs/bundle/release/app-release.aab \
+            app/build/outputs/bundle/productionRelease/app-production-release.aab \
             ${{ secrets.ANDROID_KEY_ALIAS }}
 
       - name: Upload bundle artifact
         uses: actions/upload-artifact@v4
         with:
           name: app-release.aab
-          path: android/app/build/outputs/bundle/release/app-release.aab
+          path: android/app/build/outputs/bundle/productionRelease/app-production-release.aab
 
       - name: Upload to Play (internal track)
         uses: r0adkll/upload-google-play@v1
         with:
           serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
           packageName: com.edufelip.meer
-          releaseFiles: android/app/build/outputs/bundle/release/app-release.aab
+          releaseFiles: android/app/build/outputs/bundle/productionRelease/app-production-release.aab
           track: internal
           status: draft
           # status: completed

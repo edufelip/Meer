@@ -2,7 +2,9 @@ name: iOS Release
 
 on:
   push:
-    branches: [main]
+    branches:
+      - release/**
+      - hotfix/**
     paths-ignore:
       - "web/**"
       - "site/**"
@@ -155,8 +157,8 @@ jobs:
           cd ios
           xcodebuild \
             -workspace Meer.xcworkspace \
-            -scheme Meer \
-            -configuration Release \
+            -scheme Meer-Production \
+            -configuration Production \
             -archivePath "$PWD/build/Meer.xcarchive" \
             archive \
             CODE_SIGN_STYLE=Manual \

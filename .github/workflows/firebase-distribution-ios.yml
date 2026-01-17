@@ -2,13 +2,22 @@ name: iOS Firebase Distribution
 
 on:
   push:
-    branches: [main]
+    branches: [develop]
+    paths-ignore:
+      - "web/**"
+      - "site/**"
+  pull_request:
+    branches:
+      - develop
+      - release/**
+      - hotfix/**
     paths-ignore:
       - "web/**"
       - "site/**"
 
 jobs:
   firebase-distribution:
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: macos-latest
 
     env:
@@ -97,7 +106,6 @@ jobs:
         run: |
           mkdir -p Meer
           echo "$GOOGLE_SERVICE_INFO_PLIST_BASE64" | base64 -d > Meer/GoogleService-Info-Dev.plist
-          cp Meer/GoogleService-Info-Dev.plist Meer/GoogleService-Info.plist
 
       - name: Sync Google Sign-In scheme (dev)
         run: |
@@ -203,8 +211,8 @@ jobs:
           cd ios
           xcodebuild \
             -workspace Meer.xcworkspace \
-            -scheme Meer \
-            -configuration Release \
+            -scheme Meer-Dev \
+            -configuration Dev \
             -destination "generic/platform=iOS" \
             -archivePath "$PWD/build/MeerDev.xcarchive" \
             archive \
