@@ -28,6 +28,7 @@ import Reanimated, {
 } from "react-native-reanimated";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { strings } from "../../../shared/strings";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -505,7 +506,13 @@ export function ThriftDetailScreen({ route }: ThriftDetailScreenProps) {
           resizeMode="cover"
           imageStyle={{ opacity: 0.95 }}
         >
-          <View className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+          <LinearGradient
+            colors={["rgba(0,0,0,0.8)", "rgba(0,0,0,0.4)", "transparent"]}
+            locations={[0, 0.5, 1]}
+            start={{ x: 0.5, y: 1 }}
+            end={{ x: 0.5, y: 0.65 }}
+            style={{ position: "absolute", inset: 0 }}
+          />
           <View
             className="absolute left-4 right-4 flex-row justify-between"
             style={{ top: insets.top + 8 }}
@@ -553,7 +560,7 @@ export function ThriftDetailScreen({ route }: ThriftDetailScreenProps) {
                 <Ionicons name="share-outline" size={20} color="#FFFFFF" />
               </Pressable>
             </View>
-            <Text className="text-sm text-white/90" style={{ marginTop: 4, marginBottom: 6 }}>
+            <Text className="text-sm text-white/90" style={{ marginTop: 4, marginBottom: 24 }}>
               {store.description}
             </Text>
           </View>

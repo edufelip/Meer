@@ -110,6 +110,9 @@ module.exports = ({ config }) => {
   const plugins = normalizePlugins(config.plugins);
   const nextPlugins = [...plugins];
 
+  const appName = isProdBuild ? "Guia Brechó" : "Guia Brechó Dev";
+  const appPackage = isProdBuild ? "com.edufelip.meer" : "com.edufelip.meer.dev";
+
   if (!hasPlugin(nextPlugins, "@react-native-firebase/crashlytics")) {
     nextPlugins.push([
       "@react-native-firebase/crashlytics",
@@ -144,8 +147,10 @@ module.exports = ({ config }) => {
 
   return {
     ...config,
+    name: appName,
     ios: {
       ...config.ios,
+      bundleIdentifier: appPackage,
       associatedDomains: hostname
         ? uniqStrings([
             ...(config.ios?.associatedDomains ?? []),
@@ -156,7 +161,7 @@ module.exports = ({ config }) => {
     },
     android: {
       ...config.android,
-      package: "com.edufelip.meer",
+      package: appPackage,
       intentFilters
     },
     plugins: nextPlugins

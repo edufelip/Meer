@@ -163,7 +163,7 @@ export function LoginScreen() {
       >
         <ScrollView
           className="flex-1"
-          contentContainerStyle={{ padding: 24, alignItems: "center", flexGrow: 1 }}
+          contentContainerStyle={{ padding: 24, alignItems: "center", justifyContent: "center", flexGrow: 1 }}
           keyboardShouldPersistTaps="handled"
         >
           <View className="w-full max-w-md items-center">
